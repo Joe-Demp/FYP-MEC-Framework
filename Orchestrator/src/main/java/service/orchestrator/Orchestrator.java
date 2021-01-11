@@ -22,6 +22,7 @@ public class Orchestrator extends WebSocketServer {
     public Orchestrator(int port, int rollingAverage) {
         super(new InetSocketAddress(port));
         this.rollingAverage = rollingAverage / 100;
+        System.out.println("Finished in the Orchestrator constructor");
     }
 
     /**
@@ -267,6 +268,7 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onError(WebSocket webSocket, Exception e) {
+        System.out.println("Error in the Orchestrator: " + e.getMessage());
     }
 
     @Override
@@ -275,5 +277,6 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket webSocket, int i, String s, boolean b) {
+        System.out.println("Closing the Orchestrator");
     }
 }

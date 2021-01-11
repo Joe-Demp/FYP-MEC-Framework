@@ -27,6 +27,9 @@ public class Main implements Runnable {
         if (!secure) {
             Orchestrator orchestrator = null;
             orchestrator = new Orchestrator(port,rollingAverage);
+
+            System.out.println("Created an Orchestrator object");
+
             orchestrator.run();
         } else {
             try {
