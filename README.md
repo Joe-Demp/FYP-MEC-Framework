@@ -3,6 +3,7 @@ I plan to expand on Darragh's final year project using this codebase, developing
 The final project will be published here later this year (2021) once the project has been submitted and graded.  
 
 Many thanks to Darragh for providing this code.  
+
 _The original README.md is included below._
 
 # Final Year Project 16387431
@@ -18,7 +19,7 @@ For testing purposes these jars are using preprovided keystores, for any actual 
 ## Orchestrator 
 Before trying to run the orchestrator make sure that the port it will run on is free and has firewall clearence,
 
-To run in ordinatry mode the command is
+To run in ordinary mode the command is
  ```
 java -jar {Release.jar} {Port} 
 i.e java -jar orchestrator-0.7.0-jar-with-dependencies 443
@@ -37,7 +38,7 @@ i.e java -jar orchestrator-0.7.0-jar-with-dependencies 443 -RollingAverage 60
 ```
 
 ## EdgeNode 
-To run in ordinatry mode the command is
+To run in ordinary mode the command is
  ```
 java -jar {Release.jar} {Orchestrator address} {file to host} {address of services hosted on this cloudNode} 
 i.e java -jar edge-0.6.0-jar-with-dependencies ws://193.145.123.56:443 C://path/to/file.tar ws://192.168.18.250:8080
@@ -56,7 +57,7 @@ i.e java -jar edge-0.6.0-jar-with-dependencies ws://193.145.123.56:443 C://path/
 ```
 
 ## CloudNode 
-To run in ordinatry mode the command is
+To run in ordinary mode the command is
  ```
 java -jar {Release.jar} {Orchestrator address} {file to host} {address of services hosted on this cloudNode} 
 i.e java -jar cloud-0.6.0-jar-with-dependencies ws://193.145.123.56:443 C://path/to/file.tar ws://192.168.18.250:8080
