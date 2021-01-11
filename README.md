@@ -1,3 +1,10 @@
+This repo is a fork of [Darragh Clark's FYP](https://github.com/DarraghClarke/FYP).
+I plan to expand on Darragh's final year project using this codebase, developing in GitLab.
+The final project will be published here later this year (2021) once the project has been submitted and graded.  
+
+Many thanks to Darragh for providing this code.  
+_The original README.md is included below._
+
 # Final Year Project 16387431
 
 This Project is a implementation of a mobile computing orchestrator and node setup which allows for TLS based secure migration docker images. This serves as a proof of concept implementation of a migration and also includes a sample accompanying Android application to connect to any docker image hosted.
