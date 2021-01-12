@@ -1,7 +1,6 @@
 package service.core;
 
 import org.java_websocket.WebSocket;
-
 import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
@@ -96,4 +95,14 @@ public class NodeInfo extends Message {
         RamLoad = ramLoad;
     }
 
+    @Override
+    public String toString() {
+        return String.format("UUID=%s localSA=%s, remoteSA=%s, serviceName=%s, serviceHostAddress=%s",
+                systemID,
+                webSocket.getLocalSocketAddress(),
+                webSocket.getRemoteSocketAddress(),
+                serviceName,
+                serviceHostAddress.toString()
+                );
+    }
 }

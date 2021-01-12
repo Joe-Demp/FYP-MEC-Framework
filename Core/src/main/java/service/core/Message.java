@@ -13,6 +13,7 @@ public class Message implements Serializable {
         return type;
     }
 
+    // todo could be an enum. Don't change unless confident
     /**
      * MessageTypes – a static class of final Strings used to ensure consistency of message types in the system
      */

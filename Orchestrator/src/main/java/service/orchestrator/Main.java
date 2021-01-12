@@ -25,11 +25,7 @@ public class Main implements Runnable {
     @Override
     public void run() {
         if (!secure) {
-            Orchestrator orchestrator = null;
-            orchestrator = new Orchestrator(port,rollingAverage);
-
-            System.out.println("Created an Orchestrator object");
-
+            Orchestrator orchestrator = new Orchestrator(port,rollingAverage);
             orchestrator.run();
         } else {
             try {

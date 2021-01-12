@@ -11,18 +11,36 @@ import service.core.*;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.time.Instant;
 import java.util.*;
 
-public class Orchestrator extends WebSocketServer {
+// todo remove hard coded values and use a config file instead (or command line args)
 
-    UUID firstid;
+public class Orchestrator extends WebSocketServer {
     int rollingAverage;
     private Map<UUID, NodeInfo> connectedNodes = new HashMap<>();
 
     public Orchestrator(int port, int rollingAverage) {
         super(new InetSocketAddress(port));
         this.rollingAverage = rollingAverage / 100;
-        System.out.println("Finished in the Orchestrator constructor");
+
+        // todo check if this rolling average thing works, shouldn't an int divided by a bigger int = 0 ?
+
+        // todo move this to a method or delete
+        new Timer().schedule(
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        System.out.println("-------------------------------");
+                        System.out.println("Current connections");
+                        System.out.println("-------------------------------");
+                        for (Map.Entry<UUID, NodeInfo> entry : connectedNodes.entrySet()) {
+                            System.out.println(entry.getValue().toString());
+                        }
+                        System.out.println("-------------------------------");
+                        System.out.println();
+                    }
+                }, 20000L, 20000L);
     }
 
     /**
@@ -34,11 +52,11 @@ public class Orchestrator extends WebSocketServer {
      */
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
+        // todo this sysout does not work with a proxy.
+        //  See if there's a better way (include info in the clientHandshake?)
         System.out.println("new connection :" + webSocket.getRemoteSocketAddress());
+
         UUID UUIDToReturn = UUID.randomUUID();
-        if (connectedNodes.isEmpty()) {
-            firstid = UUIDToReturn;
-        }
         connectedNodes.put(UUIDToReturn, null);//no node information yet to add
 
         //create a nodeInfoRequest and send it back to the node
@@ -111,7 +129,7 @@ public class Orchestrator extends WebSocketServer {
                 break;
             case Message.MessageTypes.HOST_REQUEST:
                 HostRequest hostRequest = (HostRequest) messageObj;
-                System.out.println("Time that orchestrator gets the request from the phone " + System.currentTimeMillis());
+                System.out.println("Time that orchestrator gets the request from the phone " + Instant.now().toString());
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
                 NodeInfo returnedNode = transferServiceToBestNode(requestFromUser);
                 URI returnURI = returnedNode.getServiceHostAddress();
@@ -268,7 +286,8 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onError(WebSocket webSocket, Exception e) {
-        System.out.println("Error in the Orchestrator: " + e.getMessage());
+        System.out.println("Error in the Orchestrator:");
+        e.printStackTrace();
     }
 
     @Override
@@ -277,6 +296,7 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket webSocket, int i, String s, boolean b) {
-        System.out.println("Closing the Orchestrator");
+        System.out.println("Closing a connection to " + webSocket.getRemoteSocketAddress());
+        System.out.println(s);
     }
 }
