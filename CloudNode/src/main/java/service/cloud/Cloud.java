@@ -84,7 +84,7 @@ public class Cloud extends WebSocketClient {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequstorID(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(),serviceRequest.getServiceName());
+                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequestorID(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(),serviceRequest.getServiceName());
                 String jsonStr = gson.toJson(serviceResponse);
                 send(jsonStr);
                 break;

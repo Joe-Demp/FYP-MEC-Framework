@@ -3,24 +3,29 @@ package service.core;
 import java.util.UUID;
 
 public class HostRequest extends Message  {
-    private UUID requstorID;
+    private UUID requestorID;
     private String serviceName;
 
     public HostRequest() {
         super(Message.MessageTypes.HOST_REQUEST);
     }
 
-    public HostRequest(UUID requstorID, String serviceName) {
+    public HostRequest(UUID requestorID, String serviceName) {
         super(Message.MessageTypes.HOST_REQUEST);
-        this.requstorID = requstorID;
+        this.requestorID = requestorID;
         this.serviceName = serviceName;
     }
 
     public UUID getRequestorID() {
-        return requstorID;
+        return requestorID;
     }
 
     public String getRequestedServiceName() {
         return serviceName;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("HostRequest: requestorId=%s serviceName=%s", requestorID.toString(), serviceName);
     }
 }

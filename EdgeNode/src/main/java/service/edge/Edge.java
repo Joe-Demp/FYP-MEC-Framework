@@ -6,8 +6,6 @@ import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 import service.core.*;
 import service.host.*;
@@ -87,7 +85,7 @@ public class Edge extends WebSocketClient {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequstorID(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(),serviceRequest.getServiceName());
+                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequestorID(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(),serviceRequest.getServiceName());
                 String jsonStr = gson.toJson(serviceResponse);
                 send(jsonStr);
                 break;

@@ -133,7 +133,20 @@ public class Orchestrator extends WebSocketServer {
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
                 NodeInfo returnedNode = transferServiceToBestNode(requestFromUser);
                 URI returnURI = returnedNode.getServiceHostAddress();
-                jsonStr = gson.toJson(new HostResponse(hostRequest.getRequestorID(), returnURI));
+                HostResponse responseForClient = new HostResponse(hostRequest.getRequestorID(), returnURI);
+
+                // DEBUG Remove me
+                System.out.println("\n ***********************");
+                System.out.println("Debug in Orchestrator#onMessage");
+                System.out.println(" ***********************");
+                System.out.println(hostRequest);
+                System.out.println("Service for the client is @ URI " + returnURI.toString());
+                System.out.println("Sending HostResponse to client");
+                System.out.println(responseForClient);
+                System.out.println(" ***********************\n");
+                // END DEBUG
+                
+                jsonStr = gson.toJson(responseForClient);
                 webSocket.send(jsonStr);
                 break;
         }
@@ -170,12 +183,25 @@ public class Orchestrator extends WebSocketServer {
     public NodeInfo transferServiceToBestNode(ServiceRequest serviceRequest) {
         NodeInfo bestNode = findBestNode(connectedNodes);
         NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
+
+        // DEBUG Remove me
+        System.out.println("\n ***********************");
+        System.out.println("Debug in Orchestrator#transferServiceToBestNode");
+        System.out.println(" ***********************");
+        System.out.println(serviceRequest);
+        System.out.println("bestNode: " + bestNode);
+        System.out.println("worstCurrentOwner: " + worstCurrentOwner);
+        System.out.println(" ***********************\n");
+        // END DEBUG
+
         if (worstCurrentOwner.getSystemID().equals(bestNode.getSystemID())) {
             return bestNode;
         }
         ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
         Gson gson = new Gson();
         String jsonStr = gson.toJson(request);
+
+        System.out.println("Sending a service request to worstCurrent owner");
         worstCurrentOwner.getWebSocket().send(jsonStr);//this tells the current worst owner of a service that its relived of duty and can send away its service
 
         return bestNode;
