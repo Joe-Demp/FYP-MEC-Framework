@@ -140,25 +140,25 @@ public class Orchestrator extends WebSocketServer {
     }
 
 
-    /**
-     * This method transfers the requested service to the best node available,
-     * but for testing purposes states that it can't stay on the cloud where it currently is
-     *
-     * @param serviceRequest the requested service
-     * @return the NodeInfo for the node that was deemed best
-     */
-    public NodeInfo transferServiceToEdgeNode(ServiceRequest serviceRequest) {
-        Map<UUID, NodeInfo> connectedNodesWithoutHosts = connectedNodes;
-        NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
-        connectedNodesWithoutHosts.remove(worstCurrentOwner.getSystemID());
-        NodeInfo bestNode = findBestNode(connectedNodesWithoutHosts);
-        ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
-        Gson gson = new Gson();
-        String jsonStr = gson.toJson(request);
-        worstCurrentOwner.getWebSocket().send(jsonStr);//this tells the current worst owner of a service that its relived of duty and can send away its service
-        System.out.println("Told worst current owner to transfer the file to best Node  --TIME " + System.currentTimeMillis());
-        return bestNode;
-    }
+//    /**
+//     * This method transfers the requested service to the best node available,
+//     * but for testing purposes states that it can't stay on the cloud where it currently is
+//     *
+//     * @param serviceRequest the requested service
+//     * @return the NodeInfo for the node that was deemed best
+//     */
+//    public NodeInfo transferServiceToEdgeNode(ServiceRequest serviceRequest) {
+//        Map<UUID, NodeInfo> connectedNodesWithoutHosts = connectedNodes;
+//        NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
+//        connectedNodesWithoutHosts.remove(worstCurrentOwner.getSystemID());
+//        NodeInfo bestNode = findBestNode(connectedNodesWithoutHosts);
+//        ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
+//        Gson gson = new Gson();
+//        String jsonStr = gson.toJson(request);
+//        worstCurrentOwner.getWebSocket().send(jsonStr);//this tells the current worst owner of a service that its relived of duty and can send away its service
+//        System.out.println("Told worst current owner to transfer the file to best Node  --TIME " + System.currentTimeMillis());
+//        return bestNode;
+//    }
 
     /**
      * This method transfers the requested service to the best node available,
