@@ -1,6 +1,8 @@
 *.iml
+.vscode/
 
 Core/target/
 EdgeNode/target/
 Orchestrator/target/
 CloudNode/target/
+DockerImage/target/
