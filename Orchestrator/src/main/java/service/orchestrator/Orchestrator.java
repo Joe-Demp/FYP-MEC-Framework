@@ -62,7 +62,7 @@ public class Orchestrator extends WebSocketServer {
     private static void printHttpFields(ClientHandshake handshake) {
         for (Iterator<String> it = handshake.iterateHttpFields(); it.hasNext(); ) {
             String field = it.next();
-            System.out.println(field);
+            System.out.printf("%s : %s\n", field, handshake.getFieldValue(field));
         }
         System.out.println();
     }
