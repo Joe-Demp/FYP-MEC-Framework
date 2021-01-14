@@ -27,6 +27,6 @@ public class HostResponse extends Message  {
 
     @Override
     public String toString() {
-        return String.format("HostResponse: requestorId=%s serviceHostAddress=%s", requestorID.toString(), serviceHostAddress);
+        return String.format("HostResponse: requestorId=%s serviceHostAddress=%s", requestorID, serviceHostAddress);
     }
 }

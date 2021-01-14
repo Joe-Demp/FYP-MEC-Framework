@@ -102,7 +102,7 @@ public class NodeInfo extends Message {
                 webSocket.getLocalSocketAddress(),
                 webSocket.getRemoteSocketAddress(),
                 serviceName,
-                serviceHostAddress.toString()
+                serviceHostAddress
                 );
     }
 }

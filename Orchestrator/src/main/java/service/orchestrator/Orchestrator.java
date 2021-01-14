@@ -10,7 +10,7 @@ import service.core.*;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 
@@ -44,6 +44,30 @@ public class Orchestrator extends WebSocketServer {
     }
 
     /**
+     * todo remove me
+     */
+    private static void printClientHandshakeContent(ClientHandshake handshake) {
+        byte[] content = handshake.getContent();
+        String contentStr = (content == null) ? null : new String(handshake.getContent(), StandardCharsets.UTF_8);
+        System.out.println(contentStr);
+        System.out.println();
+    }
+
+    /**
+     * todo remove me
+     * Method to print Http fields of the client Handshake to determine if it contains useful headers.
+     *
+     * @param handshake
+     */
+    private static void printHttpFields(ClientHandshake handshake) {
+        for (Iterator<String> it = handshake.iterateHttpFields(); it.hasNext(); ) {
+            String field = it.next();
+            System.out.println(field);
+        }
+        System.out.println();
+    }
+
+    /**
      * this method is called whenever a new connection is made with the orchestrator,
      * the orchestrator will then send a NodeInfoRequest back to the connection along with a UUID used for future communications
      *
@@ -52,9 +76,18 @@ public class Orchestrator extends WebSocketServer {
      */
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
+        // DEBUG Remove me
+        System.out.println("\n***********************");
+        System.out.println("Debug in Orchestrator#onOpen");
+        System.out.println("***********************");
         // todo this sysout does not work with a proxy.
         //  See if there's a better way (include info in the clientHandshake?)
         System.out.println("new connection :" + webSocket.getRemoteSocketAddress());
+        System.out.println("Resource descriptor: " + clientHandshake.getResourceDescriptor());
+        printClientHandshakeContent(clientHandshake);
+        printHttpFields(clientHandshake);
+        System.out.println("***********************\n");
+        // END DEBUG
 
         UUID UUIDToReturn = UUID.randomUUID();
         connectedNodes.put(UUIDToReturn, null);//no node information yet to add
@@ -95,7 +128,7 @@ public class Orchestrator extends WebSocketServer {
                 .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
                 .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
                 .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
-                .registerSubtype(MigrationSuccess.class,Message.MessageTypes.MIGRATION_SUCESS);
+                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCESS);
 
         Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
         Message messageObj = gson.fromJson(message, Message.class);
@@ -136,16 +169,16 @@ public class Orchestrator extends WebSocketServer {
                 HostResponse responseForClient = new HostResponse(hostRequest.getRequestorID(), returnURI);
 
                 // DEBUG Remove me
-                System.out.println("\n ***********************");
+                System.out.println("\n***********************");
                 System.out.println("Debug in Orchestrator#onMessage");
-                System.out.println(" ***********************");
+                System.out.println("***********************");
                 System.out.println(hostRequest);
                 System.out.println("Service for the client is @ URI " + returnURI.toString());
                 System.out.println("Sending HostResponse to client");
                 System.out.println(responseForClient);
-                System.out.println(" ***********************\n");
+                System.out.println("***********************\n");
                 // END DEBUG
-                
+
                 jsonStr = gson.toJson(responseForClient);
                 webSocket.send(jsonStr);
                 break;
@@ -185,13 +218,13 @@ public class Orchestrator extends WebSocketServer {
         NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
 
         // DEBUG Remove me
-        System.out.println("\n ***********************");
+        System.out.println("\n***********************");
         System.out.println("Debug in Orchestrator#transferServiceToBestNode");
-        System.out.println(" ***********************");
+        System.out.println("***********************");
         System.out.println(serviceRequest);
         System.out.println("bestNode: " + bestNode);
         System.out.println("worstCurrentOwner: " + worstCurrentOwner);
-        System.out.println(" ***********************\n");
+        System.out.println("***********************\n");
         // END DEBUG
 
         if (worstCurrentOwner.getSystemID().equals(bestNode.getSystemID())) {
@@ -279,6 +312,7 @@ public class Orchestrator extends WebSocketServer {
 
     /**
      * Takes in a map of cpuload and the current rolling score for CPU
+     *
      * @param entryCPULoad
      * @param rollingCPUScore
      * @return the adjusted new rolling average
@@ -296,6 +330,7 @@ public class Orchestrator extends WebSocketServer {
 
     /**
      * Takes in a map of cpuload and the current rolling score for CPU
+     *
      * @param entryRamLoad
      * @param rollingRamScore
      * @return the adjusted new rolling average
@@ -324,5 +359,7 @@ public class Orchestrator extends WebSocketServer {
     public void onClose(WebSocket webSocket, int i, String s, boolean b) {
         System.out.println("Closing a connection to " + webSocket.getRemoteSocketAddress());
         System.out.println(s);
+
+        // todo remove old nodes here
     }
 }

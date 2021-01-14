@@ -25,6 +25,6 @@ public class ServiceRequest extends Message{
 
     @Override
     public String toString() {
-        return String.format("ServiceRequest: requestorID=%s serviceName=%s", requestorID.toString(), serviceName);
+        return String.format("ServiceRequest: requestorID=%s serviceName=%s", requestorID, serviceName);
     }
 }
