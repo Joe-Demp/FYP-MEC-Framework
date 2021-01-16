@@ -81,7 +81,7 @@ public class Orchestrator extends WebSocketServer {
         System.out.println("Debug in Orchestrator#onOpen");
         System.out.println("***********************");
         // todo this sysout does not work with a proxy.
-        //  See if there's a better way (include info in the clientHandshake?)
+        //  Note: the X-Forwarded-For header can point to the original client
         System.out.println("new connection :" + webSocket.getRemoteSocketAddress());
         System.out.println("Resource descriptor: " + clientHandshake.getResourceDescriptor());
         printClientHandshakeContent(clientHandshake);
@@ -98,6 +98,8 @@ public class Orchestrator extends WebSocketServer {
         String jsonStr = gson.toJson(infoRequest);
         webSocket.send(jsonStr);
 
+        // todo think about heartbeat requests to mobile-clients. Necessary?
+        //  Probably, if the Orchestrator is to reroute clients to better App Nodes
         new Timer().schedule(
                 new TimerTask() {
 
