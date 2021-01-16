@@ -6,3 +6,4 @@ EdgeNode/target/
 Orchestrator/target/
 CloudNode/target/
 DockerImage/target/
+/.idea/
