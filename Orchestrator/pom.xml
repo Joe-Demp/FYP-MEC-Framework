@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>clarke.fyp</groupId>
-    <artifactId>orchestrator</artifactId>
+    <artifactId>Orchestrator</artifactId>
     <version>0.8.0</version>
 
     <dependencies>
@@ -35,7 +35,7 @@
         </dependency>
         <dependency>
             <groupId>clarke.fyp</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>Core</artifactId>
             <version>1.0</version>
         </dependency>
     </dependencies>

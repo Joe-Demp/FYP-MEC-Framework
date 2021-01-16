@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>clarke.fyp</groupId>
-    <artifactId>cloud</artifactId>
+    <artifactId>CloudNode</artifactId>
     <version>0.7.0</version>
 
     <dependencies>
@@ -25,7 +25,7 @@
         </dependency>
         <dependency>
             <groupId>clarke.fyp</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>Core</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>

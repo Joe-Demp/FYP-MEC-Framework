@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>clarke.fyp</groupId>
-    <artifactId>edge</artifactId>
+    <artifactId>EdgeNode</artifactId>
     <version>0.7.0</version>
 
     <dependencies>
@@ -20,7 +20,7 @@
         </dependency>
         <dependency>
             <groupId>clarke.fyp</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>Core</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>
