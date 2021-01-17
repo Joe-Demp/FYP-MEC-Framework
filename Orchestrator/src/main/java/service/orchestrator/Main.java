@@ -1,11 +1,14 @@
 package service.orchestrator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @CommandLine.Command(name = "cmMain", mixinStandardHelpOptions = true, version = "0.8")
 public class Main implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     @Option(names = {"--RollingAverage"}, defaultValue = "80", paramLabel = "Rolling Average", description = "The value that should be used in the rolling average, format: input 80 for 80/20 rolling average, Defaults to 80")
     int rollingAverage;
@@ -25,6 +28,7 @@ public class Main implements Runnable {
     @Override
     public void run() {
         if (!secure) {
+            logger.info("Starting Orchestrator");
             Orchestrator orchestrator = new Orchestrator(port,rollingAverage);
             orchestrator.run();
         } else {

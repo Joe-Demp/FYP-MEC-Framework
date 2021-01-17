@@ -6,23 +6,28 @@ import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import service.core.*;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.*;
 
 // todo remove hard coded values and use a config file instead (or command line args)
 
 public class Orchestrator extends WebSocketServer {
+    private static final Logger logger = LoggerFactory.getLogger(Orchestrator.class);
+    private static final long HEARTBEAT_REQUEST_PERIOD = 20L * 1000L;
+
     int rollingAverage;
     private Map<UUID, NodeInfo> connectedNodes = new HashMap<>();
+    private Gson gson;
 
     public Orchestrator(int port, int rollingAverage) {
         super(new InetSocketAddress(port));
         this.rollingAverage = rollingAverage / 100;
+        initializeGson();
 
         // todo check if this rolling average thing works, shouldn't an int divided by a bigger int = 0 ?
 
@@ -31,63 +36,37 @@ public class Orchestrator extends WebSocketServer {
                 new TimerTask() {
                     @Override
                     public void run() {
-                        System.out.println("-------------------------------");
-                        System.out.println("Current connections");
-                        System.out.println("-------------------------------");
+                        logger.debug("Current connections:");
                         for (Map.Entry<UUID, NodeInfo> entry : connectedNodes.entrySet()) {
-                            System.out.println(entry.getValue().toString());
+                            logger.debug(entry.getValue().toString());
                         }
-                        System.out.println("-------------------------------");
-                        System.out.println();
+                        logger.debug("End Current Connections.");
                     }
-                }, 20000L, 20000L);
+                }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
-    /**
-     * todo remove me
-     */
-    private static void printClientHandshakeContent(ClientHandshake handshake) {
-        byte[] content = handshake.getContent();
-        String contentStr = (content == null) ? null : new String(handshake.getContent(), StandardCharsets.UTF_8);
-        System.out.println(contentStr);
-        System.out.println();
+    private void initializeGson() {
+        RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
+                .of(Message.class, "type")
+                .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
+                .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
+                .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
+                .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
+                .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
+                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCESS);
+        gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
     }
 
-    /**
-     * todo remove me
-     * Method to print Http fields of the client Handshake to determine if it contains useful headers.
-     *
-     * @param handshake
-     */
-    private static void printHttpFields(ClientHandshake handshake) {
-        for (Iterator<String> it = handshake.iterateHttpFields(); it.hasNext(); ) {
-            String field = it.next();
-            System.out.printf("%s : %s\n", field, handshake.getFieldValue(field));
-        }
-        System.out.println();
-    }
-
-    /**
-     * this method is called whenever a new connection is made with the orchestrator,
-     * the orchestrator will then send a NodeInfoRequest back to the connection along with a UUID used for future communications
-     *
-     * @param webSocket
-     * @param clientHandshake
-     */
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
-        // DEBUG Remove me
-        System.out.println("\n***********************");
-        System.out.println("Debug in Orchestrator#onOpen");
-        System.out.println("***********************");
-        // todo this sysout does not work with a proxy.
-        //  Note: the X-Forwarded-For header can point to the original client
-        System.out.println("new connection :" + webSocket.getRemoteSocketAddress());
-        System.out.println("Resource descriptor: " + clientHandshake.getResourceDescriptor());
-        printClientHandshakeContent(clientHandshake);
-        printHttpFields(clientHandshake);
-        System.out.println("***********************\n");
-        // END DEBUG
+        logger.info("new connection :" + webSocket.getRemoteSocketAddress());
+        logger.debug("Resource descriptor: " + clientHandshake.getResourceDescriptor());
+        logger.debug("Http Headers:");
+        for (Iterator<String> it = clientHandshake.iterateHttpFields(); it.hasNext(); ) {
+            String field = it.next();
+            logger.debug("{} : {}", field, clientHandshake.getFieldValue(field));
+        }
+        logger.debug("END Http Headers.");
 
         UUID UUIDToReturn = UUID.randomUUID();
         connectedNodes.put(UUIDToReturn, null);//no node information yet to add
@@ -112,27 +91,15 @@ public class Orchestrator extends WebSocketServer {
                         webSocket.send(jsonStr);
 
                     }
-                }, 20000, 20000);
+                }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
-    /**
-     * When the websocket library receives any messages they are routed to this method
-     *
-     * @param webSocket the websocket that sent the message
-     * @param message   the message received
-     */
     @Override
     public void onMessage(WebSocket webSocket, String message) {
-        RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
-                .of(Message.class, "type")
-                .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
-                .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
-                .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
-                .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
-                .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
-                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCESS);
+        logger.debug(message);
+        logger.debug("from {}", webSocket.getRemoteSocketAddress());    // todo replace this call with something that
+        //  gets the actual (global) ip address
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
         Message messageObj = gson.fromJson(message, Message.class);
 
         //this routes inbound messages based on type and then moves them to other methods
@@ -152,6 +119,7 @@ public class Orchestrator extends WebSocketServer {
                 a.send(jsonStr);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
+                // Note: returnSocket seems to be for the mobile client that requested a service host
                 ServiceResponse response = (ServiceResponse) messageObj;
                 WebSocket returnSocket = connectedNodes.get(response.getRequstorID()).getWebSocket();
                 jsonStr = gson.toJson(response);
@@ -164,29 +132,23 @@ public class Orchestrator extends WebSocketServer {
                 break;
             case Message.MessageTypes.HOST_REQUEST:
                 HostRequest hostRequest = (HostRequest) messageObj;
-                System.out.println("Time that orchestrator gets the request from the phone " + Instant.now().toString());
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
                 NodeInfo returnedNode = transferServiceToBestNode(requestFromUser);
                 URI returnURI = returnedNode.getServiceHostAddress();
                 HostResponse responseForClient = new HostResponse(hostRequest.getRequestorID(), returnURI);
-
-                // DEBUG Remove me
-                System.out.println("\n***********************");
-                System.out.println("Debug in Orchestrator#onMessage");
-                System.out.println("***********************");
-                System.out.println(hostRequest);
-                System.out.println("Service for the client is @ URI " + returnURI.toString());
-                System.out.println("Sending HostResponse to client");
-                System.out.println(responseForClient);
-                System.out.println("***********************\n");
-                // END DEBUG
-
-                jsonStr = gson.toJson(responseForClient);
-                webSocket.send(jsonStr);
+                sendAsJson(webSocket, responseForClient);
                 break;
         }
     }
 
+    /**
+     * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
+     */
+    private void sendAsJson(WebSocket ws, Message message) {
+        String json = gson.toJson(message);
+        logger.debug("Sending: {}", json);
+        ws.send(json);
+    }
 
 //    /**
 //     * This method transfers the requested service to the best node available,
