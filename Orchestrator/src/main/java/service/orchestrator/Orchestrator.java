@@ -29,11 +29,8 @@ public class Orchestrator extends WebSocketServer {
 
     public Orchestrator(int port, int rollingAverage) {
         super(new InetSocketAddress(port));
-        this.rollingAverage = rollingAverage / 100;
+        this.rollingAverage = (100 * rollingAverage) / 100;
         initializeGson();
-
-        // todo check if this rolling average thing works, shouldn't an int divided by a bigger int = 0 ?
-        logger.debug("rollingAverage={}", rollingAverage);
 
         // todo extract this to a method
         new Timer().schedule(
@@ -104,6 +101,8 @@ public class Orchestrator extends WebSocketServer {
                 NodeInfo nodeInfo = (NodeInfo) messageObj;
                 nodeInfo.setWebSocket(webSocket);
                 connectedNodes.put(nodeInfo.getSystemID(), nodeInfo);
+
+                // todo deal with the difference between Application Nodes and Mobile Clients
                 if (nodeInfo.getServiceName() != null && nodeInfo.getServiceName().equals("MobileUser")) {
                     connectedNodes.remove(nodeInfo.getSystemID());
                 }
@@ -130,8 +129,13 @@ public class Orchestrator extends WebSocketServer {
                 HostRequest hostRequest = (HostRequest) messageObj;
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
                 NodeInfo returnedNode = transferServiceToBestNode(requestFromUser);
-                URI returnURI = returnedNode.getServiceHostAddress();
-                HostResponse responseForClient = new HostResponse(hostRequest.getRequestorID(), returnURI);
+                HostResponse responseForClient;
+                if (returnedNode == null) {
+                    responseForClient = new HostResponse(hostRequest.getRequestorID(), null);
+                } else {
+                    URI returnURI = returnedNode.getServiceHostAddress();
+                    responseForClient = new HostResponse(hostRequest.getRequestorID(), returnURI);
+                }
                 sendAsJson(webSocket, responseForClient);
                 break;
         }
@@ -174,7 +178,7 @@ public class Orchestrator extends WebSocketServer {
      * @return the NodeInfo for the node that was deemed best
      */
     public NodeInfo transferServiceToBestNode(ServiceRequest serviceRequest) {
-        NodeInfo bestNode = findBestNode(connectedNodes);
+        NodeInfo bestNode = findBestConnectedNode();
         NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
 
         // DEBUG Remove me
@@ -187,14 +191,20 @@ public class Orchestrator extends WebSocketServer {
         System.out.println("***********************\n");
         // END DEBUG
 
+        if (bestNode == null || worstCurrentOwner == null) {
+            logger.warn("One of the following is null. No transfer made.");
+            logger.warn("bestNode={}", bestNode);
+            logger.warn("worstCurrentOwner={}", worstCurrentOwner);
+            return null;
+        }
+        // todo remove the bug here: assumes worstCurrentOwner is non-null
         if (worstCurrentOwner.getSystemID().equals(bestNode.getSystemID())) {
             return bestNode;
         }
-        ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
-        String jsonStr = gson.toJson(request);
 
-        System.out.println("Sending a service request to worstCurrent owner");
-        worstCurrentOwner.getWebSocket().send(jsonStr);//this tells the current worst owner of a service that its relived of duty and can send away its service
+        //this tells the current worst owner of a service that its relived of duty and can send away its service
+        ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
+        sendAsJson(worstCurrentOwner.getWebSocket(), request);
 
         return bestNode;
     }
@@ -211,7 +221,7 @@ public class Orchestrator extends WebSocketServer {
         if (allServiceOwnerAddresses == null) {
             //noone had this service, inform edgenode
         } else {
-            worstNode = findBestNode(allServiceOwnerAddresses);
+            worstNode = findBestConnectedNode();
         }
         return worstNode;
     }
@@ -228,7 +238,7 @@ public class Orchestrator extends WebSocketServer {
         if (allServiceOwnerAddresses == null) {
             //noone had this service, inform edgenode
         } else {
-            bestNode = findBestNode(allServiceOwnerAddresses);
+            bestNode = findBestConnectedNode();
         }
         return bestNode;
     }
@@ -249,21 +259,42 @@ public class Orchestrator extends WebSocketServer {
         return toReturn;
     }
 
+//    /**
+//     * This method takes in a list of nodes and finds the best node on that service, ths acts as the evaluation method for the orchestrator
+//     *
+//     * @param Nodes
+//     * @return the best node's NodeInfo
+//     */
+//    private NodeInfo findBestNode(Map<UUID, NodeInfo> Nodes) {
+//        double bestNodeScore = 200;
+//        NodeInfo bestNode = null;
+//        for (Map.Entry<UUID, NodeInfo> entry : Nodes.entrySet()) {
+//            double currentNodeCPUScore = calculateRecentCPULoad(entry.getValue().getCPUload(), entry.getValue().getRollingCPUScore());
+//            double currentNodeRamScore = calculateRecentRamLoad(entry.getValue().getRamLoad(), entry.getValue().getRollingRamScore());
+//            if (currentNodeCPUScore + currentNodeRamScore < bestNodeScore && entry.getValue().isTrustyworthy()) {
+//                bestNodeScore = currentNodeCPUScore;
+//                bestNode = entry.getValue();
+//            }
+//        }
+//        return bestNode;
+//    }
+
     /**
-     * This method takes in a list of nodes and finds the best node on that service, ths acts as the evaluation method for the orchestrator
+     * This method finds the best node on that service, this acts as the evaluation method for the orchestrator.
+     * <p>
+     * todo replace this
      *
-     * @param Nodes
      * @return the best node's NodeInfo
      */
-    private NodeInfo findBestNode(Map<UUID, NodeInfo> Nodes) {
+    private NodeInfo findBestConnectedNode() {
         double bestNodeScore = 200;
         NodeInfo bestNode = null;
-        for (Map.Entry<UUID, NodeInfo> entry : Nodes.entrySet()) {
-            double currentNodeCPUScore = calculateRecentCPULoad(entry.getValue().getCPUload(), entry.getValue().getRollingCPUScore());
-            double currentNodeRamScore = calculateRecentRamLoad(entry.getValue().getRamLoad(), entry.getValue().getRollingRamScore());
-            if (currentNodeCPUScore + currentNodeRamScore < bestNodeScore && entry.getValue().isTrustyworthy()) {
+        for (NodeInfo node : connectedNodes.values()) {
+            double currentNodeCPUScore = calculateRecentCPULoad(node.getCPUload(), node.getRollingCPUScore());
+            double currentNodeRamScore = calculateRecentRamLoad(node.getRamLoad(), node.getRollingRamScore());
+            if (currentNodeCPUScore + currentNodeRamScore < bestNodeScore && node.isTrustyworthy()) {
                 bestNodeScore = currentNodeCPUScore;
-                bestNode = entry.getValue();
+                bestNode = node;
             }
         }
         return bestNode;
