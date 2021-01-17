@@ -13,7 +13,7 @@ public class Message implements Serializable {
         return type;
     }
 
-    // todo could be an enum. Don't change unless confident
+    // todo could be an enum. Don't change unless confident. Or an interface?
     /**
      * MessageTypes – a static class of final Strings used to ensure consistency of message types in the system
      */
@@ -23,7 +23,7 @@ public class Message implements Serializable {
         final public static String SERVICE_REQUEST = "ServiceRequest";
         final public static String SERVICE = "Service";
         final public static String SERVICE_RESPONSE = "ServiceResponse";
-        final public static String MIGRATION_SUCESS = "MigrationSuccess";
+        final public static String MIGRATION_SUCCESS = "MigrationSuccess";
         final public static String SERVER_HEARTBEAT_REQUEST = "ServerHeartbeatRequest";
         final public static String HOST_REQUEST = "HostRequest";
         final public static String HOST_RESPONSE = "HostResponse";

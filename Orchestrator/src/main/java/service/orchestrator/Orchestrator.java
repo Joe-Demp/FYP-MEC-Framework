@@ -33,17 +33,24 @@ public class Orchestrator extends WebSocketServer {
         initializeGson();
 
         // todo check if this rolling average thing works, shouldn't an int divided by a bigger int = 0 ?
+        logger.debug("rollingAverage={}", rollingAverage);
 
-        // todo move this to a method or delete
+        // todo extract this to a method
         new Timer().schedule(
                 new TimerTask() {
                     @Override
                     public void run() {
                         logger.debug("Current connections:");
-                        for (Map.Entry<UUID, NodeInfo> entry : connectedNodes.entrySet()) {
-                            logger.debug(entry.getValue().toString());
+                        for (NodeInfo node : connectedNodes.values()) {
+                            logger.debug(node.toString());
                         }
                         logger.debug("End Current Connections.");
+
+                        logger.debug("Sending HeartbeatRequests");
+                        for (NodeInfo node : connectedNodes.values()) {
+                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getSystemID());
+                            sendAsJson(node.getWebSocket(), heartbeat);
+                        }
                     }
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
@@ -56,7 +63,7 @@ public class Orchestrator extends WebSocketServer {
                 .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
                 .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
                 .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
-                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCESS);
+                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS);
         gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
     }
 
@@ -72,29 +79,15 @@ public class Orchestrator extends WebSocketServer {
         logger.debug("END Http Headers.");
 
         UUID UUIDToReturn = UUID.randomUUID();
-        connectedNodes.put(UUIDToReturn, null);//no node information yet to add
+
+        // todo clean this if it's not needed,
+        //  the NodeInfo should be added to the map in onMessage anyway.
+        //  Better to keep the "All NodeInfos in connectedNodes are non null" invariant
+        // connectedNodes.put(UUIDToReturn, null);//no node information yet to add
 
         //create a nodeInfoRequest and send it back to the node
-        Gson gson = new Gson();
         NodeInfoRequest infoRequest = new NodeInfoRequest(UUIDToReturn);
-        String jsonStr = gson.toJson(infoRequest);
-        webSocket.send(jsonStr);
-
-        // todo think about heartbeat requests to mobile-clients. Necessary?
-        //  Probably, if the Orchestrator is to reroute clients to better App Nodes
-        new Timer().schedule(
-                new TimerTask() {
-
-                    @Override
-                    public void run() {
-                        //create a ServerHeartbeatRequest and send it back to the node
-                        Gson gson = new Gson();
-                        ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(UUIDToReturn);
-                        String jsonStr = gson.toJson(heartbeat);
-                        webSocket.send(jsonStr);
-
-                    }
-                }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
+        sendAsJson(webSocket, infoRequest);
     }
 
     @Override
@@ -128,7 +121,7 @@ public class Orchestrator extends WebSocketServer {
                 jsonStr = gson.toJson(response);
                 returnSocket.send(jsonStr);
                 break;
-            case Message.MessageTypes.MIGRATION_SUCESS:
+            case Message.MessageTypes.MIGRATION_SUCCESS:
                 MigrationSuccess successMessage = (MigrationSuccess) messageObj;
                 connectedNodes.get(successMessage.getHostId()).setServiceName(successMessage.getServiceName());
                 connectedNodes.get(successMessage.getOldHostId()).setServiceName("noService");
@@ -198,7 +191,6 @@ public class Orchestrator extends WebSocketServer {
             return bestNode;
         }
         ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
-        Gson gson = new Gson();
         String jsonStr = gson.toJson(request);
 
         System.out.println("Sending a service request to worstCurrent owner");

@@ -8,12 +8,12 @@ public class MigrationSuccess extends Message {
     String serviceName;
 
     public MigrationSuccess() {
-        super(MessageTypes.MIGRATION_SUCESS);
+        super(MessageTypes.MIGRATION_SUCCESS);
     }
 
     public MigrationSuccess(UUID hostId,UUID oldHostId,String serviceName){
-        super(MessageTypes.MIGRATION_SUCESS);
-        this.hostId=hostId;
+        super(MessageTypes.MIGRATION_SUCCESS);
+        this.hostId = hostId;
         this.serviceName=serviceName;
         this.oldHostId=oldHostId;
     }
