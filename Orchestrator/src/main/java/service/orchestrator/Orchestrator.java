@@ -9,6 +9,7 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.core.*;
+import service.orchestrator.exceptions.NoSuchNodeException;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -21,6 +22,8 @@ public class Orchestrator extends WebSocketServer {
     private static final long HEARTBEAT_REQUEST_PERIOD = 20L * 1000L;
 
     int rollingAverage;
+
+    // todo expand this into 2 maps: 1 for ApplicationNodes, another for Clients
     private Map<UUID, NodeInfo> connectedNodes = new HashMap<>();
     private Gson gson;
 
@@ -321,9 +324,22 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket webSocket, int i, String s, boolean b) {
-        System.out.println("Closing a connection to " + webSocket.getRemoteSocketAddress());
-        System.out.println(s);
+        logger.info("Closing a connection to {}", webSocket.getRemoteSocketAddress());
+        logger.debug("Reason: {}", s);
 
-        // todo remove old nodes here
+        // remove the node that owns the connection
+        try {
+            UUID toRemove = connectedNodes.entrySet().stream()
+                    .filter(e -> e.getValue().getWebSocket().equals(webSocket))
+                    .findAny()
+                    .orElseThrow(NoSuchNodeException::new)
+                    .getKey();
+
+            logger.debug("Removing Node {} from connectedNodes.", toRemove);
+            connectedNodes.remove(toRemove);
+        } catch (NoSuchNodeException e) {
+            logger.error("No Node with address {} found in connectedNodes", webSocket.getRemoteSocketAddress());
+            e.printStackTrace();
+        }
     }
 }
