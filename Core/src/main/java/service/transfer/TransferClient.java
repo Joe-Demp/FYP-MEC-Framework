@@ -13,10 +13,11 @@ import java.nio.ByteBuffer;
 
 public class TransferClient extends WebSocketClient {
     DockerController dockerController;
-    boolean dockerLaunched=false;
+    boolean dockerLaunched = false;
+
     public TransferClient(URI serverUri, DockerController dockerController) {
         super(serverUri);
-        this.dockerController=dockerController;
+        this.dockerController = dockerController;
     }
 
     @Override
@@ -28,7 +29,7 @@ public class TransferClient extends WebSocketClient {
     public void onMessage(String file) {
         Gson gson = new Gson();
         File gsonFile = gson.fromJson(file, File.class);
-        dockerLaunched=true;
+        dockerLaunched = true;
         System.out.println("connected to tempClient" + " TIME AT END OF MIGRATION" + System.currentTimeMillis());
         dockerController.launchServiceOnNode(gsonFile);
     }
@@ -41,7 +42,7 @@ public class TransferClient extends WebSocketClient {
         try (FileOutputStream fos = new FileOutputStream("service.tar")) {
             fos.write(b);
             fos.close();
-            dockerLaunched=true;
+            dockerLaunched = true;
             dockerController.launchServiceOnNode(new File("service.tar"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -63,8 +64,7 @@ public class TransferClient extends WebSocketClient {
     public DockerController dockerControllerReady() {
         if (!dockerLaunched) {
             return dockerController;
-        }
-        else {
+        } else {
             return null;
         }
     }

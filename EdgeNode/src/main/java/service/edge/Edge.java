@@ -8,8 +8,11 @@ import org.java_websocket.handshake.ServerHandshake;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import service.core.*;
-import service.host.*;
-import service.transfer.*;
+import service.host.ServiceHost;
+import service.transfer.DockerController;
+import service.transfer.SecureTransferServer;
+import service.transfer.TransferClient;
+import service.transfer.TransferServer;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -85,7 +88,7 @@ public class Edge extends WebSocketClient {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequestorID(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(),serviceRequest.getServiceName());
+                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequesterId(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(), serviceRequest.getServiceName());
                 String jsonStr = gson.toJson(serviceResponse);
                 send(jsonStr);
                 break;

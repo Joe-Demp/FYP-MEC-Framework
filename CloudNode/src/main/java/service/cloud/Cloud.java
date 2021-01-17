@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import service.core.*;
@@ -22,6 +24,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public class Cloud extends WebSocketClient {
+    private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
 
     private File service;
     private UUID assignedUUID;
@@ -32,6 +35,7 @@ public class Cloud extends WebSocketClient {
     private Map<Integer, Double> historicalCPUload = new HashMap<>();
     private Map<Integer, Double> historicalRamload = new HashMap<>();
     boolean secureMode;
+    private Gson gson;
 
     public Cloud(URI serverUri, File service, URI serviceAddress, Boolean secureMode) {
         super(serverUri);
@@ -40,15 +44,10 @@ public class Cloud extends WebSocketClient {
         this.serviceAddress = serviceAddress;
         this.secureMode = secureMode;
         getSystemLoad();
+        initializeGson();
     }
 
-    /**
-     * When the websocket library receives any messages they are routed to this method
-     *
-     * @param message   the message received
-     */
-    @Override
-    public void onMessage(String message) {
+    private void initializeGson() {
         RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
                 .of(Message.class, "type")
                 .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
@@ -57,8 +56,19 @@ public class Cloud extends WebSocketClient {
                 .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
                 .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
                 .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST);
+        gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
+    }
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
+    /**
+     * When the websocket library receives any messages they are routed to this method
+     *
+     * @param message the message received
+     */
+    @Override
+    public void onMessage(String message) {
+        logger.debug("from {}", getRemoteSocketAddress());      // todo replace this call with something that
+        //  gets the actual (global) ip address
+        logger.debug(message);
 
         Message messageObj = gson.fromJson(message, Message.class);
 
@@ -76,34 +86,55 @@ public class Cloud extends WebSocketClient {
                 break;
             //request for the service on the node
             case Message.MessageTypes.SERVICE_REQUEST:
-                System.out.println("Time that Cloud gets the request from the Orchestrator " + System.currentTimeMillis());
+                // * Service gets transferred from this Node here *
+
                 ServiceRequest serviceRequest = (ServiceRequest) messageObj;
-                gson = new Gson();
+
+                UUID clientRequesterId = serviceRequest.getRequesterId();
+                String serviceOwnerAddress = serviceAddress.getHost() + ":" + serviceAddress.getPort();
+                String serviceName = serviceRequest.getServiceName();
+
                 try {
                     launchTransferServer();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequestorID(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(),serviceRequest.getServiceName());
-                String jsonStr = gson.toJson(serviceResponse);
-                send(jsonStr);
+
+                // ServiceResponse allows the Orchestrator to respond to the client with information about the
+                //  migration
+                //
+                ServiceResponse serviceResponse =
+                        new ServiceResponse(clientRequesterId, assignedUUID, serviceOwnerAddress, serviceName);
+                sendAsJson(serviceResponse);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
-                //this gives the proxy address we want
+                // * Service gets transferred to this Node here *
+
                 ServiceResponse response = (ServiceResponse) messageObj;
-                System.out.println(response);
-                System.out.println(response.getServiceOwnerAddress());
+
+                // todo figure out whether the CloudNode ever receives a ServiceResponse
+                logger.warn("The CloudNode received a ServiceResponse!");
 
                 try {
+                    // Inverse of what happens when a ServiceRequest message is received
+                    //
                     launchTransferClient(response.getServiceOwnerAddress());
-                    MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID,response.getServiceOwnerID(),response.getServiceName());
-                    jsonStr = gson.toJson(migrationSuccess);
-                    send(jsonStr);
+                    MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID, response.getServiceOwnerID(), response.getServiceName());
+                    sendAsJson(migrationSuccess);
                 } catch (URISyntaxException | UnknownHostException e) {
                     e.printStackTrace();
                 }
                 break;
         }
+    }
+
+    /**
+     * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
+     */
+    private void sendAsJson(Message message) {
+        String json = gson.toJson(message);
+        logger.debug("Sending: {}", json);
+        send(json);
     }
 
     /**
@@ -139,6 +170,7 @@ public class Cloud extends WebSocketClient {
         } else {
             transferServerURI = new URI("ws://" + serverAddress);
         }
+
         TransferClient transferClient = new TransferClient(transferServerURI, dockerController);
         transferClient.connect();
         while (transferClient.dockerControllerReady() == null) {
@@ -184,6 +216,8 @@ public class Cloud extends WebSocketClient {
     private InetSocketAddress launchTransferServer() throws Exception {
         InetSocketAddress serverAddress = new InetSocketAddress(serviceAddress.getPort());
         setReuseAddr(true);
+
+        logger.debug("serverAddress={}", serverAddress);
         if (!secureMode) {
             TransferServer transferServer = new TransferServer(serverAddress, service);
             transferServer.start();

@@ -89,9 +89,9 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket webSocket, String message) {
-        logger.debug(message);
         logger.debug("from {}", webSocket.getRemoteSocketAddress());    // todo replace this call with something that
         //  gets the actual (global) ip address
+        logger.debug(message);
 
         Message messageObj = gson.fromJson(message, Message.class);
 
@@ -109,16 +109,15 @@ public class Orchestrator extends WebSocketServer {
                 break;
             case Message.MessageTypes.SERVICE_REQUEST:
                 ServiceRequest serviceRequest = (ServiceRequest) messageObj;
-                String jsonStr = gson.toJson(serviceRequest);
-                WebSocket a = findBestServiceOwner(serviceRequest).getWebSocket();
-                a.send(jsonStr);
+                WebSocket bestServiceOwnerWebsocket = findBestServiceOwner(serviceRequest).getWebSocket();
+                sendAsJson(bestServiceOwnerWebsocket, serviceRequest);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
-                // Note: returnSocket seems to be for the mobile client that requested a service host
+                // routes a ServiceResponse from a Node (after it has migrated a service) to the client
+                //
                 ServiceResponse response = (ServiceResponse) messageObj;
-                WebSocket returnSocket = connectedNodes.get(response.getRequstorID()).getWebSocket();
-                jsonStr = gson.toJson(response);
-                returnSocket.send(jsonStr);
+                WebSocket returnSocket = connectedNodes.get(response.getRequesterId()).getWebSocket();
+                sendAsJson(returnSocket, response);
                 break;
             case Message.MessageTypes.MIGRATION_SUCCESS:
                 MigrationSuccess successMessage = (MigrationSuccess) messageObj;
@@ -129,6 +128,8 @@ public class Orchestrator extends WebSocketServer {
                 HostRequest hostRequest = (HostRequest) messageObj;
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
                 NodeInfo returnedNode = transferServiceToBestNode(requestFromUser);
+
+                // service has been moved to an optimal location. Inform the client
                 HostResponse responseForClient;
                 if (returnedNode == null) {
                     responseForClient = new HostResponse(hostRequest.getRequestorID(), null);
@@ -181,16 +182,6 @@ public class Orchestrator extends WebSocketServer {
         NodeInfo bestNode = findBestConnectedNode();
         NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
 
-        // DEBUG Remove me
-        System.out.println("\n***********************");
-        System.out.println("Debug in Orchestrator#transferServiceToBestNode");
-        System.out.println("***********************");
-        System.out.println(serviceRequest);
-        System.out.println("bestNode: " + bestNode);
-        System.out.println("worstCurrentOwner: " + worstCurrentOwner);
-        System.out.println("***********************\n");
-        // END DEBUG
-
         if (bestNode == null || worstCurrentOwner == null) {
             logger.warn("One of the following is null. No transfer made.");
             logger.warn("bestNode={}", bestNode);
@@ -202,7 +193,7 @@ public class Orchestrator extends WebSocketServer {
             return bestNode;
         }
 
-        //this tells the current worst owner of a service that its relived of duty and can send away its service
+        // tells the worstCurrentOwner to send its service to the bestNode
         ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
         sendAsJson(worstCurrentOwner.getWebSocket(), request);
 
@@ -252,32 +243,16 @@ public class Orchestrator extends WebSocketServer {
     public Map<UUID, NodeInfo> findAllServiceOwners(ServiceRequest serviceRequest) {
         Map<UUID, NodeInfo> toReturn = new HashMap<>();
         for (Map.Entry<UUID, NodeInfo> entry : connectedNodes.entrySet()) {
+            // a Node is a service owner if:
+            //  The service name is non-null, and
+            //  The service name equals the name in the ServiceRequest
+
             if (entry.getValue().getServiceName() != null && entry.getValue().getServiceName().equals(serviceRequest.getServiceName())) {
                 toReturn.put(entry.getKey(), entry.getValue());
             }
         }
         return toReturn;
     }
-
-//    /**
-//     * This method takes in a list of nodes and finds the best node on that service, ths acts as the evaluation method for the orchestrator
-//     *
-//     * @param Nodes
-//     * @return the best node's NodeInfo
-//     */
-//    private NodeInfo findBestNode(Map<UUID, NodeInfo> Nodes) {
-//        double bestNodeScore = 200;
-//        NodeInfo bestNode = null;
-//        for (Map.Entry<UUID, NodeInfo> entry : Nodes.entrySet()) {
-//            double currentNodeCPUScore = calculateRecentCPULoad(entry.getValue().getCPUload(), entry.getValue().getRollingCPUScore());
-//            double currentNodeRamScore = calculateRecentRamLoad(entry.getValue().getRamLoad(), entry.getValue().getRollingRamScore());
-//            if (currentNodeCPUScore + currentNodeRamScore < bestNodeScore && entry.getValue().isTrustyworthy()) {
-//                bestNodeScore = currentNodeCPUScore;
-//                bestNode = entry.getValue();
-//            }
-//        }
-//        return bestNode;
-//    }
 
     /**
      * This method finds the best node on that service, this acts as the evaluation method for the orchestrator.
@@ -343,6 +318,7 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onStart() {
+        // No Implementation
     }
 
     @Override

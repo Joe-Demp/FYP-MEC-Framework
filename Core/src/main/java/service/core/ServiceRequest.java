@@ -3,20 +3,21 @@ package service.core;
 import java.util.UUID;
 
 public class ServiceRequest extends Message{
-    private UUID requestorID;
+    private UUID requesterId;
     private String serviceName;
 
-    public ServiceRequest(){
+    public ServiceRequest() {
         super(Message.MessageTypes.SERVICE_REQUEST);
-    }
-    public ServiceRequest(UUID requestorID, String serviceName) {
-        super(Message.MessageTypes.SERVICE_REQUEST);
-        this.requestorID = requestorID;
-        this.serviceName=serviceName;
     }
 
-    public UUID getRequestorID() {
-        return requestorID;
+    public ServiceRequest(UUID requesterId, String serviceName) {
+        super(Message.MessageTypes.SERVICE_REQUEST);
+        this.requesterId = requesterId;
+        this.serviceName = serviceName;
+    }
+
+    public UUID getRequesterId() {
+        return requesterId;
     }
 
     public String getServiceName() {
@@ -25,6 +26,6 @@ public class ServiceRequest extends Message{
 
     @Override
     public String toString() {
-        return String.format("ServiceRequest: requestorID=%s serviceName=%s", requestorID, serviceName);
+        return String.format("ServiceRequest: requestorID=%s serviceName=%s", requesterId, serviceName);
     }
 }

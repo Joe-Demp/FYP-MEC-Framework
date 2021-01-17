@@ -58,6 +58,11 @@
             <artifactId>jna-platform</artifactId>
             <version>5.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.30</version>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -69,47 +74,78 @@
 
     <build>
         <resources>
-        <resource>
-            <directory>src/main/resources</directory>
-        </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
         </resources>
-    <plugins>
-        <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-                <archive>
-                    <manifest>
-                        <mainClass>service.cloud.Main</mainClass>
-                    </manifest>
-                </archive>
-                <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
+        <plugins>
+            <!-- Plugin used to run Java programs -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <mainClass>${main.class}</mainClass>
+                    <arguments>
+                        <argument>ws://csi420-01-vm1.ucd.ie</argument>
+                        <argument>docker.tar</argument>
+                        <argument>ws://localhost:8090
+                        </argument>    <!-- address of the hosted service: placeholder for the moment -->
+                        <!--                        The Orchestrator should really get the ip address, while the host can provide the port number -->
+                    </arguments>
+                    <systemProperties>
+                        <systemProperty>
+                            <key>org.slf4j.simpleLogger.defaultLogLevel</key>
+                            <value>DEBUG</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>org.slf4j.simpleLogger.showLogName</key>
+                            <value>false</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>org.slf4j.simpleLogger.showShortLogName</key>
+                            <value>true</value>
+                        </systemProperty>
+                    </systemProperties>
+                </configuration>
+            </plugin>
 
-            </configuration>
-            <executions>
-                <execution>
-                    <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                    <phase>package</phase> <!-- bind to the packaging phase -->
-                    <goals>
-                        <goal>single</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-                <archive>
-                    <manifest>
-                        <!-- Jar file entry point -->
-                        <mainClass>service.cloud.Main</mainClass>
-                    </manifest>
-                </archive>
-            </configuration>
-        </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>service.cloud.Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
 
-    </plugins>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!-- Jar file entry point -->
+                            <mainClass>service.cloud.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+        </plugins>
     </build>
 </project>
