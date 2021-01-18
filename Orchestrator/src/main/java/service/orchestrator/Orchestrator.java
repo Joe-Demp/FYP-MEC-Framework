@@ -26,6 +26,7 @@ public class Orchestrator extends WebSocketServer {
     // todo expand this into 2 maps: 1 for ApplicationNodes, another for Clients
     private Map<UUID, NodeInfo> connectedNodes = new HashMap<>();
     private Gson gson;
+    private boolean migrationOccurred = false;
 
     public Orchestrator(int port, int rollingAverage) {
         super(new InetSocketAddress(port));
@@ -67,7 +68,6 @@ public class Orchestrator extends WebSocketServer {
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
         logger.info("new connection :" + webSocket.getRemoteSocketAddress());
-        logger.debug("Resource descriptor: " + clientHandshake.getResourceDescriptor());
         logger.debug("Http Headers:");
         for (Iterator<String> it = clientHandshake.iterateHttpFields(); it.hasNext(); ) {
             String field = it.next();
@@ -77,11 +77,6 @@ public class Orchestrator extends WebSocketServer {
 
         UUID UUIDToReturn = UUID.randomUUID();
 
-        // todo clean this if it's not needed,
-        //  the NodeInfo should be added to the map in onMessage anyway.
-        //  Better to keep the "All NodeInfos in connectedNodes are non null" invariant
-        // connectedNodes.put(UUIDToReturn, null);//no node information yet to add
-
         //create a nodeInfoRequest and send it back to the node
         NodeInfoRequest infoRequest = new NodeInfoRequest(UUIDToReturn);
         sendAsJson(webSocket, infoRequest);
@@ -89,9 +84,11 @@ public class Orchestrator extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket webSocket, String message) {
-        logger.debug("from {}", webSocket.getRemoteSocketAddress());    // todo replace this call with something that
-        //  gets the actual (global) ip address
-        logger.debug(message);
+        logger.debug("from {}", webSocket.getRemoteSocketAddress());
+        // todo replace this call with something that gets the actual (global) ip address
+
+        final int MAX_MESSAGE_LEN = 130;
+        logger.debug(message.substring(0, Integer.min(message.length(), MAX_MESSAGE_LEN)));
 
         Message messageObj = gson.fromJson(message, Message.class);
 
@@ -127,7 +124,12 @@ public class Orchestrator extends WebSocketServer {
             case Message.MessageTypes.HOST_REQUEST:
                 HostRequest hostRequest = (HostRequest) messageObj;
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
-                NodeInfo returnedNode = transferServiceToBestNode(requestFromUser);
+                NodeInfo returnedNode = null;
+                if (!migrationOccurred) {
+                    returnedNode = transferServiceToBestNode(requestFromUser);
+                    logger.debug("Attempted to transfer service");
+                    migrationOccurred = true;
+                }
 
                 // service has been moved to an optimal location. Inform the client
                 HostResponse responseForClient;
@@ -183,9 +185,8 @@ public class Orchestrator extends WebSocketServer {
         NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
 
         if (bestNode == null || worstCurrentOwner == null) {
-            logger.warn("One of the following is null. No transfer made.");
-            logger.warn("bestNode={}", bestNode);
-            logger.warn("worstCurrentOwner={}", worstCurrentOwner);
+            logger.warn("One of the following is null. No transfer made." +
+                    "\nbestNode={}\nworstCurrentOwner={}", bestNode, worstCurrentOwner);
             return null;
         }
         // todo remove the bug here: assumes worstCurrentOwner is non-null
@@ -207,14 +208,21 @@ public class Orchestrator extends WebSocketServer {
      * @return the nodeInfo for the worst owner
      */
     public NodeInfo findWorstServiceOwner(ServiceRequest serviceRequest) {
-        NodeInfo worstNode = null;
-        Map<UUID, NodeInfo> allServiceOwnerAddresses = findAllServiceOwners(serviceRequest);
-        if (allServiceOwnerAddresses == null) {
-            //noone had this service, inform edgenode
-        } else {
-            worstNode = findBestConnectedNode();
-        }
-        return worstNode;
+        // todo remove this class when reimplementing NodeSelection via the Orchestrator
+
+        // let the worst ServiceOwner be any Node running the service
+        List<NodeInfo> nodes = new ArrayList<>(findAllServiceOwners(serviceRequest).values());
+        return nodes.size() > 0 ? nodes.get(0) : null;
+
+        // *** old method ***
+        //        NodeInfo worstNode = null;
+//        Map<UUID, NodeInfo> allServiceOwnerAddresses = findAllServiceOwners(serviceRequest);
+//        if (allServiceOwnerAddresses == null) {
+//            //noone had this service, inform edgenode
+//        } else {
+//            worstNode = findBestConnectedNode();
+//        }
+//        return worstNode;
     }
 
     /**
@@ -257,21 +265,31 @@ public class Orchestrator extends WebSocketServer {
     /**
      * This method finds the best node on that service, this acts as the evaluation method for the orchestrator.
      * <p>
-     * todo replace this
+     * todo replace this: currently finds the sole unconnected Node
      *
      * @return the best node's NodeInfo
      */
     private NodeInfo findBestConnectedNode() {
-        double bestNodeScore = 200;
         NodeInfo bestNode = null;
-        for (NodeInfo node : connectedNodes.values()) {
-            double currentNodeCPUScore = calculateRecentCPULoad(node.getCPUload(), node.getRollingCPUScore());
-            double currentNodeRamScore = calculateRecentRamLoad(node.getRamLoad(), node.getRollingRamScore());
-            if (currentNodeCPUScore + currentNodeRamScore < bestNodeScore && node.isTrustyworthy()) {
-                bestNodeScore = currentNodeCPUScore;
-                bestNode = node;
-            }
+        try {
+            bestNode = connectedNodes.values().stream()
+                    .filter(n -> n.getServiceName() == null)
+                    .findAny()
+                    .orElseThrow(NoSuchNodeException::new);
+        } catch (NoSuchNodeException nsne) {
+            logger.warn("Could not find an unoccupied node ");
         }
+
+        //        double bestNodeScore = Double.MAX_VALUE;
+//        NodeInfo bestNode = null;
+//        for (NodeInfo node : connectedNodes.values()) {
+//            double currentNodeCPUScore = calculateRecentCPULoad(node.getCPUload(), node.getRollingCPUScore());
+//            double currentNodeRamScore = calculateRecentRamLoad(node.getRamLoad(), node.getRollingRamScore());
+//            if (currentNodeCPUScore + currentNodeRamScore < bestNodeScore && node.isTrustyworthy()) {
+//                bestNodeScore = currentNodeCPUScore;
+//                bestNode = node;
+//            }
+//        }
         return bestNode;
     }
 

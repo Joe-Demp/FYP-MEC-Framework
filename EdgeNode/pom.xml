@@ -84,7 +84,8 @@
                     <arguments>
                         <argument>ws://csi420-01-vm1.ucd.ie</argument>
                         <argument>docker.tar</argument>
-                        <argument>ws://localhost:8091
+                        <argument>
+                            ws://localhost:8091
                         </argument>    <!-- address of the hosted service: placeholder for the moment -->
                         <!-- The Orchestrator should really get the ip address, while the host can provide the port number -->
                     </arguments>
@@ -93,14 +94,14 @@
                             <key>org.slf4j.simpleLogger.defaultLogLevel</key>
                             <value>DEBUG</value>
                         </systemProperty>
-                        <systemProperty>
-                            <key>org.slf4j.simpleLogger.showLogName</key>
-                            <value>false</value>
-                        </systemProperty>
-                        <systemProperty>
-                            <key>org.slf4j.simpleLogger.showShortLogName</key>
-                            <value>true</value>
-                        </systemProperty>
+                        <!--                        <systemProperty>-->
+                        <!--                            <key>org.slf4j.simpleLogger.showLogName</key>-->
+                        <!--                            <value>false</value>-->
+                        <!--                        </systemProperty>-->
+                        <!--                        <systemProperty>-->
+                        <!--                            <key>org.slf4j.simpleLogger.showShortLogName</key>-->
+                        <!--                            <value>true</value>-->
+                        <!--                        </systemProperty>-->
                     </systemProperties>
                 </configuration>
             </plugin>
