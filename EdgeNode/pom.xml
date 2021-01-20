@@ -66,6 +66,37 @@
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
+    <profiles>
+        <profile>
+            <!--            `mvn exec:java -Plocal` to run -->
+            <id>local</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <mainClass>${main.class}</mainClass>
+                            <arguments>
+                                <argument>ws://localhost:8080</argument>
+                                <argument>docker.tar</argument>
+                                <argument>
+                                    ws://localhost:8095
+                                </argument>    <!-- address of the hosted service: placeholder for the moment -->
+                                <!-- The Orchestrator should really get the ip address, while the host can provide the port number -->
+                            </arguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <resources>
@@ -85,7 +116,7 @@
                         <argument>ws://csi420-01-vm1.ucd.ie</argument>
                         <argument>docker.tar</argument>
                         <argument>
-                            ws://localhost:8091
+                            ws://localhost:8095
                         </argument>    <!-- address of the hosted service: placeholder for the moment -->
                         <!-- The Orchestrator should really get the ip address, while the host can provide the port number -->
                     </arguments>

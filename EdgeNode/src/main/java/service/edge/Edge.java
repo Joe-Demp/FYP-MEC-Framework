@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import service.core.*;
@@ -19,9 +21,13 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class Edge extends WebSocketClient {
+    public static final Logger logger = LoggerFactory.getLogger(Edge.class);
+
     SystemInfo nodeSystem = new SystemInfo();
     HardwareAbstractionLayer hal = nodeSystem.getHardware();
     DockerController dockerController;
@@ -177,26 +183,27 @@ public class Edge extends WebSocketClient {
      * @throws UnknownHostException
      */
     private void launchServiceOnDockerController(DockerController dockerController) throws UnknownHostException {
-        String[] array = serviceAddress.toString().split(":");
-        ServiceHost serviceHost = new ServiceHost(Integer.parseInt(array[5]), dockerController);
+        ServiceHost serviceHost = new ServiceHost(serviceAddress.getPort(), dockerController);
         serviceHost.run();
     }
 
     /**
      * This method polls the system every second and stores pecentage values for CPU and Ram Usage
+     * <p>
+     * todo implement these methods again in the new Orchestrator
      */
     private void getSystemLoad() {
-        new Timer().schedule(
-                new TimerTask() {
-                    int secondCounter = 0;
-
-                    @Override
-                    public void run() {
-                        secondCounter++;
-                        historicalCPUload.put(secondCounter, hal.getProcessor().getSystemCpuLoadBetweenTicks() * 100);
-                        historicalRamload.put(secondCounter, (double) ((hal.getMemory().getAvailable() / hal.getMemory().getTotal()) * 100));
-                    }
-                }, 0, 1000);
+//        new Timer().schedule(
+//                new TimerTask() {
+//                    int secondCounter = 0;
+//
+//                    @Override
+//                    public void run() {
+//                        secondCounter++;
+//                        historicalCPUload.put(secondCounter, hal.getProcessor().getSystemCpuLoadBetweenTicks() * 100);
+//                        historicalRamload.put(secondCounter, (double) ((hal.getMemory().getAvailable() / hal.getMemory().getTotal()) * 100));
+//                    }
+//                }, 0, 1000);
     }
 
     @Override

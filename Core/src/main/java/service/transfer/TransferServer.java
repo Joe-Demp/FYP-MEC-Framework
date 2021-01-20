@@ -40,17 +40,22 @@ public class TransferServer extends WebSocketServer {
     }
 
     @Override
-    public void onClose(WebSocket webSocket, int i, String s, boolean b) {
+    public void onClose(WebSocket webSocket, int code, String reason, boolean remote) {
+        logger.info("In TransferClient#onClose");
+        logger.info("Remote WebSocket client {}", webSocket.getRemoteSocketAddress());
+        logger.info("Code: {}", code);
+        logger.info("Reason: {}", reason);
+        logger.info("Remote: {}", remote);
+
         // todo remove the .close here?
         webSocket.close();
 
         try {
             // When the connection is closed, the server should be stopped
-
+            logger.info("Trying to stop this TransferServer");
             stop();//if this is unstable this could be moved to the owner of this object and they could close it
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
+            logger.error("");
             e.printStackTrace();
         }
     }
@@ -62,7 +67,8 @@ public class TransferServer extends WebSocketServer {
 
     @Override
     public void onError(WebSocket webSocket, Exception e) {
-        // todo implement something here
+        logger.error("In TransferServer#onError");
+        e.printStackTrace();
     }
 
     @Override

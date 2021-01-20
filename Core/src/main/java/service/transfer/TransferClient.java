@@ -3,15 +3,19 @@ package service.transfer;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 
 public class TransferClient extends WebSocketClient {
+    private static final Logger logger = LoggerFactory.getLogger(TransferClient.class);
+
     DockerController dockerController;
     boolean dockerLaunched = false;
 
@@ -22,7 +26,7 @@ public class TransferClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        System.out.println("connected to tempServer " + " TIME AT FIRST CONNECTION" + System.currentTimeMillis());
+        logger.info("connected to tempServer TIME AT FIRST CONNECTION " + Instant.now());
     }
 
     @Override
@@ -30,7 +34,7 @@ public class TransferClient extends WebSocketClient {
         Gson gson = new Gson();
         File gsonFile = gson.fromJson(file, File.class);
         dockerLaunched = true;
-        System.out.println("connected to tempClient" + " TIME AT END OF MIGRATION" + System.currentTimeMillis());
+        logger.info("connected to tempClient TIME AT END OF MIGRATION " + Instant.now());
         dockerController.launchServiceOnNode(gsonFile);
     }
 
@@ -38,27 +42,32 @@ public class TransferClient extends WebSocketClient {
     public void onMessage(ByteBuffer bytes) {
 
         byte[] b = bytes.array();
+        String filename = "service.tar";
 
-        try (FileOutputStream fos = new FileOutputStream("service.tar")) {
+        logger.info("Trying to write file {}", filename);
+        try (FileOutputStream fos = new FileOutputStream(filename)) {
             fos.write(b);
             fos.close();
             dockerLaunched = true;
-            dockerController.launchServiceOnNode(new File("service.tar"));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            dockerController.launchServiceOnNode(new File(filename));
         } catch (IOException e) {
+            logger.error("");
             e.printStackTrace();
         }
     }
 
     @Override
-    public void onClose(int i, String s, boolean b) {
-
+    public void onClose(int code, String reason, boolean remote) {
+        logger.info("In TransferClient#onClose");
+        logger.info("Code: {}", code);
+        logger.info("Reason: {}", reason);
+        logger.info("Remote: {}", remote);
     }
 
     @Override
     public void onError(Exception e) {
-
+        logger.error("In TransferClient#onError");
+        e.printStackTrace();
     }
 
     public DockerController dockerControllerReady() {
@@ -68,5 +77,4 @@ public class TransferClient extends WebSocketClient {
             return null;
         }
     }
-
 }
