@@ -91,7 +91,9 @@
                             <mainClass>${main.class}</mainClass>
                             <arguments>
                                 <argument>ws://localhost:8080</argument>
-                                <argument>docker.tar</argument>
+                                <argument>
+                                    C:\Users\demps\IntelliJProjects\fyp\mec-framework\CloudNode\src\main\resources\docker.tar
+                                </argument>
                                 <argument>
                                     ws://localhost:8090
                                 </argument>    <!-- address of the hosted service: placeholder for the moment -->

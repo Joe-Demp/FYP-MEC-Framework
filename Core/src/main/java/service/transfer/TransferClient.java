@@ -17,7 +17,7 @@ public class TransferClient extends WebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(TransferClient.class);
 
     DockerController dockerController;
-    boolean dockerLaunched = false;
+    private boolean dockerLaunched = false;
 
     public TransferClient(URI serverUri, DockerController dockerController) {
         super(serverUri);
@@ -33,9 +33,9 @@ public class TransferClient extends WebSocketClient {
     public void onMessage(String file) {
         Gson gson = new Gson();
         File gsonFile = gson.fromJson(file, File.class);
-        dockerLaunched = true;
         logger.info("connected to tempClient TIME AT END OF MIGRATION " + Instant.now());
         dockerController.launchServiceOnNode(gsonFile);
+        dockerLaunched = true;
     }
 
     @Override
@@ -47,9 +47,12 @@ public class TransferClient extends WebSocketClient {
         logger.info("Trying to write file {}", filename);
         try (FileOutputStream fos = new FileOutputStream(filename)) {
             fos.write(b);
+            logger.info("FileOutputStream writing to {}", fos.getFD().toString());
             fos.close();
-            dockerLaunched = true;
+            logger.info("File written and FileOutputStream closed");
+
             dockerController.launchServiceOnNode(new File(filename));
+            dockerLaunched = true;
         } catch (IOException e) {
             logger.error("");
             e.printStackTrace();
@@ -71,7 +74,7 @@ public class TransferClient extends WebSocketClient {
     }
 
     public DockerController dockerControllerReady() {
-        if (!dockerLaunched) {
+        if (dockerController.isDockerRunning()) {
             return dockerController;
         } else {
             return null;

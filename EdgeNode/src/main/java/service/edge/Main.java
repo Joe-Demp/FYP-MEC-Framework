@@ -1,7 +1,9 @@
 package service.edge;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+
 import java.io.File;
 import java.net.URI;
 
@@ -28,7 +30,7 @@ public class Main implements Runnable{
     @Override
     public void run() {
         if(!secure) {
-            Edge edge = new Edge(address,badAgent,port, !secure);
+            Edge edge = new Edge(address, badAgent, port, secure);
             edge.run();
         }else{
             try {

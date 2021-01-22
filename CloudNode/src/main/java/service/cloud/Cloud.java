@@ -194,6 +194,8 @@ public class Cloud extends WebSocketClient {
     private void launchServiceOnDockerController(DockerController dockerController) throws UnknownHostException {
         String[] array = serviceAddress.toString().split(":");
         ServiceHost serviceHost = new ServiceHost(Integer.parseInt(array[5]), dockerController);
+
+        logger.info("Asking the serviceHost to run. This thread should block here?");
         serviceHost.run();
     }
 

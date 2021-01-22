@@ -49,8 +49,8 @@ public class Edge extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        System.out.println("connected to orchestrator");
-        System.out.println(Edge.this.getLocalSocketAddress());//this is the local address in theory
+        logger.info("Listening to orchestrator at {} on local address {}",
+                getRemoteSocketAddress(), getLocalSocketAddress());
     }
 
     /**
@@ -101,7 +101,7 @@ public class Edge extends WebSocketClient {
             case Message.MessageTypes.SERVICE_RESPONSE:
                 //this gives the proxy address we want
                 ServiceResponse response = (ServiceResponse) messageObj;
-                System.out.println("Time that EDge gets the Response from the Orchestrator " + System.currentTimeMillis());
+                logger.info("Edge received a service response");
 
                 try {
                     launchTransferClient(response.getServiceOwnerAddress());
@@ -167,12 +167,17 @@ public class Edge extends WebSocketClient {
         } else {
             transferServerURI = new URI("ws://" + serverAddress);
         }
+
+        logger.info("Launching a transfer client for the server at {}", transferServerURI);
         TransferClient transferClient = new TransferClient(transferServerURI, dockerController);
         transferClient.connect();
         while (transferClient.dockerControllerReady() == null) {
         }
+        // todo the method above does not make sure docker was launched. Fix it
+        logger.info("The transfer client says Docker was launched.");
         DockerController dockerController = transferClient.dockerControllerReady();
         transferClient.close();
+        logger.info("Closed the TransferClient and launching the service on Docker");
         launchServiceOnDockerController(dockerController);
     }
 
@@ -184,7 +189,9 @@ public class Edge extends WebSocketClient {
      */
     private void launchServiceOnDockerController(DockerController dockerController) throws UnknownHostException {
         ServiceHost serviceHost = new ServiceHost(serviceAddress.getPort(), dockerController);
-        serviceHost.run();
+
+        logger.info("Starting the serviceHost");
+        serviceHost.start();
     }
 
     /**
@@ -208,11 +215,9 @@ public class Edge extends WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
-
     }
 
     @Override
     public void onError(Exception e) {
-
     }
 }

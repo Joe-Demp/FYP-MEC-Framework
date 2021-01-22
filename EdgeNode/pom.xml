@@ -68,7 +68,7 @@
 
     <profiles>
         <profile>
-            <!--            `mvn exec:java -Plocal` to run -->
+            <!-- `mvn exec:java -Plocal` to run -->
             <id>local</id>
             <build>
                 <resources>
@@ -137,6 +137,23 @@
                 </configuration>
             </plugin>
 
+            <!--            todo remove below: calls compile then cleans! -->
+            <!--            <plugin>-->
+            <!--                <groupId>org.apache.maven.plugins</groupId>-->
+            <!--                <artifactId>maven-clean-plugin</artifactId>-->
+            <!--                <version>3.1.0</version>-->
+            <!--                <executions>-->
+            <!--                    &lt;!&ndash; When compile is called, call clean first &ndash;&gt;-->
+            <!--                    <execution>-->
+            <!--                        <id>default-compile</id>-->
+            <!--                        <goals>-->
+            <!--                            <goal>clean</goal>-->
+            <!--                        </goals>-->
+            <!--                        <phase>compile</phase>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
@@ -162,6 +179,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifest>

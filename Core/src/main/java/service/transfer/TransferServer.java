@@ -32,11 +32,11 @@ public class TransferServer extends WebSocketServer {
         try (FileInputStream fileInputStream = new FileInputStream(serviceFile)) {
             readResult = fileInputStream.read(bytesArray);
             webSocket.send(bytesArray);
+            logger.debug("File seems to have been sent successfully");
         } catch (IOException e) {
             e.printStackTrace();
             logger.debug("readResult={}", readResult);
         }
-        logger.debug("File seems to have been sent successfully");
     }
 
     @Override
@@ -73,6 +73,6 @@ public class TransferServer extends WebSocketServer {
 
     @Override
     public void onStart() {
-        logger.debug("Launched the transfer server");
+        logger.debug("Launched TransferServer listening on {}", getAddress());
     }
 }
