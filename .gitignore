@@ -7,3 +7,5 @@ Orchestrator/target/
 CloudNode/target/
 DockerImage/target/
 /.idea/
+
+EdgeNode/service.tar

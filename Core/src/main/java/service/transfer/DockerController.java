@@ -7,51 +7,76 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.time.Instant;
+import java.util.Scanner;
 
 // todo change name to DockerConnector
 public class DockerController {
     private static final Logger logger = LoggerFactory.getLogger(DockerController.class);
     Process pr;
-    private Runtime rt = Runtime.getRuntime();
+    private Runtime runtime = Runtime.getRuntime();
+
+    // todo remove this
+    private boolean volatileIsDockerRunning = false;
 
     public void launchServiceOnNode(File newService) {
         //todo shutdown any old service before loading new one
         //load new service into docker
         try {
-            logger.info("in the launch phase2 " + newService.getName() + " and its at " + newService.getAbsolutePath());
-            rt.exec("docker load < service.tar");
-            Thread.sleep(5000);
+            Process loadProcess = loadArchiveServiceIntoDocker(newService);
+            logProcessOutput(loadProcess);
 
-            logger.info("Waking after 5 second sleep. Docker should have loaded file.");
-            //System.out.println("in the launch phas3");
-            pr = rt.exec("docker run sample");//todo make generic
-            //System.out.println("in the launch phas4");
-            //This while loop prints the output of the docker image a real file would be different
-            logger.info("TIME AT DOCKER LAUNCH " + Instant.now());
-
-            logDockerContainerOutput(pr);
+            Process runProcess = sendDockerRunSampleCommand();
+            logProcessOutput(runProcess);
         } catch (IOException | InterruptedException e) {
             logger.error("");
             e.printStackTrace();
         }
+
+        volatileIsDockerRunning = true;
+    }
+
+    private Process loadArchiveServiceIntoDocker(File newService) throws InterruptedException, IOException {
+        logger.info("Loading service file from {} into Docker", newService.getAbsolutePath());
+        Process process = runtime.exec("powershell.exe docker load --input service.tar");
+        Thread.sleep(5000);
+        logger.info("Waking after 5 second sleep. Docker should have loaded file.");
+        return process;
+    }
+
+    /**
+     * todo make this generic
+     */
+    private Process sendDockerRunSampleCommand() throws IOException {
+        logger.info("Asking docker to run container 'sample'");
+        return runtime.exec("powershell.exe docker run sample");
     }
 
     public BufferedReader sendInput(String input) throws IOException {
-        pr = rt.exec(input);
+        pr = runtime.exec(input);
         return new BufferedReader(new InputStreamReader(pr.getInputStream()));
     }
 
-    private void logDockerContainerOutput(Process process) throws IOException {
-        while (true) {
-            BufferedReader r = new BufferedReader(new InputStreamReader(pr.getInputStream()));
-            String line = r.readLine();
-            logger.info("dc :: {}", line);
+    private void logProcessOutput(Process process) throws InterruptedException {
+        logger.info("Waiting for process to stop");
+        int status = process.waitFor();
+        logger.info("Process finished with status {}", status);
 
-//            if (line != null) {
-//                logger.info("dc :: {}", line);
-//            }
+        try (
+                Scanner standardOutScan = new Scanner(process.getInputStream());
+                Scanner standardErrScan = new Scanner(process.getErrorStream())
+        ) {
+            while (standardOutScan.hasNextLine() || standardErrScan.hasNextLine()) {
+                while (standardOutScan.hasNextLine()) {
+                    logger.info("docker.stdout: {}", standardOutScan.nextLine());
+                }
+                while (standardErrScan.hasNextLine()) {
+                    logger.info("docker.stderr: {}", standardErrScan.nextLine());
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
+        logger.info("Finished logging process output");
     }
 
     /**
@@ -65,6 +90,8 @@ public class DockerController {
         //  https://javadoc.io/doc/com.github.docker-java/docker-java/2.1.1/index.html
 
         // could check this by trying to connect to Docker's port
-        return false;
+
+        // todo this was changed to true to stop the application blocking. Change it back soon
+        return volatileIsDockerRunning;
     }
 }

@@ -73,8 +73,7 @@ public class Edge extends WebSocketClient {
 
         Message messageObj = gson.fromJson(message, Message.class);
 
-        System.out.println(messageObj.getType());
-        System.out.println(message);
+        logger.info(message);
 
         //this routes inbound messages based on type and then moves them to other methods
         switch (messageObj.getType()) {
@@ -168,12 +167,13 @@ public class Edge extends WebSocketClient {
             transferServerURI = new URI("ws://" + serverAddress);
         }
 
-        logger.info("Launching a transfer client for the server at {}", transferServerURI);
         TransferClient transferClient = new TransferClient(transferServerURI, dockerController);
         transferClient.connect();
         while (transferClient.dockerControllerReady() == null) {
         }
         // todo the method above does not make sure docker was launched. Fix it
+        // todo FIXME sometimes blocks here
+
         logger.info("The transfer client says Docker was launched.");
         DockerController dockerController = transferClient.dockerControllerReady();
         transferClient.close();

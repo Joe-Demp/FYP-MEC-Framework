@@ -11,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.time.Instant;
 
 public class TransferClient extends WebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(TransferClient.class);
@@ -22,18 +21,25 @@ public class TransferClient extends WebSocketClient {
     public TransferClient(URI serverUri, DockerController dockerController) {
         super(serverUri);
         this.dockerController = dockerController;
+        logger.debug("Launching TransferClient for Server at {}", serverUri);
     }
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        logger.info("connected to tempServer TIME AT FIRST CONNECTION " + Instant.now());
+        logger.info("connected to TransferServer at {}", getRemoteSocketAddress());
     }
 
+    /**
+     * Note this method is not used (so far that I can see)
+     * Prefer `onMessage(ByteBuffer bytes)`
+     * <p>
+     * todo remove asap
+     */
     @Override
     public void onMessage(String file) {
         Gson gson = new Gson();
         File gsonFile = gson.fromJson(file, File.class);
-        logger.info("connected to tempClient TIME AT END OF MIGRATION " + Instant.now());
+        logger.error("Unexpected TransferClient.onMessage(String) call");
         dockerController.launchServiceOnNode(gsonFile);
         dockerLaunched = true;
     }
@@ -47,12 +53,12 @@ public class TransferClient extends WebSocketClient {
         logger.info("Trying to write file {}", filename);
         try (FileOutputStream fos = new FileOutputStream(filename)) {
             fos.write(b);
-            logger.info("FileOutputStream writing to {}", fos.getFD().toString());
             fos.close();
             logger.info("File written and FileOutputStream closed");
 
             dockerController.launchServiceOnNode(new File(filename));
             dockerLaunched = true;
+            logger.info("All Docker work should be done by now");
         } catch (IOException e) {
             logger.error("");
             e.printStackTrace();
@@ -73,6 +79,7 @@ public class TransferClient extends WebSocketClient {
         e.printStackTrace();
     }
 
+    // todo change this to return a boolean or a completable future or something useful
     public DockerController dockerControllerReady() {
         if (dockerController.isDockerRunning()) {
             return dockerController;
