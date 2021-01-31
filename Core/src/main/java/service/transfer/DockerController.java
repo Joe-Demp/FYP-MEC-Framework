@@ -9,7 +9,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Scanner;
 
-// todo change name to DockerConnector
+/*
+   Issue with loading raw docker containers into memory: filename != image name
+   Ideally, a DockerTar object would hold the file + the image name + the internal application port number
+    The port number should be used to inform the port mapping in the `docker run ... -p 5000:5000 ...` command
+ */
+
 public class DockerController {
     private static final Logger logger = LoggerFactory.getLogger(DockerController.class);
     Process pr;
@@ -25,7 +30,8 @@ public class DockerController {
             Process loadProcess = loadArchiveServiceIntoDocker(newService);
             logProcessOutput(loadProcess);
 
-            Process runProcess = sendDockerRunSampleCommand();
+//            Process runProcess = sendDockerRunSampleCommand();
+            Process runProcess = sendDockerRunSentalCommand();
             logProcessOutput(runProcess);
         } catch (IOException | InterruptedException e) {
             logger.error("");
@@ -49,6 +55,11 @@ public class DockerController {
     private Process sendDockerRunSampleCommand() throws IOException {
         logger.info("Asking docker to run container 'sample'");
         return runtime.exec("powershell.exe docker run sample");
+    }
+
+    private Process sendDockerRunSentalCommand() throws IOException {
+        logger.info("Asking docker to run container 'sample'");
+        return runtime.exec("powershell.exe docker run --rm -it -e MODE=http -p 5000:5000 deepaiorg/sentiment-analysis");
     }
 
     public BufferedReader sendInput(String input) throws IOException {

@@ -33,7 +33,7 @@ public class Edge extends WebSocketClient {
     DockerController dockerController;
     private boolean trustWorthyNode, secureMode;
     private URI serviceAddress;
-    private File service;
+    private File service;   // todo remove
     private UUID assignedUUID;
     private Map<Integer, Double> historicalCPUload = new HashMap<>();
     private Map<Integer, Double> historicalRamload = new HashMap<>();

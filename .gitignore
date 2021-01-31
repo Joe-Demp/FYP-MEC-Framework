@@ -1,11 +1,18 @@
 *.iml
 .vscode/
 
+# ignoring all target directories
 Core/target/
 EdgeNode/target/
 Orchestrator/target/
 CloudNode/target/
 DockerImage/target/
+
 /.idea/
 
+# ignoring tar files
 EdgeNode/service.tar
+CloudNode/src/main/resources/sental.tar
+
+# ignoring some logs
+CloudNode/hs_err_pid18512.log

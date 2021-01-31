@@ -182,6 +182,9 @@ public class Cloud extends WebSocketClient {
         }
         logger.info("dockerController ready at {}", Instant.now());
         transferClient.close();
+
+        // todo this is the only place where the service gets launched.
+        //  Ideally the CloudNode would start the service before it has to be migrated
         launchServiceOnDockerController(dockerController);
     }
 
