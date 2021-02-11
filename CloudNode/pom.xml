@@ -44,11 +44,6 @@
             <artifactId>oshi-core</artifactId>
             <version>5.5.0</version>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>com.github.oshi</groupId>-->
-        <!--            <artifactId>oshi-json</artifactId>-->
-        <!--            <version>3.13.5</version>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>

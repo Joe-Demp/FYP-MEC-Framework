@@ -210,12 +210,15 @@ public class Cloud extends WebSocketClient {
         serviceHost.run();
     }
 
+    private long[] ticks;
     /**
      * This method polls the system every second and stores pecentage values for CPU and Ram Usage
      * <p>
      * todo include this again with the new implementation
      */
     private void getSystemLoad() {
+        ticks = hal.getProcessor().getSystemCpuLoadTicks();
+
         new Timer().schedule(
                 new TimerTask() {
                     int secondCounter = 0;
@@ -223,8 +226,10 @@ public class Cloud extends WebSocketClient {
                     @Override
                     public void run() {
                         secondCounter++;
-                        historicalCPUload.put(secondCounter, hal.getProcessor().getSystemCpuLoadBetweenTicks() * 100);
+                        historicalCPUload.put(secondCounter, hal.getProcessor().getSystemCpuLoadBetweenTicks(ticks) * 100);
                         historicalRamload.put(secondCounter, (double) ((hal.getMemory().getAvailable() * 100 / hal.getMemory().getTotal())));
+
+                        ticks = hal.getProcessor().getSystemCpuLoadTicks();
                     }
                 }, 0, 1000);
     }
