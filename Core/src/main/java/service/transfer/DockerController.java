@@ -30,8 +30,8 @@ public class DockerController {
             Process loadProcess = loadArchiveServiceIntoDocker(newService);
             logProcessOutput(loadProcess);
 
-//            Process runProcess = sendDockerRunSampleCommand();
-            Process runProcess = sendDockerRunSentalCommand();
+            Process runProcess = sendDockerRunSampleCommand();
+//            Process runProcess = sendDockerRunSentalCommand();
             logProcessOutput(runProcess);
         } catch (IOException | InterruptedException e) {
             logger.error("");

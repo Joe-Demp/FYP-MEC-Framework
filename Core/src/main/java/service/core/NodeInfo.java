@@ -21,6 +21,7 @@ public class NodeInfo extends Message {
         super(Message.MessageTypes.NODE_INFO);
     }
 
+    // todo remove CPUload from here
     public NodeInfo(UUID systemID, Map<Integer, Double> CPUload, String serviceName) {
         super(Message.MessageTypes.NODE_INFO);
         this.systemID = systemID;

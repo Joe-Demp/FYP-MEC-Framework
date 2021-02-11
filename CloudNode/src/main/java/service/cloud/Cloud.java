@@ -22,9 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class Cloud extends WebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
@@ -147,14 +145,24 @@ public class Cloud extends WebSocketClient {
         Gson gson = new Gson();
         NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, service.getName());
         nodeInfo.setServiceHostAddress(serviceAddress);
+
+        // adding performance data
         if (!historicalCPUload.isEmpty()) {
             nodeInfo.setCPUload(historicalCPUload);
         }
         if (!historicalRamload.isEmpty()) {
             nodeInfo.setRamLoad(historicalRamload);
         }
+        // END adding performance data
+
         String jsonStr = gson.toJson(nodeInfo);
         send(jsonStr);
+    }
+
+    @Override
+    public void send(String json) {
+        logger.debug("Sending: {}", json);
+        super.send(json);
     }
 
     /**
@@ -208,17 +216,17 @@ public class Cloud extends WebSocketClient {
      * todo include this again with the new implementation
      */
     private void getSystemLoad() {
-//        new Timer().schedule(
-//                new TimerTask() {
-//                    int secondCounter = 0;
-//
-//                    @Override
-//                    public void run() {
-//                        secondCounter++;
-//                        historicalCPUload.put(secondCounter, hal.getProcessor().getSystemCpuLoadBetweenTicks() * 100);
-//                        historicalRamload.put(secondCounter, (double) ((hal.getMemory().getAvailable() / hal.getMemory().getTotal()) * 100));
-//                    }
-//                }, 0, 1000);
+        new Timer().schedule(
+                new TimerTask() {
+                    int secondCounter = 0;
+
+                    @Override
+                    public void run() {
+                        secondCounter++;
+                        historicalCPUload.put(secondCounter, hal.getProcessor().getSystemCpuLoadBetweenTicks() * 100);
+                        historicalRamload.put(secondCounter, (double) ((hal.getMemory().getAvailable() * 100 / hal.getMemory().getTotal())));
+                    }
+                }, 0, 1000);
     }
 
     /**
