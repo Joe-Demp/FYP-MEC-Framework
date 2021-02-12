@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
+import oshi.software.os.OSFileStore;
+import oshi.software.os.OperatingSystem;
 import service.core.*;
 import service.host.ServiceHost;
 import service.transfer.DockerController;
@@ -33,10 +35,11 @@ public class Cloud extends WebSocketClient {
     private URI serviceAddress;
     SystemInfo nodeSystem = new SystemInfo();
     HardwareAbstractionLayer hal = nodeSystem.getHardware();
+    OperatingSystem os = nodeSystem.getOperatingSystem();
     DockerController dockerController;
     private Map<Integer, Double> historicalCPUload = new HashMap<>();
     private Map<Integer, Double> historicalRamload = new HashMap<>();
-    private Map<Integer, Double> historicalStorage = new HashMap<>();
+    private Map<Integer, Long> unusedStorage = new HashMap<>();
     boolean secureMode;
     private Gson gson;
 
@@ -155,6 +158,9 @@ public class Cloud extends WebSocketClient {
         if (!historicalRamload.isEmpty()) {
             nodeInfo.setRamLoad(historicalRamload);
         }
+        if (!unusedStorage.isEmpty()) {
+            nodeInfo.setUnusedStorage(unusedStorage);
+        }
         // END adding performance data
 
         String jsonStr = gson.toJson(nodeInfo);
@@ -236,7 +242,10 @@ public class Cloud extends WebSocketClient {
                         double fractionMemoryUsed = 1.0 - (availableMemory / totalMemory);
                         historicalRamload.put(secondCounter, fractionMemoryUsed);
 
-//                        historicalStorage.put(secondCounter, -1.0);
+                        long usableSpace = os.getFileSystem().getFileStores().stream()
+                                .mapToLong(OSFileStore::getUsableSpace)
+                                .sum();
+                        unusedStorage.put(secondCounter, usableSpace);
                         ticks = hal.getProcessor().getSystemCpuLoadTicks();
                     }
                 }, 0, 1000);
