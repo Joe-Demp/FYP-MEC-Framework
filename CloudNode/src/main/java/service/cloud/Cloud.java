@@ -24,6 +24,7 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.*;
 
+// todo fix all access modifiers
 public class Cloud extends WebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
 
@@ -35,6 +36,7 @@ public class Cloud extends WebSocketClient {
     DockerController dockerController;
     private Map<Integer, Double> historicalCPUload = new HashMap<>();
     private Map<Integer, Double> historicalRamload = new HashMap<>();
+    private Map<Integer, Double> historicalStorage = new HashMap<>();
     boolean secureMode;
     private Gson gson;
 
@@ -211,6 +213,7 @@ public class Cloud extends WebSocketClient {
     }
 
     private long[] ticks;
+
     /**
      * This method polls the system every second and stores pecentage values for CPU and Ram Usage
      * <p>
@@ -227,8 +230,13 @@ public class Cloud extends WebSocketClient {
                     public void run() {
                         secondCounter++;
                         historicalCPUload.put(secondCounter, hal.getProcessor().getSystemCpuLoadBetweenTicks(ticks) * 100);
-                        historicalRamload.put(secondCounter, (double) ((hal.getMemory().getAvailable() * 100 / hal.getMemory().getTotal())));
 
+                        double totalMemory = hal.getMemory().getTotal();
+                        double availableMemory = hal.getMemory().getAvailable();
+                        double fractionMemoryUsed = 1.0 - (availableMemory / totalMemory);
+                        historicalRamload.put(secondCounter, fractionMemoryUsed);
+
+//                        historicalStorage.put(secondCounter, -1.0);
                         ticks = hal.getProcessor().getSystemCpuLoadTicks();
                     }
                 }, 0, 1000);
