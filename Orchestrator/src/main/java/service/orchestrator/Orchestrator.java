@@ -30,6 +30,7 @@ public class Orchestrator extends WebSocketServer {
 
     // todo expand this into 2 maps: 1 for ApplicationNodes, another for Clients
     private Map<UUID, NodeInfo> connectedNodes = new HashMap<>();
+    private Map<UUID, NodeInfo> connectedClients = new HashMap<>();
     private Gson gson;
     private boolean migrationOccurred = false;
 
@@ -47,10 +48,17 @@ public class Orchestrator extends WebSocketServer {
                         for (NodeInfo node : connectedNodes.values()) {
                             logger.debug(node.toString());
                         }
+                        for (NodeInfo node : connectedClients.values()) {
+                            logger.debug(node.toString());
+                        }
                         logger.debug("End Current Connections.");
 
                         logger.debug("Sending HeartbeatRequests");
                         for (NodeInfo node : connectedNodes.values()) {
+                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getSystemID());
+                            sendAsJson(node.getWebSocket(), heartbeat);
+                        }
+                        for (NodeInfo node : connectedClients.values()) {
                             ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getSystemID());
                             sendAsJson(node.getWebSocket(), heartbeat);
                         }
@@ -69,12 +77,14 @@ public class Orchestrator extends WebSocketServer {
         for (NodeInfo info : connectedNodes.values()) {
             logger.debug("{} {}", info.getServiceName(), info.getServiceHostAddress());
         }
+        for (NodeInfo info : connectedClients.values()) {
+            logger.debug("{} {}", info.getServiceName(), info.getServiceHostAddress());
+        }
         logger.debug("End printing.\n");
 
         // find a client
-        NodeInfo client = connectedNodes.values().stream()
-                .filter(infoIsClient)
-                .findFirst()
+        NodeInfo client = connectedClients.values().stream()
+                .findAny()
                 .orElse(null);
 
         // find a cloud node
@@ -141,11 +151,12 @@ public class Orchestrator extends WebSocketServer {
             case Message.MessageTypes.NODE_INFO:
                 NodeInfo nodeInfo = (NodeInfo) messageObj;
                 nodeInfo.setWebSocket(webSocket);
-                connectedNodes.put(nodeInfo.getSystemID(), nodeInfo);
 
-                // todo deal with the difference between Application Nodes and Mobile Clients
+                // todo better deal with difference between Application Nodes and Mobile Clients
                 if (nodeInfo.getServiceName() != null && nodeInfo.getServiceName().equals("MobileUser")) {
-                    connectedNodes.remove(nodeInfo.getSystemID());
+                    connectedClients.put(nodeInfo.getSystemID(), nodeInfo);
+                } else {
+                    connectedNodes.put(nodeInfo.getSystemID(), nodeInfo);
                 }
                 break;
             case Message.MessageTypes.SERVICE_REQUEST:
@@ -411,7 +422,9 @@ public class Orchestrator extends WebSocketServer {
 
         // remove the node that owns the connection
         try {
-            UUID toRemove = connectedNodes.entrySet().stream()
+            Set<Map.Entry<UUID, NodeInfo>> allNodes = connectedNodes.entrySet();
+            allNodes.addAll(connectedClients.entrySet());
+            UUID toRemove = allNodes.stream()
                     .filter(e -> e.getValue().getWebSocket().equals(webSocket))
                     .findAny()
                     .orElseThrow(NoSuchNodeException::new)
@@ -419,6 +432,7 @@ public class Orchestrator extends WebSocketServer {
 
             logger.debug("Removing Node {} from connectedNodes.", toRemove);
             connectedNodes.remove(toRemove);
+            connectedClients.remove(toRemove);
         } catch (NoSuchNodeException e) {
             logger.error("No Node with address {} found in connectedNodes", webSocket.getRemoteSocketAddress());
             e.printStackTrace();
