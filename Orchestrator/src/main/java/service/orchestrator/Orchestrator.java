@@ -75,10 +75,10 @@ public class Orchestrator extends WebSocketServer {
         logger.debug("");
         logger.debug("Printing NodeInfo.name , NodeInfo.serviceAddress");
         for (NodeInfo info : connectedNodes.values()) {
-            logger.debug("{} {}", info.getServiceName(), info.getServiceHostAddress());
+            logger.debug("{} {}", info.getServiceName(), info.getWebSocket().getRemoteSocketAddress());
         }
         for (NodeInfo info : connectedClients.values()) {
-            logger.debug("{} {}", info.getServiceName(), info.getServiceHostAddress());
+            logger.debug("{} {}", info.getServiceName(), info.getWebSocket().getRemoteSocketAddress());
         }
         logger.debug("End printing.\n");
 
@@ -95,8 +95,11 @@ public class Orchestrator extends WebSocketServer {
 
         if (nonNull(client) && nonNull(cloud)) {
             // create a NodeClientLatencyRequest
+            InetSocketAddress clientSocketAddr = client.getWebSocket().getRemoteSocketAddress();
+            URI clientUri = URI.create("ws://" + clientSocketAddr.getHostString() + ":" + clientSocketAddr.getPort());
+
             NodeClientLatencyRequest request = new NodeClientLatencyRequest(
-                    cloud.getSystemID(), client.getSystemID(), client.getServiceHostAddress());
+                    cloud.getSystemID(), client.getSystemID(), clientUri);
 
             // send the request
             sendAsJson(cloud.getWebSocket(), request);
