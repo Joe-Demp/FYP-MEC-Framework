@@ -425,7 +425,8 @@ public class Orchestrator extends WebSocketServer {
 
         // remove the node that owns the connection
         try {
-            Set<Map.Entry<UUID, NodeInfo>> allNodes = connectedNodes.entrySet();
+            Set<Map.Entry<UUID, NodeInfo>> allNodes = new HashSet<>();
+            allNodes.addAll(connectedNodes.entrySet());
             allNodes.addAll(connectedClients.entrySet());
             UUID toRemove = allNodes.stream()
                     .filter(e -> e.getValue().getWebSocket().equals(webSocket))
