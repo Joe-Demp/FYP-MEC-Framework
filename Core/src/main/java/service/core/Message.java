@@ -27,6 +27,7 @@ public class Message implements Serializable {
         final public static String SERVER_HEARTBEAT_REQUEST = "ServerHeartbeatRequest";
         final public static String HOST_REQUEST = "HostRequest";
         final public static String HOST_RESPONSE = "HostResponse";
-
+        final public static String NODE_CLIENT_LATENCY_REQUEST = "NodeClientLatencyRequest";
+        final public static String NODE_CLIENT_LATENCY_RESPONSE = "NodeClientLatencyResponse";
     }
 }

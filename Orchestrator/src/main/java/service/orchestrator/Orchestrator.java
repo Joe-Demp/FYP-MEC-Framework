@@ -14,6 +14,10 @@ import service.orchestrator.exceptions.NoSuchNodeException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Predicate;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 // todo remove hard coded values and use a config file instead (or command line args)
 
@@ -49,8 +53,39 @@ public class Orchestrator extends WebSocketServer {
                             ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getSystemID());
                             sendAsJson(node.getWebSocket(), heartbeat);
                         }
+
+                        launchNodeClientLatencyRequest();
                     }
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
+    }
+
+    private void launchNodeClientLatencyRequest() {
+        final String CLIENT_SERVICE_NAME = "MobileUser";
+        Predicate<NodeInfo> infoIsClient = nodeInfo -> nodeInfo.getServiceName().equals(CLIENT_SERVICE_NAME);
+
+        // find a client
+        NodeInfo client = connectedNodes.values().stream()
+                .filter(infoIsClient)
+                .findFirst()
+                .orElse(null);
+
+        // find a cloud node
+        NodeInfo cloud = connectedNodes.values().stream()
+                .filter(infoIsClient.negate())
+                .findAny()
+                .orElse(null);
+
+        if (nonNull(client) && nonNull(cloud)) {
+            // create a NodeClientLatencyRequest
+            NodeClientLatencyRequest request = new NodeClientLatencyRequest(
+                    cloud.getSystemID(), client.getSystemID(), client.getServiceHostAddress());
+
+            // send the request
+            sendAsJson(cloud.getWebSocket(), request);
+        } else {
+            if (isNull(client)) logger.info("launchNodeClientLatencyRequest: client is null");
+            if (isNull(cloud)) logger.info("launchNodeClientLatencyRequest: cloud is null");
+        }
     }
 
     private void initializeGson() {
@@ -61,7 +96,8 @@ public class Orchestrator extends WebSocketServer {
                 .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
                 .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
                 .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
-                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS);
+                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
+                .registerSubtype(NodeClientLatencyResponse.class, Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE);
         gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
     }
 
@@ -140,6 +176,13 @@ public class Orchestrator extends WebSocketServer {
                     responseForClient = new HostResponse(hostRequest.getRequestorID(), returnURI);
                 }
                 sendAsJson(webSocket, responseForClient);
+                break;
+            case Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE:
+                NodeClientLatencyResponse nclResponse = (NodeClientLatencyResponse) messageObj;
+                logger.info("Received a NodeClientLatencyResponse, latency={}", nclResponse.latency);
+                break;
+            default:
+                logger.error("Message received with unrecognised type: {}", messageObj.getType());
                 break;
         }
     }
@@ -326,6 +369,19 @@ public class Orchestrator extends WebSocketServer {
             }
         }
         return ((1 - rollingAverage) * rollingRamScore) + (rollingAverage * (runningTotal / 5));
+    }
+
+    private void requestClientLatencyReportFromNode() {
+        // should have a Client IP
+        //  for now, the Orchestrator sends this to all nodes
+
+        // create a request containing the client IP (etc.)
+
+        //****** Cunning Plan
+        /* All Clients have an open WebSocketServer for Nodes to ping.
+            Node connects to that WSServer, does a few pings and returns the results to the Orchestrator.
+         */
+        // END PLAN
     }
 
     @Override

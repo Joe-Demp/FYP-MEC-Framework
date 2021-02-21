@@ -13,6 +13,7 @@ DockerImage/target/
 # ignoring tar files
 EdgeNode/service.tar
 CloudNode/src/main/resources/sental.tar
+CloudNode/sental.tar
 
 # ignoring some logs
 CloudNode/hs_err_pid18512.log
