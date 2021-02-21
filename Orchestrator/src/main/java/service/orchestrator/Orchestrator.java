@@ -63,6 +63,13 @@ public class Orchestrator extends WebSocketServer {
         final String CLIENT_SERVICE_NAME = "MobileUser";
         Predicate<NodeInfo> infoIsClient = nodeInfo -> nodeInfo.getServiceName().equals(CLIENT_SERVICE_NAME);
 
+        logger.debug("");
+        logger.debug("Printing NodeInfo.name , NodeInfo.serviceAddress");
+        for (NodeInfo info : connectedNodes.values()) {
+            logger.debug("{} {}", info.getServiceName(), info.getServiceHostAddress());
+        }
+        logger.debug("End printing.\n");
+
         // find a client
         NodeInfo client = connectedNodes.values().stream()
                 .filter(infoIsClient)
@@ -162,9 +169,10 @@ public class Orchestrator extends WebSocketServer {
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
                 NodeInfo returnedNode = null;
                 if (!migrationOccurred) {
-                    returnedNode = transferServiceToBestNode(requestFromUser);
-                    logger.debug("Attempted to transfer service");
+//                    returnedNode = transferServiceToBestNode(requestFromUser);
+//                    logger.debug("Attempted to transfer service");
                     migrationOccurred = true;
+                    logger.warn("Not calling transferServiceToBestNode. Fix this asap.");
                 }
 
                 // service has been moved to an optimal location. Inform the client

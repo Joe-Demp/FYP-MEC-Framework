@@ -60,6 +60,7 @@ public class Cloud extends WebSocketClient {
     }
 
     private void startLatencyRequestMonitor() {
+        logger.debug("Starting the LatencyRequestMonitor");
         new Thread(latencyRequestMonitor).start();
     }
 
