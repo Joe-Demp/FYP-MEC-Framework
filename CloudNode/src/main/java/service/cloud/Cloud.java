@@ -11,7 +11,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
-import service.cloud.connections.WebSocketPingClient;
+import service.cloud.connections.LatencyRequestMonitor;
 import service.core.*;
 import service.host.ServiceHost;
 import service.transfer.DockerController;
@@ -26,7 +26,6 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.Executors;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.Objects.isNull;
@@ -47,6 +46,7 @@ public class Cloud extends WebSocketClient {
     private Map<Integer, Long> unusedStorage = new HashMap<>();
     boolean secureMode;
     private Gson gson;
+    private final LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor(this);
 
     public Cloud(URI serverUri, File service, URI serviceAddress, Boolean secureMode) {
         super(serverUri);
@@ -56,10 +56,12 @@ public class Cloud extends WebSocketClient {
         this.secureMode = secureMode;
         getSystemLoad();
         initializeGson();
+        startLatencyRequestMonitor();
     }
 
-    Map<URI, WebSocketPingClient> pingClients = new Hashtable<>();
-    Map<URI, NodeClientLatencyResponse> latencyResponses = new Hashtable<>();
+    private void startLatencyRequestMonitor() {
+        new Thread(latencyRequestMonitor).start();
+    }
 
     private void initializeGson() {
         RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
@@ -142,35 +144,12 @@ public class Cloud extends WebSocketClient {
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST:
                 NodeClientLatencyRequest nclRequest = (NodeClientLatencyRequest) messageObj;
-                launchNodeClientLatencyRequest(nclRequest);
+                latencyRequestMonitor.startLatencyRequest(nclRequest);
                 break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
                 break;
         }
-    }
-
-    // todo include here
-    // todo Optimization here: Use an Executor https://docs.oracle.com/javase/tutorial/essential/concurrency/pools.html
-    private void launchNodeClientLatencyRequest(NodeClientLatencyRequest nclRequest) {
-        // open a connection to the ping-server
-        WebSocketPingClient pingClient = new WebSocketPingClient(nclRequest.clientUri);
-        pingClient.connect();
-        pingClients.put(nclRequest.clientUri, pingClient);
-
-        // each client corresponds to a Thread => keep a Thread pool?
-
-        Executors.newFixedThreadPool(5);
-        // create Threads of Callables to do the ping task:
-        //  Callable returns a PingResult when finished
-
-        // add a response to the cache
-        NodeClientLatencyResponse response = new NodeClientLatencyResponse(
-                nclRequest.nodeId, nclRequest.clientId, nclRequest.clientUri, -1);
-        //  latencyResponses.put(nclRequest.clientUri, response);
-
-        // ping the server
-        //  wsClient.ping();
     }
 
     private static class LatencyRequestRecord {
@@ -197,7 +176,7 @@ public class Cloud extends WebSocketClient {
     /**
      * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
      */
-    private void sendAsJson(Message message) {
+    public void sendAsJson(Message message) {
         String json = gson.toJson(message);
         logger.debug("Sending: {}", json);
         send(json);
@@ -337,7 +316,6 @@ public class Cloud extends WebSocketClient {
 
     @Override
     public void onError(Exception e) {
-
     }
 
     @Override
