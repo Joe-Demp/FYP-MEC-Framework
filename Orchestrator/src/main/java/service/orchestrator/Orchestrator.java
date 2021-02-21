@@ -24,6 +24,7 @@ import static java.util.Objects.nonNull;
 public class Orchestrator extends WebSocketServer {
     private static final Logger logger = LoggerFactory.getLogger(Orchestrator.class);
     private static final long HEARTBEAT_REQUEST_PERIOD = 20L * 1000L;
+    public static final int PING_SERVER_PORTNUMBER = 8092;
 
     int rollingAverage;
 
