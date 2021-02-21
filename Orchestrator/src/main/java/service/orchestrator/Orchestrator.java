@@ -202,7 +202,7 @@ public class Orchestrator extends WebSocketServer {
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE:
                 NodeClientLatencyResponse nclResponse = (NodeClientLatencyResponse) messageObj;
-                logger.info("Received a NodeClientLatencyResponse, latency={}", nclResponse.latency);
+                logger.info("Received a NodeClientLatencyResponse, latency={}", nclResponse.getLatency());
                 break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());

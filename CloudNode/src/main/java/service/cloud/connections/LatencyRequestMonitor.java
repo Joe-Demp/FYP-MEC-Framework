@@ -57,7 +57,8 @@ public class LatencyRequestMonitor implements Runnable {
     }
 
     private static NodeClientLatencyResponse mapToResponse(NodeClientLatencyRequest request) {
-        return new NodeClientLatencyResponse(request.nodeId, request.clientId, request.clientUri, -1);
+        return new NodeClientLatencyResponse(
+                request.getNodeId(), request.getClientId(), request.getClientUri(), -1);
     }
 
     @Override
@@ -94,14 +95,14 @@ public class LatencyRequestMonitor implements Runnable {
     }
 
     private void sendFinishedNodeClientLatencyResponse(NodeClientLatencyResponse response, PingResult result) {
-        response.latency = result.getRunTimeInMillis();
+        response.setLatency(result.getRunTimeInMillis());
         wsClient.sendAsJson(response);
     }
 
     public void startLatencyRequest(NodeClientLatencyRequest request) {
         // create the PingTask, submit it to the ExecutorService, store the Future.
         NodeClientLatencyResponse response = mapToResponse(request);
-        PingTask task = new PingTask(request.clientUri);
+        PingTask task = new PingTask(request.getClientUri());
         Future<PingResult> futurePingResult = executor.submit(task);
         awaitedLatencyResponses.put(response, futurePingResult);
     }
