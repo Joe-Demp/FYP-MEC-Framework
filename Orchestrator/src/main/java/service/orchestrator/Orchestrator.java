@@ -28,7 +28,7 @@ public class Orchestrator extends WebSocketServer {
 
     int rollingAverage;
 
-    // todo expand this into 2 maps: 1 for ApplicationNodes, another for Clients
+    // todo extract the Node and MobileClient storage into special classes
     private Map<UUID, NodeInfo> connectedNodes = new HashMap<>();
     private Map<UUID, NodeInfo> connectedClients = new HashMap<>();
     private Gson gson;
@@ -74,9 +74,11 @@ public class Orchestrator extends WebSocketServer {
     }
 
     private void launchNodeClientLatencyRequest() {
+        // todo remove this once we've sorted out the ServiceNode vs MobileClient issue
         final String CLIENT_SERVICE_NAME = "MobileUser";
         Predicate<NodeInfo> infoIsClient = nodeInfo -> nodeInfo.getServiceName().equals(CLIENT_SERVICE_NAME);
 
+        // todo remove this eventually
         logger.debug("");
         logger.debug("Printing NodeInfo.name , NodeInfo.serviceAddress");
         for (NodeInfo info : connectedNodes.values()) {
@@ -87,7 +89,8 @@ public class Orchestrator extends WebSocketServer {
         }
         logger.debug("End printing.\n");
 
-        // find a client
+        // todo remove these once we start sending NodeClientLatencyRequests to specific nodes
+        // find any client
         NodeInfo client = connectedClients.values().stream()
                 .findAny()
                 .orElse(null);
@@ -98,11 +101,13 @@ public class Orchestrator extends WebSocketServer {
                 .findAny()
                 .orElse(null);
 
+        // todo extract to another method, or class (good code but verbose)
         if (nonNull(client) && nonNull(cloud)) {
             // create a NodeClientLatencyRequest
             InetSocketAddress clientSocketAddr = client.getWebSocket().getRemoteSocketAddress();
             URI clientUri = mapToUri(clientSocketAddr);
 
+            // todo use the actual MobileClient host name (from the X-Forwarded-For header)
             NodeClientLatencyRequest request = new NodeClientLatencyRequest(
                     cloud.getSystemID(), client.getSystemID(), clientUri);
 
@@ -136,6 +141,9 @@ public class Orchestrator extends WebSocketServer {
             logger.debug("{} : {}", field, clientHandshake.getFieldValue(field));
         }
         logger.debug("END Http Headers.");
+
+        // todo keep the "X-Forwarded-For" headers with each Node
+        //  use these for NodeClientLatencyRequests
 
         UUID UUIDToReturn = UUID.randomUUID();
 

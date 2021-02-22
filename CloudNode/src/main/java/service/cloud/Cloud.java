@@ -1,8 +1,5 @@
 package service.cloud;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,20 +27,19 @@ import java.util.*;
 // todo fix all access modifiers
 public class Cloud extends AbstractServiceNode {
     private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
-
-    private File service;
-    private UUID assignedUUID;
-    private URI serviceAddress;
+    private final LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor(this);
     SystemInfo nodeSystem = new SystemInfo();
     HardwareAbstractionLayer hal = nodeSystem.getHardware();
     OperatingSystem os = nodeSystem.getOperatingSystem();
     DockerController dockerController;
+    boolean secureMode;
+    private File service;
+    private UUID assignedUUID;
+    private URI serviceAddress;
     private Map<Integer, Double> historicalCPUload = new HashMap<>();
     private Map<Integer, Double> historicalRamload = new HashMap<>();
     private Map<Integer, Long> unusedStorage = new HashMap<>();
-    boolean secureMode;
-    private Gson gson;
-    private final LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor(this);
+    private long[] ticks;
 
     public Cloud(URI serverUri, File service, URI serviceAddress, Boolean secureMode) {
         super(serverUri);
@@ -52,26 +48,12 @@ public class Cloud extends AbstractServiceNode {
         this.serviceAddress = serviceAddress;
         this.secureMode = secureMode;
         getSystemLoad();
-        initializeGson();
         startLatencyRequestMonitor();
     }
 
     private void startLatencyRequestMonitor() {
         logger.debug("Starting the LatencyRequestMonitor");
         new Thread(latencyRequestMonitor, "LatencyRequestMonitorThread").start();
-    }
-
-    private void initializeGson() {
-        RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
-                .of(Message.class, "type")
-                .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
-                .registerSubtype(Service.class, Message.MessageTypes.SERVICE)
-                .registerSubtype(ServerHeartbeatRequest.class, Message.MessageTypes.SERVER_HEARTBEAT_REQUEST)
-                .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
-                .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
-                .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
-                .registerSubtype(NodeClientLatencyRequest.class, Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST);
-        gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
     }
 
     /**
@@ -162,7 +144,6 @@ public class Cloud extends AbstractServiceNode {
      * Constructs and sends Heartbeat responses when called
      */
     public void sendHeartbeatResponse() {
-        Gson gson = new Gson();
         NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, service.getName());
         nodeInfo.setServiceHostAddress(serviceAddress);
 
@@ -178,14 +159,7 @@ public class Cloud extends AbstractServiceNode {
         }
         // END adding performance data
 
-        String jsonStr = gson.toJson(nodeInfo);
-        send(jsonStr);
-    }
-
-    @Override
-    public void send(String json) {
-        logger.debug("Sending: {}", json);
-        super.send(json);
+        sendAsJson(nodeInfo);
     }
 
     /**
@@ -233,8 +207,6 @@ public class Cloud extends AbstractServiceNode {
         serviceHost.run();
     }
 
-    private long[] ticks;
-
     /**
      * This method polls the system every second and stores pecentage values for CPU and Ram Usage
      * <p>
@@ -268,10 +240,8 @@ public class Cloud extends AbstractServiceNode {
 
     /**
      * This method launches this nodes Transfer Server using the service address define at node creation
-     *
-     * @return the InetSocketAddress of the new temp server
      */
-    private InetSocketAddress launchTransferServer() throws Exception {
+    private void launchTransferServer() throws Exception {
         InetSocketAddress serverAddress = new InetSocketAddress(serviceAddress.getPort());
         setReuseAddr(true);
 
@@ -283,7 +253,6 @@ public class Cloud extends AbstractServiceNode {
             new SecureTransferServer(serverAddress, service);
         }
 
-        return serverAddress;
     }
 
     @Override

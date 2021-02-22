@@ -21,7 +21,6 @@ public class Message implements Serializable {
         final public static String NODE_INFO_REQUEST = "NodeInfoRequest";
         final public static String NODE_INFO = "NodeInfo";
         final public static String SERVICE_REQUEST = "ServiceRequest";
-        final public static String SERVICE = "Service";
         final public static String SERVICE_RESPONSE = "ServiceResponse";
         final public static String MIGRATION_SUCCESS = "MigrationSuccess";
         final public static String SERVER_HEARTBEAT_REQUEST = "ServerHeartbeatRequest";

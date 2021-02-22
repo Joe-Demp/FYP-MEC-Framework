@@ -1,8 +1,5 @@
 package service.edge;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,17 +57,6 @@ public class Edge extends AbstractServiceNode {
      */
     @Override
     public void onMessage(String message) {
-        RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
-                .of(Message.class, "type")
-                .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
-                .registerSubtype(Service.class, Message.MessageTypes.SERVICE)
-                .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
-                .registerSubtype(ServerHeartbeatRequest.class, Message.MessageTypes.SERVER_HEARTBEAT_REQUEST)
-                .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
-                .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST);
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
-
         Message messageObj = gson.fromJson(message, Message.class);
 
         logger.info(message);
@@ -87,7 +73,6 @@ public class Edge extends AbstractServiceNode {
                 break;
             case Message.MessageTypes.SERVICE_REQUEST:
                 ServiceRequest serviceRequest = (ServiceRequest) messageObj;
-                gson = new Gson();
                 try {
                     InetSocketAddress serverAddress = launchTransferServer();
                 } catch (Exception e) {
@@ -118,7 +103,6 @@ public class Edge extends AbstractServiceNode {
      * Constructs and sends Heartbeat responses when called
      */
     private void sendHeartbeatResponse() {
-        Gson gson = new Gson();
         NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, null);
         nodeInfo.setServiceHostAddress(serviceAddress);
         nodeInfo.setTrustyworthy(trustWorthyNode);
