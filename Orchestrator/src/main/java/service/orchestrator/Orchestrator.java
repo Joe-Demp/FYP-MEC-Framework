@@ -68,6 +68,11 @@ public class Orchestrator extends WebSocketServer {
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
+    public static URI mapToUri(InetSocketAddress socketAddress) {
+        String uriString = String.format("ws://%s:%d", socketAddress.getHostString(), PING_SERVER_PORTNUMBER);
+        return URI.create(uriString);
+    }
+
     private void launchNodeClientLatencyRequest() {
         final String CLIENT_SERVICE_NAME = "MobileUser";
         Predicate<NodeInfo> infoIsClient = nodeInfo -> nodeInfo.getServiceName().equals(CLIENT_SERVICE_NAME);
@@ -96,7 +101,7 @@ public class Orchestrator extends WebSocketServer {
         if (nonNull(client) && nonNull(cloud)) {
             // create a NodeClientLatencyRequest
             InetSocketAddress clientSocketAddr = client.getWebSocket().getRemoteSocketAddress();
-            URI clientUri = URI.create("ws://" + clientSocketAddr.getHostString() + ":" + clientSocketAddr.getPort());
+            URI clientUri = mapToUri(clientSocketAddr);
 
             NodeClientLatencyRequest request = new NodeClientLatencyRequest(
                     cloud.getSystemID(), client.getSystemID(), clientUri);

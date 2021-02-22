@@ -91,7 +91,6 @@ public class Cloud extends WebSocketClient {
         Message messageObj = gson.fromJson(message, Message.class);
 
         //this routes inbound messages based on type and then moves them to other methods
-        logger.debug(messageObj == null ? "messageObj is null" : "messageObj is not null");
         switch (messageObj.getType()) {
             //A request for the nodes status when it initially joins
             case Message.MessageTypes.NODE_INFO_REQUEST:

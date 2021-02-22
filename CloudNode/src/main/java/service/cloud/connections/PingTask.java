@@ -18,6 +18,7 @@ public class PingTask implements Callable<PingResult> {
 
     public PingTask(URI clientUri) {
         this.wsPingClient = new WebSocketPingClient(clientUri, this);
+        // wsPingClient.connect called in method call()
     }
 
     public void submitPingResult(PingResult result) {
@@ -28,11 +29,15 @@ public class PingTask implements Callable<PingResult> {
 
     @Override
     public PingResult call() throws Exception {
-        wsPingClient.sendLoadedPing();
-//        waitForTaskResult();      // spinning lock
+        connectAndSendPing();
         waitForWebSocket();
         wsPingClient.closeBlocking();
         return taskResult.get();
+    }
+
+    private void connectAndSendPing() throws Exception {
+        wsPingClient.connectBlocking();
+        wsPingClient.sendLoadedPing();
     }
 
     private synchronized void waitForWebSocket() {

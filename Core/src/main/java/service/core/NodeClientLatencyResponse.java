@@ -9,6 +9,10 @@ public class NodeClientLatencyResponse extends Message {
     private URI clientUri;
     private long latency;
 
+    public NodeClientLatencyResponse() {
+        super(MessageTypes.NODE_CLIENT_LATENCY_RESPONSE);
+    }
+
     public NodeClientLatencyResponse(UUID nodeId, UUID clientId, URI clientUri, long latency) {
         super(MessageTypes.NODE_CLIENT_LATENCY_RESPONSE);
         this.nodeId = nodeId;
