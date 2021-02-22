@@ -3,7 +3,6 @@ package service.cloud;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
-import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +13,7 @@ import oshi.software.os.OperatingSystem;
 import service.cloud.connections.LatencyRequestMonitor;
 import service.core.*;
 import service.host.ServiceHost;
+import service.node.AbstractServiceNode;
 import service.transfer.DockerController;
 import service.transfer.SecureTransferServer;
 import service.transfer.TransferClient;
@@ -27,11 +27,8 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.*;
 
-import static java.time.temporal.ChronoUnit.MILLIS;
-import static java.util.Objects.isNull;
-
 // todo fix all access modifiers
-public class Cloud extends WebSocketClient {
+public class Cloud extends AbstractServiceNode {
     private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
 
     private File service;
@@ -84,8 +81,7 @@ public class Cloud extends WebSocketClient {
      */
     @Override
     public void onMessage(String message) {
-        logger.debug("from {}", getRemoteSocketAddress());      // todo replace this call with something that
-        //  gets the actual (global) ip address
+        logger.debug("from {}", getRemoteSocketAddress());
         logger.debug(message);
 
         Message messageObj = gson.fromJson(message, Message.class);
@@ -150,27 +146,6 @@ public class Cloud extends WebSocketClient {
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
                 break;
-        }
-    }
-
-    private static class LatencyRequestRecord {
-        public Instant start = Instant.now();
-        public Instant stop;
-        public NodeClientLatencyResponse nclResponse;
-
-        public LatencyRequestRecord(NodeClientLatencyResponse nclResponse) {
-            this.nclResponse = nclResponse;
-        }
-
-        public void close() {
-            this.stop = Instant.now();
-        }
-
-        public long getRequestTime() {
-            if (isNull(stop)) {
-                return -1;
-            }
-            return MILLIS.between(start, stop);
         }
     }
 
@@ -263,7 +238,7 @@ public class Cloud extends WebSocketClient {
     /**
      * This method polls the system every second and stores pecentage values for CPU and Ram Usage
      * <p>
-     * todo include this again with the new implementation
+     * todo extract this out to a separate class
      */
     private void getSystemLoad() {
         ticks = hal.getProcessor().getSystemCpuLoadTicks();

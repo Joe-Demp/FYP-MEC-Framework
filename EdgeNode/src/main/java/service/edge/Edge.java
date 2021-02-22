@@ -3,7 +3,6 @@ package service.edge;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
-import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +10,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import service.core.*;
 import service.host.ServiceHost;
+import service.node.AbstractServiceNode;
 import service.transfer.DockerController;
 import service.transfer.SecureTransferServer;
 import service.transfer.TransferClient;
@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Edge extends WebSocketClient {
+public class Edge extends AbstractServiceNode {
     public static final Logger logger = LoggerFactory.getLogger(Edge.class);
 
     SystemInfo nodeSystem = new SystemInfo();
