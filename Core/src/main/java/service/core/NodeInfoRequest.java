@@ -5,7 +5,6 @@ import java.util.UUID;
 public class NodeInfoRequest extends Message {
     UUID assignedUUID;
 
-    // todo check if this is necessary? May be for serialization
     public NodeInfoRequest(){
         super(MessageTypes.NODE_INFO_REQUEST);
     }

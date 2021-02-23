@@ -11,10 +11,11 @@ import org.slf4j.LoggerFactory;
 import service.core.*;
 import service.orchestrator.exceptions.NoSuchNodeException;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.*;
-import java.util.function.Predicate;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -25,12 +26,14 @@ public class Orchestrator extends WebSocketServer {
     private static final Logger logger = LoggerFactory.getLogger(Orchestrator.class);
     private static final long HEARTBEAT_REQUEST_PERIOD = 20L * 1000L;
     public static final int PING_SERVER_PORTNUMBER = 8092;
+    private static final String X_FORWARDED_FOR = "X-Forwarded-For";
 
     int rollingAverage;
 
     // todo extract the Node and MobileClient storage into special classes
-    private Map<UUID, NodeInfo> connectedNodes = new HashMap<>();
-    private Map<UUID, NodeInfo> connectedClients = new HashMap<>();
+    private Map<UUID, NodeInfo> serviceNodes = new HashMap<>();
+    private Map<UUID, MobileClientInfo> mobileClients = new HashMap<>();
+    private Map<UUID, InetAddress> newWSClientAddresses = new HashMap<>();
     private Gson gson;
     private boolean migrationOccurred = false;
 
@@ -45,22 +48,22 @@ public class Orchestrator extends WebSocketServer {
                     @Override
                     public void run() {
                         logger.debug("Current connections:");
-                        for (NodeInfo node : connectedNodes.values()) {
+                        for (NodeInfo node : serviceNodes.values()) {
                             logger.debug(node.toString());
                         }
-                        for (NodeInfo node : connectedClients.values()) {
-                            logger.debug(node.toString());
+                        for (MobileClientInfo mobile : mobileClients.values()) {
+                            logger.debug(mobile.toString());
                         }
                         logger.debug("End Current Connections.");
 
                         logger.debug("Sending HeartbeatRequests");
-                        for (NodeInfo node : connectedNodes.values()) {
-                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getSystemID());
+                        for (NodeInfo node : serviceNodes.values()) {
+                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getUuid());
                             sendAsJson(node.getWebSocket(), heartbeat);
                         }
-                        for (NodeInfo node : connectedClients.values()) {
-                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getSystemID());
-                            sendAsJson(node.getWebSocket(), heartbeat);
+                        for (MobileClientInfo mobile : mobileClients.values()) {
+                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(mobile.getUuid());
+                            sendAsJson(mobile.getWebSocket(), heartbeat);
                         }
 
                         launchNodeClientLatencyRequest();
@@ -68,53 +71,65 @@ public class Orchestrator extends WebSocketServer {
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
-    public static URI mapToUri(InetSocketAddress socketAddress) {
-        String uriString = String.format("ws://%s:%d", socketAddress.getHostString(), PING_SERVER_PORTNUMBER);
+    public static URI mapToUri(InetAddress address) {
+        String uriString = String.format("ws://%s:%d", address.getHostAddress(), PING_SERVER_PORTNUMBER);
         return URI.create(uriString);
     }
 
-    private void launchNodeClientLatencyRequest() {
-        // todo remove this once we've sorted out the ServiceNode vs MobileClient issue
-        final String CLIENT_SERVICE_NAME = "MobileUser";
-        Predicate<NodeInfo> infoIsClient = nodeInfo -> nodeInfo.getServiceName().equals(CLIENT_SERVICE_NAME);
+    private static InetAddress getClientAddress(WebSocket webSocket, ClientHandshake handshake) {
+        String xForwardedFor = handshake.getFieldValue(X_FORWARDED_FOR);
+        if (!xForwardedFor.isEmpty()) {
+            return mapStringToAddress(xForwardedFor);
+        }
+        return webSocket.getRemoteSocketAddress().getAddress();
+    }
 
+    private static InetAddress mapStringToAddress(String addressString) {
+        InetAddress webSocketAddress = null;
+        try {
+            webSocketAddress = InetAddress.getByName(addressString);
+        } catch (UnknownHostException e) {
+            logger.error("Unknown host at {} ; message: {}", addressString, e.getMessage());
+        }
+        return webSocketAddress;
+    }
+
+    private void launchNodeClientLatencyRequest() {
         // todo remove this eventually
         logger.debug("");
         logger.debug("Printing NodeInfo.name , NodeInfo.serviceAddress");
-        for (NodeInfo info : connectedNodes.values()) {
+        for (NodeInfo info : serviceNodes.values()) {
             logger.debug("{} {}", info.getServiceName(), info.getWebSocket().getRemoteSocketAddress());
         }
-        for (NodeInfo info : connectedClients.values()) {
-            logger.debug("{} {}", info.getServiceName(), info.getWebSocket().getRemoteSocketAddress());
+        for (MobileClientInfo mobile : mobileClients.values()) {
+            logger.debug("{} {}", mobile.getDesiredServiceName(), mobile.getPingServer());
         }
         logger.debug("End printing.\n");
 
         // todo remove these once we start sending NodeClientLatencyRequests to specific nodes
         // find any client
-        NodeInfo client = connectedClients.values().stream()
+        MobileClientInfo mobileClient = mobileClients.values().stream()
                 .findAny()
                 .orElse(null);
 
         // find a cloud node
-        NodeInfo cloud = connectedNodes.values().stream()
-                .filter(infoIsClient.negate())
+        NodeInfo cloud = serviceNodes.values().stream()
                 .findAny()
                 .orElse(null);
 
         // todo extract to another method, or class (good code but verbose)
-        if (nonNull(client) && nonNull(cloud)) {
+        if (nonNull(mobileClient) && nonNull(cloud)) {
             // create a NodeClientLatencyRequest
-            InetSocketAddress clientSocketAddr = client.getWebSocket().getRemoteSocketAddress();
-            URI clientUri = mapToUri(clientSocketAddr);
+            InetAddress clientAddress = mobileClient.getPingServer();
+            URI clientPingServer = mapToUri(clientAddress);
 
-            // todo use the actual MobileClient host name (from the X-Forwarded-For header)
             NodeClientLatencyRequest request = new NodeClientLatencyRequest(
-                    cloud.getSystemID(), client.getSystemID(), clientUri);
+                    cloud.getUuid(), mobileClient.getUuid(), clientPingServer);
 
             // send the request
             sendAsJson(cloud.getWebSocket(), request);
         } else {
-            if (isNull(client)) logger.info("launchNodeClientLatencyRequest: client is null");
+            if (isNull(mobileClient)) logger.info("launchNodeClientLatencyRequest: client is null");
             if (isNull(cloud)) logger.info("launchNodeClientLatencyRequest: cloud is null");
         }
     }
@@ -128,7 +143,8 @@ public class Orchestrator extends WebSocketServer {
                 .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
                 .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
                 .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
-                .registerSubtype(NodeClientLatencyResponse.class, Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE);
+                .registerSubtype(NodeClientLatencyResponse.class, Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE)
+                .registerSubtype(MobileClientInfo.class, Message.MessageTypes.MOBILE_CLIENT_INFO);
         gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
     }
 
@@ -142,10 +158,12 @@ public class Orchestrator extends WebSocketServer {
         }
         logger.debug("END Http Headers.");
 
-        // todo keep the "X-Forwarded-For" headers with each Node
-        //  use these for NodeClientLatencyRequests
-
         UUID UUIDToReturn = UUID.randomUUID();
+
+        // cache client addresses for safekeeping
+        InetAddress newWSClientAddress = getClientAddress(webSocket, clientHandshake);
+        newWSClientAddresses.put(UUIDToReturn, getClientAddress(webSocket, clientHandshake));
+        logger.debug("Keeping UUID and WSocketAddress: {} {}", UUIDToReturn, newWSClientAddress);
 
         //create a nodeInfoRequest and send it back to the node
         NodeInfoRequest infoRequest = new NodeInfoRequest(UUIDToReturn);
@@ -165,15 +183,10 @@ public class Orchestrator extends WebSocketServer {
         //this routes inbound messages based on type and then moves them to other methods
         switch (messageObj.getType()) {
             case Message.MessageTypes.NODE_INFO:
-                NodeInfo nodeInfo = (NodeInfo) messageObj;
-                nodeInfo.setWebSocket(webSocket);
-
-                // todo better deal with difference between Application Nodes and Mobile Clients
-                if (nodeInfo.getServiceName() != null && nodeInfo.getServiceName().equals("MobileUser")) {
-                    connectedClients.put(nodeInfo.getSystemID(), nodeInfo);
-                } else {
-                    connectedNodes.put(nodeInfo.getSystemID(), nodeInfo);
-                }
+                registerServiceNode((NodeInfo) messageObj, webSocket);
+                break;
+            case Message.MessageTypes.MOBILE_CLIENT_INFO:
+                registerMobileClient((MobileClientInfo) messageObj, webSocket);
                 break;
             case Message.MessageTypes.SERVICE_REQUEST:
                 ServiceRequest serviceRequest = (ServiceRequest) messageObj;
@@ -184,15 +197,18 @@ public class Orchestrator extends WebSocketServer {
                 // routes a ServiceResponse from a Node (after it has migrated a service) to the client
                 //
                 ServiceResponse response = (ServiceResponse) messageObj;
-                WebSocket returnSocket = connectedNodes.get(response.getRequesterId()).getWebSocket();
+                WebSocket returnSocket = serviceNodes.get(response.getRequesterId()).getWebSocket();
                 sendAsJson(returnSocket, response);
                 break;
             case Message.MessageTypes.MIGRATION_SUCCESS:
                 MigrationSuccess successMessage = (MigrationSuccess) messageObj;
-                connectedNodes.get(successMessage.getHostId()).setServiceName(successMessage.getServiceName());
-                connectedNodes.get(successMessage.getOldHostId()).setServiceName("noService");
+                serviceNodes.get(successMessage.getHostId()).setServiceName(successMessage.getServiceName());
+                serviceNodes.get(successMessage.getOldHostId()).setServiceName("noService");
                 break;
             case Message.MessageTypes.HOST_REQUEST:
+                // todo take a look here: does the Orchestrator always answer the HostRequest with
+                //  the current recommended host?
+
                 HostRequest hostRequest = (HostRequest) messageObj;
                 ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
                 NodeInfo returnedNode = null;
@@ -221,6 +237,24 @@ public class Orchestrator extends WebSocketServer {
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
                 break;
         }
+    }
+
+    // todo extract these "register" methods to a separate class
+    private void registerServiceNode(NodeInfo nodeInfo, WebSocket webSocket) {
+        nodeInfo.setWebSocket(webSocket);
+
+        // removes Address (of no use to the ServiceNodes)
+        newWSClientAddresses.remove(nodeInfo.getUuid());
+        serviceNodes.put(nodeInfo.getUuid(), nodeInfo);
+    }
+
+    private void registerMobileClient(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
+        mobileClientInfo.setWebSocket(webSocket);
+        if (newWSClientAddresses.containsKey(mobileClientInfo.getUuid())) {
+            InetAddress address = newWSClientAddresses.remove(mobileClientInfo.getUuid());
+            mobileClientInfo.setPingServer(address);
+        }
+        mobileClients.put(mobileClientInfo.getUuid(), mobileClientInfo);
     }
 
     /**
@@ -269,12 +303,12 @@ public class Orchestrator extends WebSocketServer {
             return null;
         }
         // todo remove the bug here: assumes worstCurrentOwner is non-null
-        if (worstCurrentOwner.getSystemID().equals(bestNode.getSystemID())) {
+        if (worstCurrentOwner.getUuid().equals(bestNode.getUuid())) {
             return bestNode;
         }
 
         // tells the worstCurrentOwner to send its service to the bestNode
-        ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
+        ServiceRequest request = new ServiceRequest(bestNode.getUuid(), serviceRequest.getServiceName());
         sendAsJson(worstCurrentOwner.getWebSocket(), request);
 
         return bestNode;
@@ -329,7 +363,7 @@ public class Orchestrator extends WebSocketServer {
      */
     public Map<UUID, NodeInfo> findAllServiceOwners(ServiceRequest serviceRequest) {
         Map<UUID, NodeInfo> toReturn = new HashMap<>();
-        for (Map.Entry<UUID, NodeInfo> entry : connectedNodes.entrySet()) {
+        for (Map.Entry<UUID, NodeInfo> entry : serviceNodes.entrySet()) {
             // a Node is a service owner if:
             //  The service name is non-null, and
             //  The service name equals the name in the ServiceRequest
@@ -351,7 +385,7 @@ public class Orchestrator extends WebSocketServer {
     private NodeInfo findBestConnectedNode() {
         NodeInfo bestNode = null;
         try {
-            bestNode = connectedNodes.values().stream()
+            bestNode = serviceNodes.values().stream()
                     .filter(n -> n.getServiceName() == null)
                     .findAny()
                     .orElseThrow(NoSuchNodeException::new);
@@ -436,23 +470,27 @@ public class Orchestrator extends WebSocketServer {
         logger.info("Closing a connection to {}", webSocket.getRemoteSocketAddress());
         logger.debug("Reason: {}", s);
 
+        // todo fix this mess
         // remove the node that owns the connection
-        try {
-            Set<Map.Entry<UUID, NodeInfo>> allNodes = new HashSet<>();
-            allNodes.addAll(connectedNodes.entrySet());
-            allNodes.addAll(connectedClients.entrySet());
-            UUID toRemove = allNodes.stream()
-                    .filter(e -> e.getValue().getWebSocket().equals(webSocket))
-                    .findAny()
-                    .orElseThrow(NoSuchNodeException::new)
-                    .getKey();
-
-            logger.debug("Removing Node {} from connectedNodes.", toRemove);
-            connectedNodes.remove(toRemove);
-            connectedClients.remove(toRemove);
-        } catch (NoSuchNodeException e) {
-            logger.error("No Node with address {} found in connectedNodes", webSocket.getRemoteSocketAddress());
-            e.printStackTrace();
+        UUID removed = null;
+        Map.Entry<UUID, NodeInfo> nodeToRemove = serviceNodes.entrySet().stream()
+                .filter(entry -> entry.getValue().getWebSocket().equals(webSocket))
+                .findAny()
+                .orElse(null);
+        if (nonNull(nodeToRemove)) {
+            removed = nodeToRemove.getKey();
+            serviceNodes.remove(nodeToRemove.getKey());
         }
+
+        Map.Entry<UUID, MobileClientInfo> mobileToRemove = mobileClients.entrySet().stream()
+                .filter(entry -> entry.getValue().getWebSocket().equals(webSocket))
+                .findAny()
+                .orElse(null);
+        if (nonNull(mobileToRemove)) {
+            removed = mobileToRemove.getKey();
+            mobileClients.remove(mobileToRemove.getKey());
+        }
+
+        logger.debug("Removed Node {}", removed);
     }
 }

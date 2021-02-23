@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class NodeInfo extends Message {
-    private UUID systemID;
+    private UUID uuid;
     private WebSocket webSocket;
     private String serviceName;
     private Map<Integer, Double> CPUload;
@@ -23,9 +23,9 @@ public class NodeInfo extends Message {
     }
 
     // todo remove CPUload from here
-    public NodeInfo(UUID systemID, Map<Integer, Double> CPUload, String serviceName) {
+    public NodeInfo(UUID uuid, Map<Integer, Double> CPUload, String serviceName) {
         super(Message.MessageTypes.NODE_INFO);
-        this.systemID = systemID;
+        this.uuid = uuid;
         this.CPUload = CPUload;
         this.serviceName = serviceName;
     }
@@ -54,8 +54,8 @@ public class NodeInfo extends Message {
         this.serviceName = serviceName;
     }
 
-    public UUID getSystemID() {
-        return systemID;
+    public UUID getUuid() {
+        return uuid;
     }
 
     public Map<Integer, Double> getCPUload() {
@@ -109,7 +109,7 @@ public class NodeInfo extends Message {
     @Override
     public String toString() {
         return String.format("UUID=%s remoteSA=%s, serviceName=%s, serviceHostAddress=%s",
-                systemID,
+                uuid,
                 webSocket.getRemoteSocketAddress(),
                 serviceName,
                 serviceHostAddress
