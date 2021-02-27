@@ -11,7 +11,6 @@ public class MobileClientInfo extends Message {
     private InetAddress pingServer;
     private WebSocket webSocket;
 
-
     public MobileClientInfo() {
         super(MessageTypes.MOBILE_CLIENT_INFO);
     }
