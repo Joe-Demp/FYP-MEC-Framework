@@ -123,6 +123,10 @@ public class Cloud extends AbstractServiceNode {
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST:
                 NodeClientLatencyRequest nclRequest = (NodeClientLatencyRequest) messageObj;
+
+                // todo here: requests should have clouds continually checking MobileClients
+                //  i.e. when a request is received, it should be sent to the 'LatencyChecker'
+                //      which should startLatencyRequests every so often
                 latencyRequestMonitor.startLatencyRequest(nclRequest);
                 break;
             default:
