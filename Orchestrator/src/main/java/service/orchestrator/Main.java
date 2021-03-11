@@ -5,9 +5,11 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import service.orchestrator.properties.OrchestratorProperties;
+import service.orchestrator.migration.LatencyTrigger;
 
-import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @CommandLine.Command(name = "cmMain", mixinStandardHelpOptions = true, version = "0.8")
 public class Main implements Runnable {
@@ -28,11 +30,13 @@ public class Main implements Runnable {
         System.exit(exitCode);
     }
 
+    private static final ScheduledExecutorService scheduledService = Executors.newSingleThreadScheduledExecutor();
+
     @Override
     public void run() {
         if (!secure) {
+            scheduledService.scheduleAtFixedRate(new LatencyTrigger(), 5, 5, TimeUnit.SECONDS);
             // consider spinning up more threads here:
-            //      e.g. periodic migration trigger
             //      Node Scorer? -> except this is a job that can be done on demand
             //          A thread would be good here if it was to keep scoring on a rolling basis.
 
@@ -45,8 +49,6 @@ public class Main implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 }
-
