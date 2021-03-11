@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.core.NodeInfo;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.DoubleStream;
@@ -88,6 +89,15 @@ public class ServiceNode {
 
     public double getMeanStorage() {
         return getMean(unusedStorage);
+    }
+
+    /**
+     * Gets the address that this orchestrator uses to communicate with the {@code ServiceNode}
+     *
+     * @return the remote address of the WebSocket owned by this class.
+     */
+    public InetSocketAddress getAddress() {
+        return webSocket.getRemoteSocketAddress();
     }
 
     private double getMean(Collection<? extends Number> numbers) {

@@ -222,40 +222,44 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     private void launchNodeClientLatencyRequest() {
         // todo remove this eventually
+
+        Collection<ServiceNode> serviceNodes = serviceNodeRegistry.getServiceNodes();
+        Collection<MobileClient> mobileClients = mobileClientRegistry.getMobileClients();
+
         logger.debug("");
-        logger.debug("Printing NodeInfo.name , NodeInfo.serviceAddress");
-        for (NodeInfo info : serviceNodes.values()) {
-            logger.debug("{} {}", info.getServiceName(), info.getWebSocket().getRemoteSocketAddress());
+        logger.debug("Printing ServiceNode name & address");
+        for (ServiceNode node : serviceNodes) {
+            logger.debug("{} {}", node.serviceName, node.getAddress());
         }
         logger.debug("End printing.");
-        logger.debug("Printing MobileClientInfo.desiredServiceName , MobileClientInfo.pingServerAddress");
-        for (MobileClientInfo mobile : mobileClients.values()) {
-            logger.debug("{} {}", mobile.getDesiredServiceName(), mobile.getPingServer());
+        logger.debug("Printing MobileClient desiredServiceName & pingServer");
+        for (MobileClient client : mobileClients) {
+            logger.debug("{} {}", client.desiredServiceName, client.pingServer);
         }
         logger.debug("End printing.\n");
 
         // todo remove these once we start sending NodeClientLatencyRequests to specific nodes
         // find any client
-        MobileClientInfo mobileClient = mobileClients.values().stream()
+        MobileClient mobileClient = mobileClients.stream()
                 .findAny()
                 .orElse(null);
 
         // find a cloud node
-        NodeInfo cloud = serviceNodes.values().stream()
+        ServiceNode cloud = serviceNodes.stream()
                 .findAny()
                 .orElse(null);
 
         // todo extract to another method, or class (good code but verbose)
         if (nonNull(mobileClient) && nonNull(cloud)) {
             // create a NodeClientLatencyRequest
-            InetAddress clientAddress = mobileClient.getPingServer();
+            InetAddress clientAddress = mobileClient.pingServer;
             URI clientPingServer = mapToUri(clientAddress);
 
             NodeClientLatencyRequest request = new NodeClientLatencyRequest(
-                    cloud.getUuid(), mobileClient.getUuid(), clientPingServer);
+                    cloud.uuid, mobileClient.uuid, clientPingServer);
 
             // send the request
-            sendAsJson(cloud.getWebSocket(), request);
+            sendAsJson(cloud.webSocket, request);
         } else {
             if (isNull(mobileClient)) logger.info("launchNodeClientLatencyRequest: client is null");
             if (isNull(cloud)) logger.info("launchNodeClientLatencyRequest: cloud is null");
