@@ -8,14 +8,14 @@ public class PingResult {
     public Instant finishTime;
 
     /**
-     * A ping result with a startTime after its finishTime, to flag errors.
+     * A ping result with a run time of one day, to flag errors.
      */
     public static final PingResult ERROR_PING_RESULT;
 
     static {
         ERROR_PING_RESULT = new PingResult();
         ERROR_PING_RESULT.finishTime = Instant.now();
-        ERROR_PING_RESULT.startTime = ERROR_PING_RESULT.finishTime.plus(1, ChronoUnit.DAYS);
+        ERROR_PING_RESULT.startTime = ERROR_PING_RESULT.finishTime.minus(1, ChronoUnit.DAYS);
     }
 
     public long getRunTimeInMillis() {
