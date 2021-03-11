@@ -30,7 +30,6 @@ public class Main implements Runnable {
 
     @Override
     public void run() {
-        tryGetProperties();
         if (!secure) {
             // consider spinning up more threads here:
             //      e.g. periodic migration trigger
@@ -49,15 +48,5 @@ public class Main implements Runnable {
 
         }
     }
-
-    // todo remove
-    private void tryGetProperties() {
-        try {
-            OrchestratorProperties ops = OrchestratorProperties.get();
-            System.out.printf("%d %f %f %f\n",
-                    ops.getMaxLatency(), ops.getMaxCpu(), ops.getMaxMemory(), ops.getMinStorage());
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
 }
+
