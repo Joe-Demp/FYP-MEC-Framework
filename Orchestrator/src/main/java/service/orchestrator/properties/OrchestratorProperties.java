@@ -1,31 +1,45 @@
 package service.orchestrator.properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.MissingResourceException;
 import java.util.Properties;
 
 import static java.util.Objects.isNull;
 
 public class OrchestratorProperties {
+    private static final Logger logger = LoggerFactory.getLogger(OrchestratorProperties.class);
     private static final String FILENAME = "orchestrator.properties";
     private static final String DEFAULT_DOUBLE = Double.valueOf(1.0).toString();
     private static OrchestratorProperties instance;
     private Properties properties;
 
-    private OrchestratorProperties() throws IOException {
+    private OrchestratorProperties() {
         properties = new Properties();
-        properties.load(new FileInputStream(getFilePath()));
+
+        try {
+            properties.load(new FileInputStream(getFilePath()));
+        } catch (IOException ioe) {
+            logger.error(ioe.getMessage());
+            ioe.printStackTrace();
+            throw new MissingResourceException(
+                    String.format("No Orchestrator properties file found: %s", ioe.getMessage()),
+                    OrchestratorProperties.class.getSimpleName(),
+                    "orchestrator.properties"
+            );
+        }
     }
 
     /**
      * Gets the singleton OrchestratorProperties.
      *
      * @return an OrchestratorProperties object, if one exists already, or was created during this invocation.
-     * @throws IOException if the underlying properties file could not be found or if there was a problem while reading
-     *                     said properties file.
      */
-    public static OrchestratorProperties get() throws IOException {
+    public static OrchestratorProperties get() {
         if (isNull(instance)) {
             instance = new OrchestratorProperties();
         }

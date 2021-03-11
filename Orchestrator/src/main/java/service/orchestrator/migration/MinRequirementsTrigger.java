@@ -6,8 +6,10 @@ import service.orchestrator.nodes.ServiceNode;
 import service.orchestrator.nodes.ServiceNodeRegistry;
 import service.orchestrator.properties.OrchestratorProperties;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.OptionalDouble;
 import java.util.stream.DoubleStream;
 
 public class MinRequirementsTrigger implements Trigger {
@@ -21,7 +23,7 @@ public class MinRequirementsTrigger implements Trigger {
 
     @Override
     public void examine(Collection<ServiceNode> nodes) {
-        OrchestratorProperties properties = getOrchestratorProperties();
+        OrchestratorProperties properties = OrchestratorProperties.get();
         List<ServiceNode> failingNodes = new LinkedList<>();
 
         // todo nodes
@@ -44,22 +46,6 @@ public class MinRequirementsTrigger implements Trigger {
             }
         }
         migrator.trigger(failingNodes);
-    }
-
-    private OrchestratorProperties getOrchestratorProperties() {
-        OrchestratorProperties properties;
-        try {
-            properties = OrchestratorProperties.get();
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-            e.printStackTrace();
-            throw new MissingResourceException(
-                    "No Orchestrator properties file found",
-                    OrchestratorProperties.class.getSimpleName(),
-                    "orchestrator.properties"
-            );
-        }
-        return properties;
     }
 
     /**
