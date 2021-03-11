@@ -38,7 +38,7 @@ public class Main implements Runnable {
             //          A thread would be good here if it was to keep scoring on a rolling basis.
 
             logger.info("Starting Orchestrator");
-            Orchestrator orchestrator = new Orchestrator(port, rollingAverage);
+            Orchestrator orchestrator = new Orchestrator(port);
             orchestrator.run();
         } else {
             try {

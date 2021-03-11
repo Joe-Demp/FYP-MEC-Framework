@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class NodeInfo extends Message {
+    // todo remove unnecessary fields from here. Some are now held in ServiceNode
+
     private UUID uuid;
     private WebSocket webSocket;
     private String serviceName;

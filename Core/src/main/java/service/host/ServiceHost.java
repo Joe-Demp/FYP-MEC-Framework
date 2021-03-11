@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+/**
+ * Acts as a WebSocket proxy server for an application running under a DockerController.
+ */
 public class ServiceHost extends WebSocketServer {
     private static final Logger logger = LoggerFactory.getLogger(ServiceHost.class);
     DockerController dockerController;

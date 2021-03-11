@@ -9,6 +9,7 @@ import service.core.*;
 import java.net.URI;
 
 // todo pull functions from the subclasses up
+// todo rethink this (at least the naming -> we want nodes to *use* WebSockets, not *be* them
 public abstract class AbstractServiceNode extends WebSocketClient {
     protected Gson gson;
 

@@ -52,7 +52,7 @@ public class OrchestratorProperties {
     }
 
     public double getMaxMemory() {
-        String maxCpu = (String) properties.getOrDefault("application.limit.max-memory", DEFAULT_DOUBLE);
+        String maxCpu = (String) properties.getOrDefault("application.limit.max-memory-used", DEFAULT_DOUBLE);
         return Double.parseDouble(maxCpu);
     }
 

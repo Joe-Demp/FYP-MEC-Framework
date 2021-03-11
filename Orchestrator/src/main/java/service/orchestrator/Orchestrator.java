@@ -9,7 +9,12 @@ import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.core.*;
+import service.orchestrator.clients.MobileClient;
+import service.orchestrator.clients.MobileClientRegistry;
 import service.orchestrator.exceptions.NoSuchNodeException;
+import service.orchestrator.migration.Migrator;
+import service.orchestrator.nodes.ServiceNode;
+import service.orchestrator.nodes.ServiceNodeRegistry;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -22,24 +27,25 @@ import static java.util.Objects.nonNull;
 
 // todo remove hard coded values and use a config file instead (or command line args)
 
-public class Orchestrator extends WebSocketServer {
+public class Orchestrator extends WebSocketServer implements Migrator {
+    public static final int PING_SERVER_PORTNUMBER = 8092;
     private static final Logger logger = LoggerFactory.getLogger(Orchestrator.class);
     private static final long HEARTBEAT_REQUEST_PERIOD = 20L * 1000L;
-    public static final int PING_SERVER_PORTNUMBER = 8092;
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
-
-    int rollingAverage;
+    private static final ServiceNodeRegistry serviceNodeRegistry = ServiceNodeRegistry.get();
+    private static final MobileClientRegistry mobileClientRegistry = MobileClientRegistry.get();
 
     // todo extract the Node and MobileClient storage into special classes
     private Map<UUID, NodeInfo> serviceNodes = new HashMap<>();
     private Map<UUID, MobileClientInfo> mobileClients = new HashMap<>();
+    // todo create a way to map serviceNodes to the mobileClients they serve
+
     private Map<UUID, InetAddress> newWSClientAddresses = new HashMap<>();
     private Gson gson;
     private boolean migrationOccurred = false;
 
-    public Orchestrator(int port, int rollingAverage) {
+    public Orchestrator(int port) {
         super(new InetSocketAddress(port));
-        this.rollingAverage = (100 * rollingAverage) / 100;
         initializeGson();
 
         // todo extract this to a method
@@ -48,22 +54,22 @@ public class Orchestrator extends WebSocketServer {
                     @Override
                     public void run() {
                         logger.debug("Current connections:");
-                        for (NodeInfo node : serviceNodes.values()) {
+                        for (ServiceNode node : serviceNodeRegistry.getServiceNodes()) {
                             logger.debug(node.toString());
                         }
-                        for (MobileClientInfo mobile : mobileClients.values()) {
+                        for (MobileClient mobile : mobileClientRegistry.getMobileClients()) {
                             logger.debug(mobile.toString());
                         }
                         logger.debug("End Current Connections.");
 
                         logger.debug("Sending HeartbeatRequests");
-                        for (NodeInfo node : serviceNodes.values()) {
-                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.getUuid());
-                            sendAsJson(node.getWebSocket(), heartbeat);
+                        for (ServiceNode node : serviceNodeRegistry.getServiceNodes()) {
+                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.uuid);
+                            sendAsJson(node.webSocket, heartbeat);
                         }
-                        for (MobileClientInfo mobile : mobileClients.values()) {
-                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(mobile.getUuid());
-                            sendAsJson(mobile.getWebSocket(), heartbeat);
+                        for (MobileClient mobile : mobileClientRegistry.getMobileClients()) {
+                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(mobile.uuid);
+                            sendAsJson(mobile.webSocket, heartbeat);
                         }
 
                         launchNodeClientLatencyRequest();
@@ -72,7 +78,6 @@ public class Orchestrator extends WebSocketServer {
     }
 
     public static URI mapToUri(InetAddress address) {
-        if (address == null) logger.debug("mapToUri InetAddress is null");
         String uriString = String.format("ws://%s:%d", address.getHostAddress(), PING_SERVER_PORTNUMBER);
         logger.debug("Mapping {} to URI.", uriString);
         return URI.create(uriString);
@@ -96,12 +101,6 @@ public class Orchestrator extends WebSocketServer {
         return webSocketAddress;
     }
 
-    private static void updateExistingMobileClientInfo(MobileClientInfo existing, MobileClientInfo fresh) {
-        if (!existing.getDesiredServiceName().equals(fresh.getDesiredServiceName())) {
-            existing.setDesiredServiceName(fresh.getDesiredServiceName());
-        }
-    }
-
     private void initializeGson() {
         RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
                 .of(Message.class, "type")
@@ -116,6 +115,16 @@ public class Orchestrator extends WebSocketServer {
         gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
     }
 
+    /*
+    Note the somewhat complicated 'dance' here.
+    WebSocketClients connect to this Server, but we don't know whether they are ServiceNodes or MobileClients
+
+    We also need to associate their IP address with them, either from the webSocket object or via the X-Forwarded-For
+    header in the clientHandshake.
+
+    Therefore we keep the client's address in newWSClientAddress until it is removed when a NodeInfo or
+    MobileClientInfo message is received.
+     */
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
         logger.info("new connection :" + webSocket.getRemoteSocketAddress());
@@ -130,7 +139,7 @@ public class Orchestrator extends WebSocketServer {
 
         // cache client addresses for safekeeping
         InetAddress newWSClientAddress = getClientAddress(webSocket, clientHandshake);
-        newWSClientAddresses.put(UUIDToReturn, getClientAddress(webSocket, clientHandshake));
+        newWSClientAddresses.put(UUIDToReturn, newWSClientAddress);
         logger.debug("Keeping UUID and WSocketAddress: {} {}", UUIDToReturn, newWSClientAddress);
 
         //create a nodeInfoRequest and send it back to the node
@@ -174,30 +183,11 @@ public class Orchestrator extends WebSocketServer {
                 serviceNodes.get(successMessage.getOldHostId()).setServiceName("noService");
                 break;
             case Message.MessageTypes.HOST_REQUEST:
-                // todo take a look here: does the Orchestrator always answer the HostRequest with
-                //  the current recommended host?
-
-                HostRequest hostRequest = (HostRequest) messageObj;
-                ServiceRequest requestFromUser = new ServiceRequest(hostRequest.getRequestorID(), hostRequest.getRequestedServiceName());
-                NodeInfo returnedNode = null;
-                if (!migrationOccurred) {
-//                    returnedNode = transferServiceToBestNode(requestFromUser);
-//                    logger.debug("Attempted to transfer service");
-                    migrationOccurred = true;
-                    logger.warn("Not calling transferServiceToBestNode. Fix this asap.");
-                }
-
-                // service has been moved to an optimal location. Inform the client
-                HostResponse responseForClient;
-                if (returnedNode == null) {
-                    responseForClient = new HostResponse(hostRequest.getRequestorID(), null);
-                } else {
-                    URI returnURI = returnedNode.getServiceHostAddress();
-                    responseForClient = new HostResponse(hostRequest.getRequestorID(), returnURI);
-                }
-                sendAsJson(webSocket, responseForClient);
+                logger.warn("Not calling transferServiceToBestNode. Fix this asap.");
+                handleHostRequest((HostRequest) messageObj);
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE:
+                // todo associate the latency with the given Node
                 NodeClientLatencyResponse nclResponse = (NodeClientLatencyResponse) messageObj;
                 logger.info("Received a NodeClientLatencyResponse, latency={}", nclResponse.getLatency());
                 break;
@@ -207,13 +197,27 @@ public class Orchestrator extends WebSocketServer {
         }
     }
 
+    private void handleHostRequest(HostRequest request) {
+        MobileClient requestor = mobileClientRegistry.get(request.getRequestorID());
+        ServiceNode bestNode = getBestServiceForClient(requestor);
+        HostResponse response = new HostResponse(request.getRequestorID(), bestNode.serviceHostAddress);
+
+        sendAsJson(requestor.webSocket, response);
+    }
+
+    // todo should be done by the selector
+    private ServiceNode getBestServiceForClient(MobileClient mobileClient) {
+        return serviceNodeRegistry.getServiceNodes().stream().findAny().orElse(null);
+    }
+
     // todo extract these "register" methods to a separate class
     private void registerServiceNode(NodeInfo nodeInfo, WebSocket webSocket) {
         nodeInfo.setWebSocket(webSocket);
-
-        // removes Address (of no use to the ServiceNodes)
+        // Removes Address from the newWSClient Addresses
+        //  used by the Orchestrator to track *MobileClients*
+        //  not ServiceNodes.
         newWSClientAddresses.remove(nodeInfo.getUuid());
-        serviceNodes.put(nodeInfo.getUuid(), nodeInfo);
+        serviceNodeRegistry.updateNode(nodeInfo);
     }
 
     private void launchNodeClientLatencyRequest() {
@@ -258,18 +262,28 @@ public class Orchestrator extends WebSocketServer {
         }
     }
 
-    // todo this method does too many things. Split & extract MobileClientInfos into a separate class
     private void registerMobileClient(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
         boolean firstTimeToRegister = newWSClientAddresses.containsKey(mobileClientInfo.getUuid());
+
         if (firstTimeToRegister) {
-            InetAddress address = newWSClientAddresses.remove(mobileClientInfo.getUuid());
-            mobileClientInfo.setPingServer(address);
-            mobileClientInfo.setWebSocket(webSocket);
-            mobileClients.put(mobileClientInfo.getUuid(), mobileClientInfo);
+            registerNewMobileClient(mobileClientInfo, webSocket);
         } else {
-            MobileClientInfo existingMobileClient = mobileClients.get(mobileClientInfo.getUuid());
-            updateExistingMobileClientInfo(existingMobileClient, mobileClientInfo);
+            updateExistingMobileClient(mobileClientInfo);
         }
+    }
+
+    // todo consider a new name here, very similar to other method
+    private void registerNewMobileClient(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
+        InetAddress address = newWSClientAddresses.remove(mobileClientInfo.getUuid());
+        mobileClientInfo.setPingServer(address);
+        mobileClientInfo.setWebSocket(webSocket);
+        mobileClients.put(mobileClientInfo.getUuid(), mobileClientInfo);
+        mobileClientRegistry.updateClient(mobileClientInfo);
+    }
+
+    private void updateExistingMobileClient(MobileClientInfo mobileClientInfo) {
+        // todo remove this if not needed (MobileClientInfo doesn't really change)
+        mobileClientRegistry.updateClient(mobileClientInfo);
     }
 
     /**
@@ -304,6 +318,8 @@ public class Orchestrator extends WebSocketServer {
     /**
      * This method transfers the requested service to the best node available,
      * if that node is the current host, no transfer occurs
+     * <p>
+     * // todo fix this: Trigger should be able to call this? Or Selector..
      *
      * @param serviceRequest the requested service
      * @return the NodeInfo for the node that was deemed best
@@ -436,7 +452,7 @@ public class Orchestrator extends WebSocketServer {
             }
         }
 
-        return ((1 - rollingAverage) * rollingCPUScore) + (rollingAverage * (runningTotal / 5));
+        return -1; // ((1 - rollingAverage) * rollingCPUScore) + (rollingAverage * (runningTotal / 5));
     }
 
     /**
@@ -453,7 +469,7 @@ public class Orchestrator extends WebSocketServer {
                 runningTotal = +entryRamLoad.get(i);
             }
         }
-        return ((1 - rollingAverage) * rollingRamScore) + (rollingAverage * (runningTotal / 5));
+        return -1; //((1 - rollingAverage) * rollingRamScore) + (rollingAverage * (runningTotal / 5));
     }
 
     private void requestClientLatencyReportFromNode() {
@@ -467,6 +483,15 @@ public class Orchestrator extends WebSocketServer {
             Node connects to that WSServer, does a few pings and returns the results to the Orchestrator.
          */
         // END PLAN
+    }
+
+    @Override
+    public void trigger(Collection<ServiceNode> nodes) {
+        logger.info("--- In Orchestrator.trigger ---");
+        for (ServiceNode node : nodes) {
+            logger.debug("{} {}", node.serviceName, node.webSocket.getRemoteSocketAddress());
+        }
+        logger.info("--- End Orchestrator.trigger ---");
     }
 
     @Override
