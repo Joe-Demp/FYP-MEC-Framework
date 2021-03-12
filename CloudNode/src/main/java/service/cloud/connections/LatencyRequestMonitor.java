@@ -2,42 +2,27 @@ package service.cloud.connections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.cloud.Cloud;
 import service.core.NodeClientLatencyRequest;
 import service.core.NodeClientLatencyResponse;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A class that handles NodeClientLatencyRequests, between this node and mobile clients.
  *
- * <p>The Node should pass its NodeClientLatencyRequests to this class through method startLatencyRequest. This class
- * will monitor the progress of those requests and send responses when they're ready.
+ * <p>Clients call startLatencyRequest and takeLatencySnapshot.
+ * This class will monitor request progress and store results.
  */
 public class LatencyRequestMonitor implements Runnable {
-    private static final long PULSE = 1000L;
     private static final Logger logger = LoggerFactory.getLogger(LatencyRequestMonitor.class);
 
-    // todo this should be a "Node", because Clouds and Edges should be location agnostic
-    //  reason why: need to use method Cloud#sendAsJson
-    private final Cloud wsClient;
-    private final AtomicBoolean running = new AtomicBoolean(true);
     private final Map<NodeClientLatencyResponse, Future<PingResult>> awaitedLatencyResponses = new HashMap<>();
-    private final Lock futurePingResultsIterationLock = new ReentrantLock();
     private final ExecutorService executor = Executors.newFixedThreadPool(5);
-
-    public LatencyRequestMonitor(Cloud wsClient) {
-        this.wsClient = wsClient;
-    }
+    private final Map<UUID, List<Long>> latencies = new Hashtable<>();
 
     private static PingResult extractFinishedPingResult(Future<PingResult> pingResultFuture) {
         try {
@@ -48,14 +33,6 @@ public class LatencyRequestMonitor implements Runnable {
         return PingResult.ERROR_PING_RESULT;
     }
 
-    private static void waitForPulse() {
-        try {
-            Thread.sleep(PULSE);
-        } catch (InterruptedException ie) {
-            logger.error("Interrupted while sleeping.");
-        }
-    }
-
     private static NodeClientLatencyResponse mapToResponse(NodeClientLatencyRequest request) {
         return new NodeClientLatencyResponse(
                 request.getNodeId(), request.getClientId(), request.getClientUri(), -1);
@@ -63,29 +40,23 @@ public class LatencyRequestMonitor implements Runnable {
 
     @Override
     public void run() {
-        while (running.get()) {
-            futurePingResultsIterationLock.lock();
-            checkForFinishedPingTasks();
-            futurePingResultsIterationLock.unlock();
-
-            waitForPulse();
-        }
+        checkForFinishedPingTasks();
     }
 
-    private void checkForFinishedPingTasks() {
+    // synchronized since it accesses awaitedLatencyResponses
+    private synchronized void checkForFinishedPingTasks() {
         /* Using the pre Java 1.5 style for loop with iterator in order to use method Iterator#remove()
          *
          * Loops through the Map of awaitedLatencyResponses and checks for those with finished PingTasks.
          * If a task is finished, it's removed from the Map and passed to sendFinishedNodeClientLatencyResponse.
          */
-        for (Iterator<Map.Entry<NodeClientLatencyResponse, Future<PingResult>>> it = getAwaitedLatencyResponsesIterator();
-             it.hasNext(); ) {
+        Iterator<Map.Entry<NodeClientLatencyResponse, Future<PingResult>>> it;
+        for (it = getAwaitedLatencyResponsesIterator(); it.hasNext(); ) {
             Map.Entry<NodeClientLatencyResponse, Future<PingResult>> awaitedResponse = it.next();
             if (awaitedResponse.getValue().isDone()) {
                 it.remove();
-                sendFinishedNodeClientLatencyResponse(
-                        awaitedResponse.getKey(), extractFinishedPingResult(awaitedResponse.getValue())
-                );
+                UUID clientUuid = awaitedResponse.getKey().getClientId();
+                saveLatency(clientUuid, extractFinishedPingResult(awaitedResponse.getValue()));
             }
         }
     }
@@ -94,16 +65,27 @@ public class LatencyRequestMonitor implements Runnable {
         return awaitedLatencyResponses.entrySet().iterator();
     }
 
-    private void sendFinishedNodeClientLatencyResponse(NodeClientLatencyResponse response, PingResult result) {
-        response.setLatency(result.getRunTimeInMillis());
-        wsClient.sendAsJson(response);
+    // synchronized since it updates latencies
+    private synchronized void saveLatency(UUID clientUuid, PingResult result) {
+        List<Long> clientLatencies = latencies.getOrDefault(clientUuid, new LinkedList<>());
+        long pingTime = result.getRunTimeInMillis();
+        clientLatencies.add(pingTime);
+        latencies.put(clientUuid, clientLatencies);
     }
 
-    public void startLatencyRequest(NodeClientLatencyRequest request) {
+    // synchronized since it accesses awaitedLatencyResponses
+    public synchronized void startLatencyRequest(NodeClientLatencyRequest request) {
         // create the PingTask, submit it to the ExecutorService, store the Future.
         NodeClientLatencyResponse response = mapToResponse(request);
         PingTask task = new PingTask(request.getClientUri());
         Future<PingResult> futurePingResult = executor.submit(task);
         awaitedLatencyResponses.put(response, futurePingResult);
+    }
+
+    // synchronized since it queries and clears latencies
+    public synchronized Map<UUID, List<Long>> takeLatencySnapshot() {
+        Map<UUID, List<Long>> latencySnapshot = Collections.unmodifiableMap(latencies);
+        latencies.clear();
+        return latencySnapshot;
     }
 }

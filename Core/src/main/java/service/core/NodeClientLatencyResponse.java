@@ -3,6 +3,7 @@ package service.core;
 import java.net.URI;
 import java.util.UUID;
 
+// todo get rid of this - Node will return Latency info in a NodeInfo Message
 public class NodeClientLatencyResponse extends Message {
     private UUID nodeId;
     private UUID clientId;

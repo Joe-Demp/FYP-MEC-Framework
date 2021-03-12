@@ -28,7 +28,7 @@ public class LatencyTrigger implements Trigger {
         OrchestratorProperties properties = OrchestratorProperties.get();
 
         for (ServiceNode node : nodes) {
-            for (Map.Entry<UUID, List<Long>> mcLatencyEntry : node.mobileClientLatencies.entrySet()) {
+            for (Map.Entry<UUID, List<Long>> mcLatencyEntry : node.getLatencies().entrySet()) {
                 long latencyAggregate = aggregateLatencies(mcLatencyEntry.getValue());
                 if (latencyAggregate > properties.getMaxLatency()) {
                     // do something about it

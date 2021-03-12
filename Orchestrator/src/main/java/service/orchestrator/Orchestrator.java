@@ -22,7 +22,6 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.*;
 
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 // todo remove hard coded values and use a config file instead (or command line args)
@@ -71,13 +70,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                             ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(mobile.uuid);
                             sendAsJson(mobile.webSocket, heartbeat);
                         }
-
-                        launchNodeClientLatencyRequest();
                     }
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
-    public static URI mapToUri(InetAddress address) {
+    private static URI mapToUri(InetAddress address) {
         String uriString = String.format("ws://%s:%d", address.getHostAddress(), PING_SERVER_PORTNUMBER);
         logger.debug("Mapping {} to URI.", uriString);
         return URI.create(uriString);
@@ -142,7 +139,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         newWSClientAddresses.put(UUIDToReturn, newWSClientAddress);
         logger.debug("Keeping UUID and WSocketAddress: {} {}", UUIDToReturn, newWSClientAddress);
 
-        //create a nodeInfoRequest and send it back to the node
+        // create a nodeInfoRequest and send it back to the node
         NodeInfoRequest infoRequest = new NodeInfoRequest(UUIDToReturn);
         sendAsJson(webSocket, infoRequest);
     }
@@ -172,12 +169,13 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
                 // routes a ServiceResponse from a Node (after it has migrated a service) to the client
-                //
+                // todo extract & replace serviceNodes with serviceNodeRegistry.getServiceNodes()
                 ServiceResponse response = (ServiceResponse) messageObj;
                 WebSocket returnSocket = serviceNodes.get(response.getRequesterId()).getWebSocket();
                 sendAsJson(returnSocket, response);
                 break;
             case Message.MessageTypes.MIGRATION_SUCCESS:
+                // todo extract & replace serviceNodes with serviceNodeRegistry.getServiceNodes()
                 MigrationSuccess successMessage = (MigrationSuccess) messageObj;
                 serviceNodes.get(successMessage.getHostId()).setServiceName(successMessage.getServiceName());
                 serviceNodes.get(successMessage.getOldHostId()).setServiceName("noService");
@@ -211,58 +209,23 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     }
 
     // todo extract these "register" methods to a separate class
-    private void registerServiceNode(NodeInfo nodeInfo, WebSocket webSocket) {
-        nodeInfo.setWebSocket(webSocket);
-        // Removes Address from the newWSClient Addresses
-        //  used by the Orchestrator to track *MobileClients*
-        //  not ServiceNodes.
-        newWSClientAddresses.remove(nodeInfo.getUuid());
-        serviceNodeRegistry.updateNode(nodeInfo);
+    // Removes Address from newWSClientAddresses, used by the Orchestrator to track *MobileClients* (not ServiceNodes).
+    private void registerServiceNode(NodeInfo nodeInfoMsg, WebSocket nodeWebSocket) {
+        nodeInfoMsg.setWebSocket(nodeWebSocket);
+        newWSClientAddresses.remove(nodeInfoMsg.getUuid());
+        serviceNodeRegistry.updateNode(nodeInfoMsg);
+
+        askNodeToTrackAllLatencies(serviceNodeRegistry.get(nodeInfoMsg.getUuid()));
     }
 
-    private void launchNodeClientLatencyRequest() {
-        // todo remove this eventually
-
-        Collection<ServiceNode> serviceNodes = serviceNodeRegistry.getServiceNodes();
+    private void askNodeToTrackAllLatencies(ServiceNode serviceNode) {
         Collection<MobileClient> mobileClients = mobileClientRegistry.getMobileClients();
+        NodeClientLatencyRequest request;
 
-        logger.debug("");
-        logger.debug("Printing ServiceNode name & address");
-        for (ServiceNode node : serviceNodes) {
-            logger.debug("{} {}", node.serviceName, node.getAddress());
-        }
-        logger.debug("End printing.");
-        logger.debug("Printing MobileClient desiredServiceName & pingServer");
         for (MobileClient client : mobileClients) {
-            logger.debug("{} {}", client.desiredServiceName, client.pingServer);
-        }
-        logger.debug("End printing.\n");
-
-        // todo remove these once we start sending NodeClientLatencyRequests to specific nodes
-        // find any client
-        MobileClient mobileClient = mobileClients.stream()
-                .findAny()
-                .orElse(null);
-
-        // find a cloud node
-        ServiceNode cloud = serviceNodes.stream()
-                .findAny()
-                .orElse(null);
-
-        // todo extract to another method, or class (good code but verbose)
-        if (nonNull(mobileClient) && nonNull(cloud)) {
-            // create a NodeClientLatencyRequest
-            InetAddress clientAddress = mobileClient.pingServer;
-            URI clientPingServer = mapToUri(clientAddress);
-
-            NodeClientLatencyRequest request = new NodeClientLatencyRequest(
-                    cloud.uuid, mobileClient.uuid, clientPingServer);
-
-            // send the request
-            sendAsJson(cloud.webSocket, request);
-        } else {
-            if (isNull(mobileClient)) logger.info("launchNodeClientLatencyRequest: client is null");
-            if (isNull(cloud)) logger.info("launchNodeClientLatencyRequest: cloud is null");
+            URI clientPingServer = mapToUri(client.pingServer);
+            request = new NodeClientLatencyRequest(serviceNode.uuid, client.uuid, clientPingServer);
+            sendAsJson(serviceNode.webSocket, request);
         }
     }
 

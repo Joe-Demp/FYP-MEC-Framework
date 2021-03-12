@@ -3,6 +3,7 @@ package service.core;
 import org.java_websocket.WebSocket;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ public class NodeInfo extends Message {
     private Map<Integer, Double> CPUload;
     private Map<Integer, Double> RamLoad;
     private Map<Integer, Long> unusedStorage;
+    private Map<UUID, List<Long>> latencies;
     private double rollingCPUScore;
     private double rollingRamScore;
     private boolean trustyworthy = true;
@@ -38,6 +40,14 @@ public class NodeInfo extends Message {
 
     public void setUnusedStorage(Map<Integer, Long> unusedStorage) {
         this.unusedStorage = unusedStorage;
+    }
+
+    public Map<UUID, List<Long>> getLatencies() {
+        return latencies;
+    }
+
+    public void setLatencies(Map<UUID, List<Long>> latencies) {
+        this.latencies = latencies;
     }
 
     public WebSocket getWebSocket() {

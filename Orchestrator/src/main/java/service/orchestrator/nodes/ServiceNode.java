@@ -30,7 +30,7 @@ public class ServiceNode {
     public Deque<Double> CPUload = new ArrayDeque<>();
     public Deque<Double> RamLoad = new ArrayDeque<>();
     public Deque<Long> unusedStorage = new ArrayDeque<>();
-    public Map<UUID, List<Long>> mobileClientLatencies = new HashMap<>();
+    private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
 
     // todo these scores need to be born out of methods. Remove the fields if not necessary
         /*
@@ -65,6 +65,7 @@ public class ServiceNode {
         CPUload.addAll(cpuMap.values());
         RamLoad.addAll(ramMap.values());
         unusedStorage.addAll(unusedStorageMap.values());
+        addAllLatencies(nodeInfo.getLatencies());
 
         // todo maybe extract these to different methods
         // update the semi static fields
@@ -72,11 +73,21 @@ public class ServiceNode {
         serviceHostAddress = nodeInfo.getServiceHostAddress();
     }
 
-    public void addLatency(UUID uuid, List<Long> latencies) {
+    public void addAllLatencies(Map<UUID, List<Long>> latencies) {
+        for (Map.Entry<UUID, List<Long>> entry : latencies.entrySet()) {
+            addLatency(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public synchronized void addLatency(UUID uuid, List<Long> latencies) {
         if (!mobileClientLatencies.containsKey(uuid)) {
             mobileClientLatencies.put(uuid, new ArrayList<>());
         }
         mobileClientLatencies.get(uuid).addAll(latencies);
+    }
+
+    public synchronized Map<UUID, List<Long>> getLatencies() {
+        return mobileClientLatencies;
     }
 
     public double getMeanCPU() {

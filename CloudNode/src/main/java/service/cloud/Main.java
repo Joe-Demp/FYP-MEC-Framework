@@ -3,9 +3,14 @@ package service.cloud;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import service.cloud.connections.LatencyRequestMonitor;
+import service.cloud.connections.LatencyRequestor;
 
 import java.io.File;
 import java.net.URI;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @CommandLine.Command(name = "cmMain", mixinStandardHelpOptions = true, version = "0.7")
 public class Main implements Runnable {
@@ -23,10 +28,18 @@ public class Main implements Runnable {
     @Parameters(index = "2", paramLabel = "serviceAddress", description = "The address any services will run out of on this machine {ip}:{port}")
     private URI port;
 
+    private static final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
+
     @Override
     public void run() {
         if (!secure) {
-            Cloud cloud = new Cloud(address, file, port,secure);
+            // todo tidy this
+            LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor();
+            LatencyRequestor latencyRequestor = new LatencyRequestor(latencyRequestMonitor);
+            Cloud cloud = new Cloud(address, file, port, secure, latencyRequestMonitor, latencyRequestor);
+
+            scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
+            scheduleService.scheduleAtFixedRate(latencyRequestMonitor, 5, 5, TimeUnit.SECONDS);
             cloud.run();
         } else {
             try {

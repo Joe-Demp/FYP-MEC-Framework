@@ -8,6 +8,7 @@ import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import service.cloud.connections.LatencyRequestMonitor;
+import service.cloud.connections.LatencyRequestor;
 import service.core.*;
 import service.host.ServiceHost;
 import service.node.AbstractServiceNode;
@@ -27,7 +28,8 @@ import java.util.*;
 // todo fix all access modifiers
 public class Cloud extends AbstractServiceNode {
     private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
-    private final LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor(this);
+    private final LatencyRequestMonitor latencyRequestMonitor;
+    private final LatencyRequestor latencyRequestor;
     SystemInfo nodeSystem = new SystemInfo();
     HardwareAbstractionLayer hal = nodeSystem.getHardware();
     OperatingSystem os = nodeSystem.getOperatingSystem();
@@ -41,19 +43,17 @@ public class Cloud extends AbstractServiceNode {
     private Map<Integer, Long> unusedStorage = new HashMap<>();
     private long[] ticks;
 
-    public Cloud(URI serverUri, File service, URI serviceAddress, Boolean secureMode) {
+    public Cloud(
+            URI serverUri, File service, URI serviceAddress, boolean secureMode,
+            LatencyRequestMonitor latencyRequestMonitor, LatencyRequestor latencyRequestor) {
         super(serverUri);
         this.service = service;
         dockerController = new DockerController();
         this.serviceAddress = serviceAddress;
         this.secureMode = secureMode;
+        this.latencyRequestMonitor = latencyRequestMonitor;
+        this.latencyRequestor = latencyRequestor;
         getSystemLoad();
-        startLatencyRequestMonitor();
-    }
-
-    private void startLatencyRequestMonitor() {
-        logger.debug("Starting the LatencyRequestMonitor");
-        new Thread(latencyRequestMonitor, "LatencyRequestMonitorThread").start();
     }
 
     /**
@@ -122,12 +122,7 @@ public class Cloud extends AbstractServiceNode {
                 }
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST:
-                NodeClientLatencyRequest nclRequest = (NodeClientLatencyRequest) messageObj;
-
-                // todo here: requests should have clouds continually checking MobileClients
-                //  i.e. when a request is received, it should be sent to the 'LatencyChecker'
-                //      which should startLatencyRequests every so often
-                latencyRequestMonitor.startLatencyRequest(nclRequest);
+                latencyRequestor.registerRequest((NodeClientLatencyRequest) messageObj);
                 break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
@@ -161,6 +156,7 @@ public class Cloud extends AbstractServiceNode {
         if (!unusedStorage.isEmpty()) {
             nodeInfo.setUnusedStorage(unusedStorage);
         }
+        nodeInfo.setLatencies(latencyRequestMonitor.takeLatencySnapshot());
         // END adding performance data
 
         sendAsJson(nodeInfo);
