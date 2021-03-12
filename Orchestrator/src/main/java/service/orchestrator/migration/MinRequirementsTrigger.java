@@ -45,7 +45,8 @@ public class MinRequirementsTrigger implements Trigger {
                 failingNodes.add(node);
             }
         }
-        migrator.trigger(failingNodes);
+        logger.error("MinRequirementsTrigger.examine not calling migrator.migrate(...)");
+//        migrator.trigger(failingNodes);
     }
 
     /**
