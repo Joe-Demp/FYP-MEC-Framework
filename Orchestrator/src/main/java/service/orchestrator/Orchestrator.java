@@ -33,7 +33,7 @@ import static java.util.Objects.nonNull;
 public class Orchestrator extends WebSocketServer implements Migrator {
     public static final int PING_SERVER_PORTNUMBER = OrchestratorProperties.get().getClientPingServerPort();
     private static final Logger logger = LoggerFactory.getLogger(Orchestrator.class);
-    private static final long HEARTBEAT_REQUEST_PERIOD = 20L * 1000L;
+    private static final long HEARTBEAT_REQUEST_PERIOD = 10L * 1000L;
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
     private static final ServiceNodeRegistry serviceNodeRegistry = ServiceNodeRegistry.get();
     private static final MobileClientRegistry mobileClientRegistry = MobileClientRegistry.get();
@@ -198,6 +198,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     }
 
     // Removes Address from newWSClientAddresses, used by the Orchestrator to track *MobileClients* (not ServiceNodes).
+    //  FYI: called every time a NodeInfo is received.
     private void registerServiceNode(NodeInfo nodeInfoMsg, WebSocket nodeWebSocket) {
         nodeInfoMsg.setWebSocket(nodeWebSocket);
         newWSClientAddresses.remove(nodeInfoMsg.getUuid());
