@@ -1,5 +1,8 @@
 package service.cloud;
 
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -14,7 +17,25 @@ import java.security.KeyStore;
 public class SecureCloud {
     SecureCloud(URI address, File serviceToRun, URI serviceAddress, Boolean secure) throws Exception {
 
-        Cloud node = new Cloud(address, serviceToRun, serviceAddress,secure);
+//        Cloud node = new Cloud(address, serviceToRun, serviceAddress,secure);
+        WebSocketClient node = new WebSocketClient(serviceAddress) {
+            @Override
+            public void onOpen(ServerHandshake handshakedata) {
+                throw new UnsupportedOperationException("Dummy WebSocketClient can't be instantiated");
+            }
+
+            @Override
+            public void onMessage(String message) {
+            }
+
+            @Override
+            public void onClose(int code, String reason, boolean remote) {
+            }
+
+            @Override
+            public void onError(Exception ex) {
+            }
+        };
 
         // load up the key store
         String STORETYPE = "JKS";
