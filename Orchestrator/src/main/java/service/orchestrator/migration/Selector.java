@@ -5,6 +5,7 @@ import service.core.NodeInfo;
 
 import java.util.Collection;
 
+// todo revisit
 /**
  * A type for objects that choose optimal target nodes for migration.
  */

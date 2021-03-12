@@ -85,7 +85,7 @@ public class Cloud extends AbstractServiceNode {
 
                 ServiceRequest serviceRequest = (ServiceRequest) messageObj;
 
-                UUID clientRequesterId = serviceRequest.getRequesterId();
+                UUID targetNodeUuid = serviceRequest.getTargetNodeUuid();
                 String serviceOwnerAddress = serviceAddress.getHost() + ":" + serviceAddress.getPort();
                 String serviceName = serviceRequest.getDesiredServiceName();
 
@@ -99,7 +99,7 @@ public class Cloud extends AbstractServiceNode {
                 //  migration
                 //
                 ServiceResponse serviceResponse =
-                        new ServiceResponse(clientRequesterId, assignedUUID, serviceOwnerAddress, serviceName);
+                        new ServiceResponse(targetNodeUuid, assignedUUID, serviceOwnerAddress, serviceName);
                 sendAsJson(serviceResponse);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
@@ -113,8 +113,8 @@ public class Cloud extends AbstractServiceNode {
                 try {
                     // Inverse of what happens when a ServiceRequest message is received
                     //
-                    launchTransferClient(response.getServiceOwnerAddress());
-                    MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID, response.getServiceOwnerID(), response.getServiceName());
+                    launchTransferClient(response.getSourceServiceAddress());
+                    MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID, response.getSourceNodeUuid(), response.getServiceName());
                     sendAsJson(migrationSuccess);
                 } catch (URISyntaxException | UnknownHostException e) {
                     e.printStackTrace();

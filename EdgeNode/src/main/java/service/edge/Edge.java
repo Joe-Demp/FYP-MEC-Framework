@@ -78,7 +78,7 @@ public class Edge extends AbstractServiceNode {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequesterId(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(), serviceRequest.getDesiredServiceName());
+                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getTargetNodeUuid(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(), serviceRequest.getDesiredServiceName());
                 String jsonStr = gson.toJson(serviceResponse);
                 send(jsonStr);
                 break;
@@ -88,8 +88,8 @@ public class Edge extends AbstractServiceNode {
                 logger.info("Edge received a service response");
 
                 try {
-                    launchTransferClient(response.getServiceOwnerAddress());
-                    MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID,response.getServiceOwnerID(),response.getServiceName());
+                    launchTransferClient(response.getSourceServiceAddress());
+                    MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID, response.getSourceNodeUuid(), response.getServiceName());
                     jsonStr = gson.toJson(migrationSuccess);
                     send(jsonStr);
                 } catch (URISyntaxException | UnknownHostException e) {

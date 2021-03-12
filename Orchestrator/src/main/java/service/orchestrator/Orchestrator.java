@@ -38,9 +38,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     private static final ServiceNodeRegistry serviceNodeRegistry = ServiceNodeRegistry.get();
     private static final MobileClientRegistry mobileClientRegistry = MobileClientRegistry.get();
 
+    // todo consider removing this throughout the framework
+    private static final String serviceName = "docker.tar";
+
     private Map<UUID, InetAddress> newWSClientAddresses = new HashMap<>();
     private Gson gson;
-    private boolean migrationOccurred = false;
 
     public Orchestrator(int port) {
         super(new InetSocketAddress(port));
@@ -239,11 +241,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         mobileClientRegistry.updateClient(mobileClientInfo);
     }
 
-    // Routes a ServiceResponse from a Node (after it has received a migrated service) to the client.
+    // Routes a ServiceResponse from a source ServiceNode to a target ServiceNode.
     // todo make sure this works
     private void handleServiceResponse(ServiceResponse response) {
-        UUID clientUuid = response.getRequesterId();
-        WebSocket returnSocket = mobileClientRegistry.get(clientUuid).webSocket;
+        UUID targetUuid = response.getTargetNodeUuid();
+        WebSocket returnSocket = serviceNodeRegistry.get(targetUuid).webSocket;
         sendAsJson(returnSocket, response);
     }
 
@@ -403,12 +405,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     }
 
     @Override
-    public void trigger(Collection<ServiceNode> nodes) {
-        logger.info("--- In Orchestrator.trigger ---");
-        for (ServiceNode node : nodes) {
-            logger.debug("{} {}", node.serviceName, node.webSocket.getRemoteSocketAddress());
-        }
-        logger.info("--- End Orchestrator.trigger ---");
+    public void migrate(ServiceNode source, ServiceNode target) {
+        logger.info("--- In Orchestrator.migrate ---");
+        ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
+        sendAsJson(source.webSocket, request);
+        logger.info("--- End Orchestrator.migrate ---");
     }
 
     @Override

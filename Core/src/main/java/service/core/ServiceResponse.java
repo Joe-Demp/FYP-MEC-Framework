@@ -2,11 +2,15 @@ package service.core;
 
 import java.util.UUID;
 
-//this step is kinda acting like the owner of a service acknowleding the response and approving the transfer
+/**
+ * Message sent by a migration Source ServiceNode to the Orchestrator to relay to the Target ServiceNode.
+ * <p>
+ * Shows that the Source approves the transfer.
+ */
 public class ServiceResponse extends Message {
-    private UUID requesterId;
-    private UUID serviceOwnerID;
-    private String serviceOwnerAddress;
+    private UUID targetNodeUuid;
+    private UUID sourceNodeUuid;
+    private String sourceServiceAddress;
     private String serviceName;
 
     // todo something about the comment below
@@ -16,24 +20,24 @@ public class ServiceResponse extends Message {
         super(Message.MessageTypes.SERVICE_RESPONSE);
     }
 
-    public ServiceResponse(UUID requesterId, UUID serviceOwnerID, String serviceOwnerAddress, String serviceName) {
+    public ServiceResponse(UUID targetNodeUuid, UUID sourceNodeUuid, String sourceServiceAddress, String serviceName) {
         this();
-        this.requesterId = requesterId;
-        this.serviceOwnerID = serviceOwnerID;
-        this.serviceOwnerAddress = serviceOwnerAddress;
+        this.targetNodeUuid = targetNodeUuid;
+        this.sourceNodeUuid = sourceNodeUuid;
+        this.sourceServiceAddress = sourceServiceAddress;
         this.serviceName = serviceName;
     }
 
-    public UUID getRequesterId() {
-        return requesterId;
+    public UUID getTargetNodeUuid() {
+        return targetNodeUuid;
     }
 
-    public UUID getServiceOwnerID() {
-        return serviceOwnerID;
+    public UUID getSourceNodeUuid() {
+        return sourceNodeUuid;
     }
 
-    public String getServiceOwnerAddress() {
-        return serviceOwnerAddress;
+    public String getSourceServiceAddress() {
+        return sourceServiceAddress;
     }
 
     public String getServiceName() {

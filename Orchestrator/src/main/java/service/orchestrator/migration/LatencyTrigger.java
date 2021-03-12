@@ -12,8 +12,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.LongStream;
 
+import static java.util.Objects.nonNull;
+
 public class LatencyTrigger implements Trigger {
     private static final Logger logger = LoggerFactory.getLogger(LatencyTrigger.class);
+
+    // todo extract this
+    private static final SimpleSelector selector = new SimpleSelector();
+    private final Migrator migrator;
 
     // this implementation gets the max latency, or Long.MAX_VALUE if latencies is the empty list
     private static long aggregateLatencies(List<Long> latencies) {
@@ -21,6 +27,10 @@ public class LatencyTrigger implements Trigger {
                 .flatMapToLong(LongStream::of)
                 .max()
                 .orElse(Long.MAX_VALUE);
+    }
+
+    public LatencyTrigger(Migrator migrator) {
+        this.migrator = migrator;
     }
 
     @Override
@@ -33,6 +43,11 @@ public class LatencyTrigger implements Trigger {
                 if (latencyAggregate > properties.getMaxLatency()) {
                     // do something about it
                     logger.debug("{} has high latency {}", mcLatencyEntry.getKey(), latencyAggregate);
+                    ServiceNode migrationTarget = selector.selectMigrationTarget(node);
+
+                    if (nonNull(migrationTarget)) {
+                        migrator.migrate(node, migrationTarget);
+                    }
                 } else {
                     // todo remove this unnecessary branch
                     logger.debug("{} has low latency {}", mcLatencyEntry.getKey(), latencyAggregate);
@@ -43,6 +58,7 @@ public class LatencyTrigger implements Trigger {
 
     @Override
     public void run() {
+        logger.debug("Running LatencyTrigger");
         examine(ServiceNodeRegistry.get().getServiceNodes());
     }
 }

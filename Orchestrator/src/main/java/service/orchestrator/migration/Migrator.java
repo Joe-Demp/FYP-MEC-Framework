@@ -2,14 +2,15 @@ package service.orchestrator.migration;
 
 import service.orchestrator.nodes.ServiceNode;
 
-import java.util.Collection;
-
 /**
  * A type for objects that migrate services or artifacts.
  */
 public interface Migrator {
     /**
-     * Causes the {@code Migrator} to act on a given trigger, represented as a {@code Collection} of {@code NodeInfo}.
+     * Starts the migration process between two {@code ServiceNode}s.
+     *
+     * @param source the {@code ServiceNode} that the application will migrate from.
+     * @param target the {@code ServiceNode} that the application will migrate to.
      */
-    void trigger(Collection<ServiceNode> nodes);
+    void migrate(ServiceNode source, ServiceNode target);
 }

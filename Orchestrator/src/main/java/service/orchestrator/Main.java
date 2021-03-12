@@ -35,13 +35,9 @@ public class Main implements Runnable {
     @Override
     public void run() {
         if (!secure) {
-            scheduledService.scheduleAtFixedRate(new LatencyTrigger(), 5, 5, TimeUnit.SECONDS);
-            // consider spinning up more threads here:
-            //      Node Scorer? -> except this is a job that can be done on demand
-            //          A thread would be good here if it was to keep scoring on a rolling basis.
-
             logger.info("Starting Orchestrator");
             Orchestrator orchestrator = new Orchestrator(port);
+            scheduledService.scheduleAtFixedRate(new LatencyTrigger(orchestrator), 5, 5, TimeUnit.SECONDS);
             orchestrator.run();
         } else {
             try {
