@@ -78,7 +78,7 @@ public class Edge extends AbstractServiceNode {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequesterId(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(), serviceRequest.getServiceName());
+                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getRequesterId(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(), serviceRequest.getDesiredServiceName());
                 String jsonStr = gson.toJson(serviceResponse);
                 send(jsonStr);
                 break;

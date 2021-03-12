@@ -1,15 +1,16 @@
 package service.orchestrator.nodes;
 
+import org.java_websocket.WebSocket;
 import service.core.NodeInfo;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
 
 public class ServiceNodeRegistry {
     private static final ServiceNodeRegistry instance = new ServiceNodeRegistry();
-    private Map<UUID, ServiceNode> serviceNodes = new HashMap<>();
+    private Map<UUID, ServiceNode> serviceNodes = new Hashtable<>();
 
     private ServiceNodeRegistry() {
     }
@@ -19,10 +20,6 @@ public class ServiceNodeRegistry {
      */
     public static ServiceNodeRegistry get() {
         return instance;
-    }
-
-    public void put(ServiceNode serviceNode) {
-        serviceNodes.put(serviceNode.uuid, serviceNode);
     }
 
     public ServiceNode get(UUID uuid) {
@@ -40,6 +37,19 @@ public class ServiceNodeRegistry {
      */
     public void updateNode(NodeInfo nodeInfo) {
         getOrCreateServiceNode(nodeInfo).update(nodeInfo);
+    }
+
+    public void removeNodeWithWebsocket(WebSocket webSocket) {
+        ServiceNode toRemove = serviceNodeWithWebsocket(webSocket);
+        serviceNodes.remove(toRemove.uuid);
+    }
+
+    // returns a dummy ServiceNode if it's not in the registry
+    private ServiceNode serviceNodeWithWebsocket(WebSocket webSocket) {
+        return serviceNodes.values().stream()
+                .filter(node -> node.webSocket.equals(webSocket))
+                .findFirst()
+                .orElse(new ServiceNode(UUID.randomUUID(), webSocket));
     }
 
     private ServiceNode getOrCreateServiceNode(NodeInfo nodeInfo) {

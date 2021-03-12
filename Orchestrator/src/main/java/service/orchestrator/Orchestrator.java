@@ -15,29 +15,28 @@ import service.orchestrator.exceptions.NoSuchNodeException;
 import service.orchestrator.migration.Migrator;
 import service.orchestrator.nodes.ServiceNode;
 import service.orchestrator.nodes.ServiceNodeRegistry;
+import service.orchestrator.properties.OrchestratorProperties;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 // todo remove hard coded values and use a config file instead (or command line args)
 
 public class Orchestrator extends WebSocketServer implements Migrator {
-    public static final int PING_SERVER_PORTNUMBER = 8092;
+    public static final int PING_SERVER_PORTNUMBER = OrchestratorProperties.get().getClientPingServerPort();
     private static final Logger logger = LoggerFactory.getLogger(Orchestrator.class);
     private static final long HEARTBEAT_REQUEST_PERIOD = 20L * 1000L;
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
     private static final ServiceNodeRegistry serviceNodeRegistry = ServiceNodeRegistry.get();
     private static final MobileClientRegistry mobileClientRegistry = MobileClientRegistry.get();
-
-    // todo extract the Node and MobileClient storage into special classes
-    private Map<UUID, NodeInfo> serviceNodes = new HashMap<>();
-    private Map<UUID, MobileClientInfo> mobileClients = new HashMap<>();
-    // todo create a way to map serviceNodes to the mobileClients they serve
 
     private Map<UUID, InetAddress> newWSClientAddresses = new HashMap<>();
     private Gson gson;
@@ -147,47 +146,37 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     @Override
     public void onMessage(WebSocket webSocket, String message) {
         logger.debug("from {}", webSocket.getRemoteSocketAddress());
-        // todo replace this call with something that gets the actual (global) ip address
 
         final int MAX_MESSAGE_LEN = 130;
         logger.debug(message.substring(0, Integer.min(message.length(), MAX_MESSAGE_LEN)));
 
         Message messageObj = gson.fromJson(message, Message.class);
 
+        // todo a good way to cut this down would be to:
+        //  map messages to commands (separate switch in a separate class)
+        //  execute commands polymorphically
         //this routes inbound messages based on type and then moves them to other methods
         switch (messageObj.getType()) {
             case Message.MessageTypes.NODE_INFO:
                 registerServiceNode((NodeInfo) messageObj, webSocket);
                 break;
             case Message.MessageTypes.MOBILE_CLIENT_INFO:
-                registerMobileClient((MobileClientInfo) messageObj, webSocket);
-                break;
-            case Message.MessageTypes.SERVICE_REQUEST:
-                ServiceRequest serviceRequest = (ServiceRequest) messageObj;
-                WebSocket bestServiceOwnerWebsocket = findBestServiceOwner(serviceRequest).getWebSocket();
-                sendAsJson(bestServiceOwnerWebsocket, serviceRequest);
+                handleMobileClientInfo((MobileClientInfo) messageObj, webSocket);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
-                // routes a ServiceResponse from a Node (after it has migrated a service) to the client
-                // todo extract & replace serviceNodes with serviceNodeRegistry.getServiceNodes()
-                ServiceResponse response = (ServiceResponse) messageObj;
-                WebSocket returnSocket = serviceNodes.get(response.getRequesterId()).getWebSocket();
-                sendAsJson(returnSocket, response);
+                handleServiceResponse((ServiceResponse) messageObj);
                 break;
             case Message.MessageTypes.MIGRATION_SUCCESS:
-                // todo extract & replace serviceNodes with serviceNodeRegistry.getServiceNodes()
-                MigrationSuccess successMessage = (MigrationSuccess) messageObj;
-                serviceNodes.get(successMessage.getHostId()).setServiceName(successMessage.getServiceName());
-                serviceNodes.get(successMessage.getOldHostId()).setServiceName("noService");
+                handleMigrationSuccess((MigrationSuccess) messageObj);
                 break;
             case Message.MessageTypes.HOST_REQUEST:
                 logger.warn("Not calling transferServiceToBestNode. Fix this asap.");
                 handleHostRequest((HostRequest) messageObj);
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE:
-                // todo associate the latency with the given Node
-                NodeClientLatencyResponse nclResponse = (NodeClientLatencyResponse) messageObj;
-                logger.info("Received a NodeClientLatencyResponse, latency={}", nclResponse.getLatency());
+                // todo get rid of this handler once NodeClientLatencyResponse is deleted
+                NodeClientLatencyResponse nclr = (NodeClientLatencyResponse) messageObj;
+                logger.error("Received a NodeClientLatencyResponse from {}", nclr.getNodeId());
                 break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
@@ -208,7 +197,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         return serviceNodeRegistry.getServiceNodes().stream().findAny().orElse(null);
     }
 
-    // todo extract these "register" methods to a separate class
     // Removes Address from newWSClientAddresses, used by the Orchestrator to track *MobileClients* (not ServiceNodes).
     private void registerServiceNode(NodeInfo nodeInfoMsg, WebSocket nodeWebSocket) {
         nodeInfoMsg.setWebSocket(nodeWebSocket);
@@ -229,28 +217,42 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         }
     }
 
-    private void registerMobileClient(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
-        boolean firstTimeToRegister = newWSClientAddresses.containsKey(mobileClientInfo.getUuid());
+    private void handleMobileClientInfo(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
+        boolean isNewClient = newWSClientAddresses.containsKey(mobileClientInfo.getUuid());
 
-        if (firstTimeToRegister) {
+        if (isNewClient) {
             registerNewMobileClient(mobileClientInfo, webSocket);
         } else {
             updateExistingMobileClient(mobileClientInfo);
         }
     }
 
-    // todo consider a new name here, very similar to other method
     private void registerNewMobileClient(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
         InetAddress address = newWSClientAddresses.remove(mobileClientInfo.getUuid());
         mobileClientInfo.setPingServer(address);
         mobileClientInfo.setWebSocket(webSocket);
-        mobileClients.put(mobileClientInfo.getUuid(), mobileClientInfo);
         mobileClientRegistry.updateClient(mobileClientInfo);
     }
 
     private void updateExistingMobileClient(MobileClientInfo mobileClientInfo) {
-        // todo remove this if not needed (MobileClientInfo doesn't really change)
         mobileClientRegistry.updateClient(mobileClientInfo);
+    }
+
+    // Routes a ServiceResponse from a Node (after it has received a migrated service) to the client.
+    // todo make sure this works
+    private void handleServiceResponse(ServiceResponse response) {
+        UUID clientUuid = response.getRequesterId();
+        WebSocket returnSocket = mobileClientRegistry.get(clientUuid).webSocket;
+        sendAsJson(returnSocket, response);
+    }
+
+    // updates the service statuses of the ServiceNodes after migration.
+    private void handleMigrationSuccess(MigrationSuccess migrationSuccess) {
+        UUID migrationSourceUuid = migrationSuccess.getSourceHostUuid();
+        serviceNodeRegistry.get(migrationSourceUuid).serviceName = null;
+
+        UUID migrationTargetUuid = migrationSuccess.getTargetHostUuid();
+        serviceNodeRegistry.get(migrationTargetUuid).serviceName = migrationSuccess.getServiceName();
     }
 
     /**
@@ -291,116 +293,76 @@ public class Orchestrator extends WebSocketServer implements Migrator {
      * @param serviceRequest the requested service
      * @return the NodeInfo for the node that was deemed best
      */
-    public NodeInfo transferServiceToBestNode(ServiceRequest serviceRequest) {
-        NodeInfo bestNode = findBestConnectedNode();
-        NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
+    public ServiceNode transferServiceToBestNode(ServiceRequest serviceRequest) {
+        ServiceNode dormantServiceNode = anyDormantServiceNode();
+        ServiceNode worstCurrentOwner = findWorstServiceOwner(serviceRequest);
 
-        if (bestNode == null || worstCurrentOwner == null) {
+        if (isNull(dormantServiceNode) || isNull(worstCurrentOwner)) {
             logger.warn("One of the following is null. No transfer made." +
-                    "\nbestNode={}\nworstCurrentOwner={}", bestNode, worstCurrentOwner);
+                    "\ndormantServiceNode={}\nworstCurrentOwner={}", dormantServiceNode, worstCurrentOwner);
             return null;
         }
-        // todo remove the bug here: assumes worstCurrentOwner is non-null
-        if (worstCurrentOwner.getUuid().equals(bestNode.getUuid())) {
-            return bestNode;
+
+        if (worstCurrentOwner.uuid.equals(dormantServiceNode.uuid)) {
+            return dormantServiceNode;
         }
 
-        // tells the worstCurrentOwner to send its service to the bestNode
-        ServiceRequest request = new ServiceRequest(bestNode.getUuid(), serviceRequest.getServiceName());
-        sendAsJson(worstCurrentOwner.getWebSocket(), request);
+        // tells the worstCurrentOwner to send its service to the dormantServiceNode
+        ServiceRequest request = new ServiceRequest(dormantServiceNode.uuid, serviceRequest.getDesiredServiceName());
+        sendAsJson(worstCurrentOwner.webSocket, request);
 
-        return bestNode;
+        return dormantServiceNode;
     }
 
-    /**
-     * This method finds the owner of the Service that scores lowest by the evaluation metric
-     *
-     * @param serviceRequest
-     * @return the nodeInfo for the worst owner
-     */
-    public NodeInfo findWorstServiceOwner(ServiceRequest serviceRequest) {
-        // todo remove this class when reimplementing NodeSelection via the Orchestrator
+    // Currently returns any ServiceNode running the service.
+    public ServiceNode findWorstServiceOwner(ServiceRequest serviceRequest) {
+        // todo remove this method when reimplementing the Selector
 
         // let the worst ServiceOwner be any Node running the service
-        List<NodeInfo> nodes = new ArrayList<>(findAllServiceOwners(serviceRequest).values());
+        List<ServiceNode> nodes = new ArrayList<>(findAllServiceOwners(serviceRequest).values());
         return nodes.size() > 0 ? nodes.get(0) : null;
-
-        // *** old method ***
-        //        NodeInfo worstNode = null;
-//        Map<UUID, NodeInfo> allServiceOwnerAddresses = findAllServiceOwners(serviceRequest);
-//        if (allServiceOwnerAddresses == null) {
-//            //noone had this service, inform edgenode
-//        } else {
-//            worstNode = findBestConnectedNode();
-//        }
-//        return worstNode;
     }
 
     /**
-     * This method finds the best owner of a service
+     * This method finds the best owner of a service, for a MobileClient.
      *
      * @param serviceRequest
      * @return the nodeInfo of the best owner
      */
-    public NodeInfo findBestServiceOwner(ServiceRequest serviceRequest) {
-        NodeInfo bestNode = null;
-        Map<UUID, NodeInfo> allServiceOwnerAddresses = findAllServiceOwners(serviceRequest);
+    public ServiceNode findBestServiceOwner(ServiceRequest serviceRequest) {
+        ServiceNode bestNode = null;
+        Map<UUID, ServiceNode> allServiceOwnerAddresses = findAllServiceOwners(serviceRequest);
         if (allServiceOwnerAddresses == null) {
             //noone had this service, inform edgenode
         } else {
-            bestNode = findBestConnectedNode();
+            bestNode = anyDormantServiceNode();
         }
         return bestNode;
     }
 
     /**
-     * This method finds every node that currently is hosting a given service
-     *
-     * @param serviceRequest
-     * @return Map of all owners of a service
+     * This method finds every node that is currently hosting a service specified by the given {@code ServiceRequest}.
      */
-    public Map<UUID, NodeInfo> findAllServiceOwners(ServiceRequest serviceRequest) {
-        Map<UUID, NodeInfo> toReturn = new HashMap<>();
-        for (Map.Entry<UUID, NodeInfo> entry : serviceNodes.entrySet()) {
-            // a Node is a service owner if:
-            //  The service name is non-null, and
-            //  The service name equals the name in the ServiceRequest
-
-            if (entry.getValue().getServiceName() != null && entry.getValue().getServiceName().equals(serviceRequest.getServiceName())) {
-                toReturn.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return toReturn;
+    public Map<UUID, ServiceNode> findAllServiceOwners(ServiceRequest serviceRequest) {
+        Collection<ServiceNode> serviceNodes = serviceNodeRegistry.getServiceNodes();
+        String desiredServiceName = serviceRequest.getDesiredServiceName();
+        return serviceNodes.stream()
+                .filter(node -> nonNull(node.serviceName))
+                .filter(node -> node.serviceName.equals(desiredServiceName))
+                .collect(Collectors.toMap(node -> node.uuid, Function.identity()));
     }
 
-    /**
-     * This method finds the best node on that service, this acts as the evaluation method for the orchestrator.
-     * <p>
-     * todo replace this: currently finds the sole unconnected Node
-     *
-     * @return the best node's NodeInfo
-     */
-    private NodeInfo findBestConnectedNode() {
-        NodeInfo bestNode = null;
+    // finds any Node that is not hosting a service (is Dormant)
+    private ServiceNode anyDormantServiceNode() {
+        ServiceNode bestNode = null;
         try {
-            bestNode = serviceNodes.values().stream()
-                    .filter(n -> n.getServiceName() == null)
+            bestNode = serviceNodeRegistry.getServiceNodes().stream()
+                    .filter(node -> isNull(node.serviceName))
                     .findAny()
                     .orElseThrow(NoSuchNodeException::new);
         } catch (NoSuchNodeException nsne) {
             logger.warn("Could not find an unoccupied node ");
         }
-
-        //        double bestNodeScore = Double.MAX_VALUE;
-//        NodeInfo bestNode = null;
-//        for (NodeInfo node : connectedNodes.values()) {
-//            double currentNodeCPUScore = calculateRecentCPULoad(node.getCPUload(), node.getRollingCPUScore());
-//            double currentNodeRamScore = calculateRecentRamLoad(node.getRamLoad(), node.getRollingRamScore());
-//            if (currentNodeCPUScore + currentNodeRamScore < bestNodeScore && node.isTrustyworthy()) {
-//                bestNodeScore = currentNodeCPUScore;
-//                bestNode = node;
-//            }
-//        }
         return bestNode;
     }
 
@@ -439,19 +401,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         return -1; //((1 - rollingAverage) * rollingRamScore) + (rollingAverage * (runningTotal / 5));
     }
 
-    private void requestClientLatencyReportFromNode() {
-        // should have a Client IP
-        //  for now, the Orchestrator sends this to all nodes
-
-        // create a request containing the client IP (etc.)
-
-        //****** Cunning Plan
-        /* All Clients have an open WebSocketServer for Nodes to ping.
-            Node connects to that WSServer, does a few pings and returns the results to the Orchestrator.
-         */
-        // END PLAN
-    }
-
     @Override
     public void trigger(Collection<ServiceNode> nodes) {
         logger.info("--- In Orchestrator.trigger ---");
@@ -469,7 +418,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     @Override
     public void onStart() {
-        // No Implementation
     }
 
     @Override
@@ -477,27 +425,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         logger.info("Closing a connection to {}", webSocket.getRemoteSocketAddress());
         logger.debug("Reason: {}", s);
 
-        // todo fix this mess
-        // remove the node that owns the connection
-        UUID removed = null;
-        Map.Entry<UUID, NodeInfo> nodeToRemove = serviceNodes.entrySet().stream()
-                .filter(entry -> entry.getValue().getWebSocket().equals(webSocket))
-                .findAny()
-                .orElse(null);
-        if (nonNull(nodeToRemove)) {
-            removed = nodeToRemove.getKey();
-            serviceNodes.remove(nodeToRemove.getKey());
-        }
-
-        Map.Entry<UUID, MobileClientInfo> mobileToRemove = mobileClients.entrySet().stream()
-                .filter(entry -> entry.getValue().getWebSocket().equals(webSocket))
-                .findAny()
-                .orElse(null);
-        if (nonNull(mobileToRemove)) {
-            removed = mobileToRemove.getKey();
-            mobileClients.remove(mobileToRemove.getKey());
-        }
-
-        logger.debug("Removed Node {}", removed);
+        serviceNodeRegistry.removeNodeWithWebsocket(webSocket);
+        mobileClientRegistry.removeClientWithWebsocket(webSocket);
     }
 }

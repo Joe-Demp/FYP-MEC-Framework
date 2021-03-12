@@ -25,16 +25,15 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.*;
 
-// todo fix all access modifiers
 public class Cloud extends AbstractServiceNode {
     private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
     private final LatencyRequestMonitor latencyRequestMonitor;
     private final LatencyRequestor latencyRequestor;
-    SystemInfo nodeSystem = new SystemInfo();
-    HardwareAbstractionLayer hal = nodeSystem.getHardware();
-    OperatingSystem os = nodeSystem.getOperatingSystem();
-    DockerController dockerController;
-    boolean secureMode;
+    private final SystemInfo nodeSystem = new SystemInfo();
+    private final HardwareAbstractionLayer hal = nodeSystem.getHardware();
+    private final OperatingSystem os = nodeSystem.getOperatingSystem();
+    private final DockerController dockerController;
+    private final boolean secureMode;
     private File service;
     private UUID assignedUUID;
     private URI serviceAddress;
@@ -88,7 +87,7 @@ public class Cloud extends AbstractServiceNode {
 
                 UUID clientRequesterId = serviceRequest.getRequesterId();
                 String serviceOwnerAddress = serviceAddress.getHost() + ":" + serviceAddress.getPort();
-                String serviceName = serviceRequest.getServiceName();
+                String serviceName = serviceRequest.getDesiredServiceName();
 
                 try {
                     launchTransferServer();
@@ -266,6 +265,6 @@ public class Cloud extends AbstractServiceNode {
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
         System.out.println("connected to orchestrator");
-        System.out.println(Cloud.this.getLocalSocketAddress());//this is the local address in theory
+        System.out.println(getLocalSocketAddress());//this is the local address in theory
     }
 }

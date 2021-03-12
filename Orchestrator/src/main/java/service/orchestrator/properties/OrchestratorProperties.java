@@ -56,23 +56,28 @@ public class OrchestratorProperties {
 
     public int getMaxLatency() {
         final String MAX_VALUE_STRING = Integer.toString(Integer.MAX_VALUE);
-        String maxLatency = (String) properties.getOrDefault("application.limit.max-latency", MAX_VALUE_STRING);
+        String maxLatency = properties.getProperty("application.limit.max-latency", MAX_VALUE_STRING);
         return Integer.parseInt(maxLatency);
     }
 
     public double getMaxCpu() {
-        String maxCpu = (String) properties.getOrDefault("application.limit.max-cpu", DEFAULT_DOUBLE);
+        String maxCpu = properties.getProperty("application.limit.max-cpu", DEFAULT_DOUBLE);
         return Double.parseDouble(maxCpu);
     }
 
     public double getMaxMemory() {
-        String maxCpu = (String) properties.getOrDefault("application.limit.max-memory-used", DEFAULT_DOUBLE);
+        String maxCpu = properties.getProperty("application.limit.max-memory-used", DEFAULT_DOUBLE);
         return Double.parseDouble(maxCpu);
     }
 
     public double getMinStorage() {
         final String DOUBLE_ZERO = Double.toString(0.0);
-        String maxCpu = (String) properties.getOrDefault("application.limit.min-storage", DOUBLE_ZERO);
+        String maxCpu = properties.getProperty("application.limit.min-storage", DOUBLE_ZERO);
         return Double.parseDouble(maxCpu);
+    }
+
+    public int getClientPingServerPort() {
+        String clientPingServerPort = properties.getProperty("client.pingserver.port", "8092");
+        return Integer.parseInt(clientPingServerPort);
     }
 }

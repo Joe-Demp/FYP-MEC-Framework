@@ -3,31 +3,31 @@ package service.core;
 import java.util.UUID;
 
 public class MigrationSuccess extends Message {
-    UUID hostId;
-    UUID oldHostId;
+    UUID targetHostUuid;
+    UUID sourceHostUuid;
     String serviceName;
 
     public MigrationSuccess() {
         super(MessageTypes.MIGRATION_SUCCESS);
     }
 
-    public MigrationSuccess(UUID hostId,UUID oldHostId,String serviceName){
-        super(MessageTypes.MIGRATION_SUCCESS);
-        this.hostId = hostId;
-        this.serviceName=serviceName;
-        this.oldHostId=oldHostId;
+    public MigrationSuccess(UUID targetHostUuid, UUID sourceHostUuid, String serviceName) {
+        this();
+        this.targetHostUuid = targetHostUuid;
+        this.serviceName = serviceName;
+        this.sourceHostUuid = sourceHostUuid;
     }
 
-    public UUID getHostId() {
-        return hostId;
+    public UUID getTargetHostUuid() {
+        return targetHostUuid;
     }
 
     public String getServiceName() {
         return serviceName;
     }
 
-    public UUID getOldHostId() {
-        return oldHostId;
+    public UUID getSourceHostUuid() {
+        return sourceHostUuid;
     }
 }
 
