@@ -141,7 +141,7 @@ public class Cloud extends AbstractServiceNode {
     /**
      * Constructs and sends Heartbeat responses when called
      */
-    public void sendHeartbeatResponse() {
+    private void sendHeartbeatResponse() {
         NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, service.getName());
         nodeInfo.setServiceHostAddress(serviceAddress);
 
@@ -155,7 +155,14 @@ public class Cloud extends AbstractServiceNode {
         if (!unusedStorage.isEmpty()) {
             nodeInfo.setUnusedStorage(unusedStorage);
         }
-        nodeInfo.setLatencies(latencyRequestMonitor.takeLatencySnapshot());
+
+        // todo get rid of this
+        Map<UUID, List<Long>> latencySnapshot = latencyRequestMonitor.takeLatencySnapshot();
+        for (UUID uuid : latencySnapshot.keySet()) {
+            logger.debug("latencySnapshot UUID {}", uuid);
+        }
+
+        nodeInfo.setLatencies(latencySnapshot);
         // END adding performance data
 
         sendAsJson(nodeInfo);
