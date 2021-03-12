@@ -82,28 +82,8 @@ public class Cloud extends AbstractServiceNode {
                 break;
             //request for the service on the node
             case Message.MessageTypes.SERVICE_REQUEST:
-                // * Service gets transferred from this Node here *
-
-                ServiceRequest serviceRequest = (ServiceRequest) messageObj;
-
-                UUID targetNodeUuid = serviceRequest.getTargetNodeUuid();
-
-                // todo examine this
-                String serviceOwnerAddress = serviceAddress.getHost() + ":" + TRANSFER_SERVER_PORT_NUMBER;
-                String serviceName = serviceRequest.getDesiredServiceName();
-
-                try {
-                    launchTransferServer();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                // ServiceResponse allows the Orchestrator to respond to the client with information about the
-                //  migration
-                //
-                ServiceResponse serviceResponse =
-                        new ServiceResponse(targetNodeUuid, assignedUUID, serviceOwnerAddress, serviceName);
-                sendAsJson(serviceResponse);
+                // transfers service from this node to the target
+                handleServiceRequest((ServiceRequest) messageObj);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
                 // * Service gets transferred to this Node here *
@@ -130,6 +110,22 @@ public class Cloud extends AbstractServiceNode {
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
                 break;
         }
+    }
+
+    // launches the Transfer Server and sends a ServiceResponse to indicate success.
+    private void handleServiceRequest(ServiceRequest request) {
+        InetSocketAddress transferServerAddress = launchTransferServer();
+        sendServiceResponse(request, transferServerAddress);
+    }
+
+    private void sendServiceResponse(ServiceRequest request, InetSocketAddress transferServerAddress) {
+        ServiceResponse response = new ServiceResponse(
+                request.getTargetNodeUuid(),
+                assignedUUID,
+                transferServerAddress.toString(),
+                request.getDesiredServiceName()
+        );
+        sendAsJson(response);
     }
 
     /**
@@ -165,8 +161,8 @@ public class Cloud extends AbstractServiceNode {
     }
 
     /**
-     * This method creates and launches the TransferClient for this client,
-     * If this node is in secure mode then the TransferClient will also be in secure mode
+     * This method creates and launches a TransferClient for this target host.
+     * If this node is in secure mode then the TransferClient will also be in secure mode.
      * After a successful connection this method will start the launch process for the new service.
      *
      * @param serverAddress The address of the TransferServer that is trying to be connected to
@@ -241,20 +237,27 @@ public class Cloud extends AbstractServiceNode {
     }
 
     /**
-     * This method launches this nodes Transfer Server using the service address define at node creation
+     * This method launches this nodes Transfer Server using the service address define at node creation.
+     *
+     * @return the address of the newly launched transfer server.
      */
-    private void launchTransferServer() throws Exception {
-        InetSocketAddress serverAddress = new InetSocketAddress(TRANSFER_SERVER_PORT_NUMBER);
+    private InetSocketAddress launchTransferServer() {
+        InetSocketAddress serverAddress = new InetSocketAddress(0);
         setReuseAddr(true);
 
-        logger.debug("serverAddress={}", serverAddress);
+        logger.debug("Launching Transfer Server at {}", serverAddress);
         if (!secureMode) {
+            // todo keep this Transfer Server somewhere so it can be shut down when finished
             TransferServer transferServer = new TransferServer(serverAddress, service);
             transferServer.start();
         } else {
-            new SecureTransferServer(serverAddress, service);
+            try {
+                new SecureTransferServer(serverAddress, service);
+            } catch (Exception ex) {
+                logger.error("Exception in Cloud.launchTransferServer. Check for secureMode!", ex);
+            }
         }
-
+        return serverAddress;
     }
 
     @Override

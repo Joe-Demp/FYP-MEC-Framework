@@ -6,14 +6,18 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 public class SecureTransferServer {
 
-    public SecureTransferServer(InetSocketAddress serverAddress, File serviceToTrasnfer) throws Exception {
-        TransferServer transferServer = new TransferServer(serverAddress,serviceToTrasnfer);
+    public SecureTransferServer(InetSocketAddress serverAddress, File serviceToTrasnfer)
+            throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException,
+            UnrecoverableKeyException, KeyManagementException {
+        TransferServer transferServer = new TransferServer(serverAddress, serviceToTrasnfer);
 
         // load up the key store
         String STORETYPE = "JKS";
