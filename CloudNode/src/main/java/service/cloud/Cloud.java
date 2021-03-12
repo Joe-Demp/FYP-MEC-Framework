@@ -155,14 +155,7 @@ public class Cloud extends AbstractServiceNode {
         if (!unusedStorage.isEmpty()) {
             nodeInfo.setUnusedStorage(unusedStorage);
         }
-
-        // todo get rid of this
-        Map<UUID, List<Long>> latencySnapshot = latencyRequestMonitor.takeLatencySnapshot();
-        for (UUID uuid : latencySnapshot.keySet()) {
-            logger.debug("latencySnapshot UUID {}", uuid);
-        }
-
-        nodeInfo.setLatencies(latencySnapshot);
+        nodeInfo.setLatencies(latencyRequestMonitor.takeLatencySnapshot());
         // END adding performance data
 
         sendAsJson(nodeInfo);
