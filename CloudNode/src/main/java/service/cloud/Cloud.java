@@ -27,6 +27,7 @@ import java.util.*;
 
 public class Cloud extends AbstractServiceNode {
     private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
+    private static final int TRANSFER_SERVER_PORT_NUMBER = 90921;
     private final LatencyRequestMonitor latencyRequestMonitor;
     private final LatencyRequestor latencyRequestor;
     private final SystemInfo nodeSystem = new SystemInfo();
@@ -86,7 +87,9 @@ public class Cloud extends AbstractServiceNode {
                 ServiceRequest serviceRequest = (ServiceRequest) messageObj;
 
                 UUID targetNodeUuid = serviceRequest.getTargetNodeUuid();
-                String serviceOwnerAddress = serviceAddress.getHost() + ":" + serviceAddress.getPort();
+
+                // todo examine this
+                String serviceOwnerAddress = serviceAddress.getHost() + ":" + TRANSFER_SERVER_PORT_NUMBER;
                 String serviceName = serviceRequest.getDesiredServiceName();
 
                 try {
@@ -241,7 +244,7 @@ public class Cloud extends AbstractServiceNode {
      * This method launches this nodes Transfer Server using the service address define at node creation
      */
     private void launchTransferServer() throws Exception {
-        InetSocketAddress serverAddress = new InetSocketAddress(serviceAddress.getPort());
+        InetSocketAddress serverAddress = new InetSocketAddress(TRANSFER_SERVER_PORT_NUMBER);
         setReuseAddr(true);
 
         logger.debug("serverAddress={}", serverAddress);
