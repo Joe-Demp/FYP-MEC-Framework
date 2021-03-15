@@ -189,6 +189,8 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     private void handleHostRequest(HostRequest request) {
         MobileClient requestor = mobileClientRegistry.get(request.getRequestorID());
         ServiceNode bestNode = getBestServiceForClient(requestor);
+
+        // todo fix NullPointerException here
         HostResponse response = new HostResponse(request.getRequestorID(), bestNode.serviceHostAddress);
 
         sendAsJson(requestor.webSocket, response);
