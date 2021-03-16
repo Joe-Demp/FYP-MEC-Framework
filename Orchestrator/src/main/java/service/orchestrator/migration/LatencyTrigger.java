@@ -59,6 +59,6 @@ public class LatencyTrigger implements Trigger {
     @Override
     public void run() {
         logger.debug("Running LatencyTrigger");
-        examine(ServiceNodeRegistry.get().getServiceNodes());
+        examine(ServiceNodeRegistry.get().getHostingAndStableServiceNodes());
     }
 }

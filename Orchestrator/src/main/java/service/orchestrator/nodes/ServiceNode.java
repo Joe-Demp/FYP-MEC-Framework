@@ -8,6 +8,7 @@ import service.core.NodeInfo;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
 
 import static java.util.Objects.nonNull;
@@ -31,6 +32,7 @@ public class ServiceNode {
     public Deque<Double> RamLoad = new ArrayDeque<>();
     public Deque<Long> unusedStorage = new ArrayDeque<>();
     private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
+    private AtomicReference<State> stateAtomRef = new AtomicReference<>(State.STABLE);
 
     // todo these scores need to be born out of methods. Remove the fields if not necessary
         /*
@@ -111,6 +113,17 @@ public class ServiceNode {
         return webSocket.getRemoteSocketAddress();
     }
 
+    public State getState() {
+        return stateAtomRef.get();
+    }
+
+    /**
+     * Sets the {@code ServiceNode}'s state to {@code state} and returns the previous value of state.
+     */
+    public State setState(State state) {
+        return stateAtomRef.getAndSet(state);
+    }
+
     private double getMean(Collection<? extends Number> numbers) {
         return numbers.stream()
                 .map(Number::doubleValue)
@@ -118,6 +131,10 @@ public class ServiceNode {
                 .average()
                 .orElse(Double.MAX_VALUE)
                 ;
+    }
+
+    public boolean isHosting() {
+        return nonNull(serviceName);
     }
 
     @Override
@@ -128,5 +145,9 @@ public class ServiceNode {
                 serviceName,
                 serviceHostAddress
         );
+    }
+
+    public enum State {
+        STABLE, MIGRATING
     }
 }

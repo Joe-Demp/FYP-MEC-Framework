@@ -10,8 +10,8 @@ public class NodeInfoRequest extends Message {
     }
 
     public NodeInfoRequest(UUID assignedUUID) {
-        super(MessageTypes.NODE_INFO_REQUEST);
-        this.assignedUUID=assignedUUID;
+        this();
+        this.assignedUUID = assignedUUID;
     }
 
     public UUID getAssignedUUID() {

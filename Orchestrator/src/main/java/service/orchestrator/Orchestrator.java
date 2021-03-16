@@ -75,8 +75,8 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
-    private static URI mapToUri(InetAddress address) {
-        String uriString = String.format("ws://%s:%d", address.getHostAddress(), PING_SERVER_PORTNUMBER);
+    private static URI mapToUri(InetSocketAddress address) {
+        String uriString = String.format("ws://%s", address);
         logger.debug("Mapping {} to URI.", uriString);
         return URI.create(uriString);
     }
@@ -234,7 +234,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     private void registerNewMobileClient(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
         InetAddress address = newWSClientAddresses.remove(mobileClientInfo.getUuid());
-        mobileClientInfo.setPingServer(address);
+        mobileClientInfo.setPingServerAddress(address);
         mobileClientInfo.setWebSocket(webSocket);
         mobileClientRegistry.updateClient(mobileClientInfo);
     }
@@ -253,20 +253,9 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     // updates the service statuses of the ServiceNodes after migration.
     private void handleMigrationSuccess(MigrationSuccess migrationSuccess) {
-        UUID migrationSourceUuid = migrationSuccess.getSourceHostUuid();
-        serviceNodeRegistry.get(migrationSourceUuid).serviceName = null;
-
-        UUID migrationTargetUuid = migrationSuccess.getTargetHostUuid();
-        serviceNodeRegistry.get(migrationTargetUuid).serviceName = migrationSuccess.getServiceName();
-    }
-
-    /**
-     * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
-     */
-    private void sendAsJson(WebSocket ws, Message message) {
-        String json = gson.toJson(message);
-        logger.debug("Sending: {}", json);
-        ws.send(json);
+        UUID sourceUuid = migrationSuccess.getSourceHostUuid();
+        UUID targetUuid = migrationSuccess.getTargetHostUuid();
+        serviceNodeRegistry.recordMigration(sourceUuid, targetUuid);
     }
 
 //    /**
@@ -288,6 +277,15 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 //        System.out.println("Told worst current owner to transfer the file to best Node  --TIME " + System.currentTimeMillis());
 //        return bestNode;
 //    }
+
+    /**
+     * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
+     */
+    private void sendAsJson(WebSocket ws, Message message) {
+        String json = gson.toJson(message);
+        logger.debug("Sending: {}", json);
+        ws.send(json);
+    }
 
     /**
      * This method transfers the requested service to the best node available,
@@ -409,8 +407,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     @Override
     public void migrate(ServiceNode source, ServiceNode target) {
         logger.info("--- In Orchestrator.migrate ---");
+
         ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
+        serviceNodeRegistry.setToMigrating(source, target);
         sendAsJson(source.webSocket, request);
+
         logger.info("--- End Orchestrator.migrate ---");
     }
 

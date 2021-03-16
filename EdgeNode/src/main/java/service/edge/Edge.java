@@ -1,8 +1,6 @@
 package service.edge;
 
 import org.java_websocket.handshake.ServerHandshake;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import service.core.*;
@@ -23,8 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Edge extends AbstractServiceNode {
-    public static final Logger logger = LoggerFactory.getLogger(Edge.class);
-
     SystemInfo nodeSystem = new SystemInfo();
     HardwareAbstractionLayer hal = nodeSystem.getHardware();
     DockerController dockerController;
@@ -72,30 +68,32 @@ public class Edge extends AbstractServiceNode {
                 sendHeartbeatResponse();
                 break;
             case Message.MessageTypes.SERVICE_REQUEST:
+                // todo this is untested - should be fixed once Cloud and Edge are unified
                 ServiceRequest serviceRequest = (ServiceRequest) messageObj;
+                InetSocketAddress serverAddress;
                 try {
-                    InetSocketAddress serverAddress = launchTransferServer();
+                    serverAddress = launchTransferServer();
+                    ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getTargetNodeUuid(), assignedUUID, serverAddress, serviceRequest.getDesiredServiceName());
+                    String jsonStr = gson.toJson(serviceResponse);
+                    send(jsonStr);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ServiceResponse serviceResponse = new ServiceResponse(serviceRequest.getTargetNodeUuid(), assignedUUID, serviceAddress.getHost() + ":" + serviceAddress.getPort(), serviceRequest.getDesiredServiceName());
-                String jsonStr = gson.toJson(serviceResponse);
-                send(jsonStr);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
-                //this gives the proxy address we want
-                ServiceResponse response = (ServiceResponse) messageObj;
-                logger.info("Edge received a service response");
-
-                try {
-                    launchTransferClient(response.getSourceServiceAddress());
-                    MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID, response.getSourceNodeUuid(), response.getServiceName());
-                    jsonStr = gson.toJson(migrationSuccess);
-                    send(jsonStr);
-                } catch (URISyntaxException | UnknownHostException e) {
-                    e.printStackTrace();
-                }
+                handleServiceResponse((ServiceResponse) messageObj);
                 break;
+        }
+    }
+
+    private void handleServiceResponse(ServiceResponse response) {
+        logger.info("Edge received a service response");
+        try {
+            launchTransferClient(response.getTransferServerAddress());
+            MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID, response.getSourceNodeUuid(), response.getServiceName());
+            sendAsJson(migrationSuccess);
+        } catch (URISyntaxException | UnknownHostException e) {
+            e.printStackTrace();
         }
     }
 
@@ -143,12 +141,12 @@ public class Edge extends AbstractServiceNode {
      * @throws URISyntaxException
      * @throws UnknownHostException
      */
-    private void launchTransferClient(String serverAddress) throws URISyntaxException, UnknownHostException {
+    private void launchTransferClient(InetSocketAddress serverAddress) throws URISyntaxException, UnknownHostException {
         URI transferServerURI;
         if (secureMode) {
-            transferServerURI = new URI("wss://" + serverAddress);
+            transferServerURI = URI.create("wss://" + serverAddress);
         } else {
-            transferServerURI = new URI("ws://" + serverAddress);
+            transferServerURI = URI.create("ws://" + serverAddress);
         }
 
         TransferClient transferClient = new TransferClient(transferServerURI, dockerController);

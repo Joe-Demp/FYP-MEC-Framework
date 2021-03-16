@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ServiceNodeRegistry {
     private static final ServiceNodeRegistry instance = new ServiceNodeRegistry();
@@ -30,6 +31,11 @@ public class ServiceNodeRegistry {
         return serviceNodes.values();
     }
 
+    private static void swapServiceNames(ServiceNode source, ServiceNode target) {
+        target.serviceName = source.serviceName;
+        source.serviceName = null;
+    }
+
     /**
      * todo write
      *
@@ -42,6 +48,31 @@ public class ServiceNodeRegistry {
     public void removeNodeWithWebsocket(WebSocket webSocket) {
         ServiceNode toRemove = serviceNodeWithWebsocket(webSocket);
         serviceNodes.remove(toRemove.uuid);
+    }
+
+    private static void setToStable(ServiceNode... nodes) {
+        for (ServiceNode node : nodes) node.setState(ServiceNode.State.STABLE);
+    }
+
+    public Collection<ServiceNode> getHostingAndStableServiceNodes() {
+        return serviceNodes.values().stream()
+                .filter(ServiceNode::isHosting)
+                .filter(node -> (node.getState() == ServiceNode.State.STABLE))
+                .collect(Collectors.toList())
+                ;
+    }
+
+    public void recordMigration(UUID source, UUID target) {
+        ServiceNode sourceNode = get(source);
+        ServiceNode targetNode = get(target);
+
+
+        swapServiceNames(sourceNode, targetNode);
+        setToStable(sourceNode, targetNode);
+    }
+
+    public void setToMigrating(ServiceNode... nodes) {
+        for (ServiceNode node : nodes) node.setState(ServiceNode.State.MIGRATING);
     }
 
     // returns a dummy ServiceNode if it's not in the registry

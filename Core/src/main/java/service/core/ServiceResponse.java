@@ -1,5 +1,6 @@
 package service.core;
 
+import java.net.InetSocketAddress;
 import java.util.UUID;
 
 /**
@@ -10,21 +11,22 @@ import java.util.UUID;
 public class ServiceResponse extends Message {
     private UUID targetNodeUuid;
     private UUID sourceNodeUuid;
-    private String sourceServiceAddress;
+    /**
+     * The address of the transfer server provided by the source ServiceNode during migration.
+     */
+    private InetSocketAddress transferServerAddress;
     private String serviceName;
-
-    // todo something about the comment below
-    //idk if this is how i wanna do it but maybe
 
     public ServiceResponse() {
         super(Message.MessageTypes.SERVICE_RESPONSE);
     }
 
-    public ServiceResponse(UUID targetNodeUuid, UUID sourceNodeUuid, String sourceServiceAddress, String serviceName) {
+    public ServiceResponse(UUID targetNodeUuid, UUID sourceNodeUuid, InetSocketAddress transferServerAddress,
+                           String serviceName) {
         this();
         this.targetNodeUuid = targetNodeUuid;
         this.sourceNodeUuid = sourceNodeUuid;
-        this.sourceServiceAddress = sourceServiceAddress;
+        this.transferServerAddress = transferServerAddress;
         this.serviceName = serviceName;
     }
 
@@ -36,8 +38,8 @@ public class ServiceResponse extends Message {
         return sourceNodeUuid;
     }
 
-    public String getSourceServiceAddress() {
-        return sourceServiceAddress;
+    public InetSocketAddress getTransferServerAddress() {
+        return transferServerAddress;
     }
 
     public String getServiceName() {

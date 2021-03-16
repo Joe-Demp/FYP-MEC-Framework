@@ -1,8 +1,6 @@
 package service.cloud;
 
 import org.java_websocket.handshake.ServerHandshake;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OSFileStore;
@@ -26,8 +24,6 @@ import java.time.Instant;
 import java.util.*;
 
 public class Cloud extends AbstractServiceNode {
-    private static final Logger logger = LoggerFactory.getLogger(Cloud.class);
-    private static final int TRANSFER_SERVER_PORT_NUMBER = 90921;
     private final LatencyRequestMonitor latencyRequestMonitor;
     private final LatencyRequestor latencyRequestor;
     private final SystemInfo nodeSystem = new SystemInfo();
@@ -96,7 +92,7 @@ public class Cloud extends AbstractServiceNode {
                 try {
                     // Inverse of what happens when a ServiceRequest message is received
                     //
-                    launchTransferClient(response.getSourceServiceAddress());
+                    launchTransferClient(response.getTransferServerAddress());
                     MigrationSuccess migrationSuccess = new MigrationSuccess(assignedUUID, response.getSourceNodeUuid(), response.getServiceName());
                     sendAsJson(migrationSuccess);
                 } catch (URISyntaxException | UnknownHostException e) {
@@ -122,7 +118,7 @@ public class Cloud extends AbstractServiceNode {
         ServiceResponse response = new ServiceResponse(
                 request.getTargetNodeUuid(),
                 assignedUUID,
-                transferServerAddress.toString(),
+                transferServerAddress,
                 request.getDesiredServiceName()
         );
         sendAsJson(response);
@@ -169,12 +165,12 @@ public class Cloud extends AbstractServiceNode {
      * @throws URISyntaxException
      * @throws UnknownHostException
      */
-    private void launchTransferClient(String serverAddress) throws URISyntaxException, UnknownHostException {
+    private void launchTransferClient(InetSocketAddress serverAddress) throws URISyntaxException, UnknownHostException {
         URI transferServerURI;
         if (secureMode) {
-            transferServerURI = new URI("wss://" + serverAddress);
+            transferServerURI = URI.create("wss://" + serverAddress);
         } else {
-            transferServerURI = new URI("ws://" + serverAddress);
+            transferServerURI = URI.create("ws://" + serverAddress);
         }
 
         TransferClient transferClient = new TransferClient(transferServerURI, dockerController);
@@ -242,7 +238,7 @@ public class Cloud extends AbstractServiceNode {
      * @return the address of the newly launched transfer server.
      */
     private InetSocketAddress launchTransferServer() {
-        InetSocketAddress serverAddress = new InetSocketAddress(0);
+        InetSocketAddress serverAddress = new InetSocketAddress(Constants.TRANSFER_SERVER_PORT);
         setReuseAddr(true);
 
         logger.debug("Launching Transfer Server at {}", serverAddress);

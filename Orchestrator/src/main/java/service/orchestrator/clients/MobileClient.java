@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.core.MobileClientInfo;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import static java.util.Objects.nonNull;
@@ -17,10 +17,10 @@ public class MobileClient {
 
     public UUID uuid;
     public String desiredServiceName;
-    public InetAddress pingServer;
+    public InetSocketAddress pingServer;
     public WebSocket webSocket;
 
-    public MobileClient(UUID uuid, String desiredServiceName, InetAddress pingServer, WebSocket webSocket) {
+    public MobileClient(UUID uuid, String desiredServiceName, InetSocketAddress pingServer, WebSocket webSocket) {
         this.uuid = uuid;
         this.desiredServiceName = desiredServiceName;
         this.pingServer = pingServer;
@@ -45,7 +45,7 @@ public class MobileClient {
         }
     }
 
-    private void setPingServer(InetAddress pingServer) {
+    private void setPingServer(InetSocketAddress pingServer) {
         if (nonNull(pingServer)) {
             this.pingServer = pingServer;
         }
