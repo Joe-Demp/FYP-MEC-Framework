@@ -76,12 +76,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
-    // todo make sure MobileInfo.pingServer is not being fed into this (often pingServer.getHostString() == 0.0.0.0)
-    private static URI mapToUri(InetSocketAddress address) {
-        String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
-        logger.debug("Mapping {} to URI.", uriString);
-        return URI.create(uriString);
-    }
+        private static URI mapToUri(InetSocketAddress address) {
+            String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
+            logger.debug("Mapping {} to URI.", uriString);
+            return URI.create(uriString);
+        }
 
     private static InetAddress getClientAddress(WebSocket webSocket, ClientHandshake handshake) {
         String xForwardedFor = handshake.getFieldValue(X_FORWARDED_FOR);

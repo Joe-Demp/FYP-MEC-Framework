@@ -17,6 +17,9 @@ public class MobileClient {
 
     public UUID uuid;
     public String desiredServiceName;
+    /**
+     * Always contains the address of the PingServer from the point of view of the Orchestrator.
+     */
     public InetSocketAddress pingServer;
     public WebSocket webSocket;
 
@@ -27,6 +30,9 @@ public class MobileClient {
         this.webSocket = webSocket;
     }
 
+    private static boolean isWildcardInetAddress(InetSocketAddress address) {
+        return address.getHostString().equals("0.0.0.0");
+    }
 
     public void update(MobileClientInfo mobileClientInfo) {
         // take the new values from mobileClientInfo and add them to the ServiceNode's fields
@@ -36,7 +42,17 @@ public class MobileClient {
         }
 
         setWebSocket(mobileClientInfo.getWebSocket());
-        setPingServer(mobileClientInfo.getPingServer());
+        updatePingServer(mobileClientInfo.getPingServer());
+    }
+
+    private void updatePingServer(InetSocketAddress update) {
+        if (!isWildcardInetAddress(update)) {
+            setPingServer(update);
+        } else {
+            String oldHostName = pingServer.getHostName();
+            int newPort = update.getPort();
+            setPingServer(new InetSocketAddress(oldHostName, newPort));
+        }
     }
 
     private void setWebSocket(WebSocket webSocket) {
