@@ -9,7 +9,7 @@ import service.cloud.connections.LatencyRequestMonitor;
 import service.cloud.connections.LatencyRequestor;
 import service.core.*;
 import service.host.ServiceHost;
-import service.node.AbstractServiceNode;
+import service.node.ServiceNodeMecClient;
 import service.transfer.DockerController;
 import service.transfer.SecureTransferServer;
 import service.transfer.TransferClient;
@@ -23,7 +23,7 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.*;
 
-public class Cloud extends AbstractServiceNode {
+public class Cloud extends ServiceNodeMecClient {
     private final LatencyRequestMonitor latencyRequestMonitor;
     private final LatencyRequestor latencyRequestor;
     private final SystemInfo nodeSystem = new SystemInfo();

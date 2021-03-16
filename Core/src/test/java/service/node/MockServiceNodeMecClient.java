@@ -4,8 +4,8 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
 
-class MockAbstractServiceNode extends AbstractServiceNode {
-    public MockAbstractServiceNode() {
+class MockServiceNodeMecClient extends ServiceNodeMecClient {
+    public MockServiceNodeMecClient() {
         super(URI.create("ws://localhost:2000"));
     }
 

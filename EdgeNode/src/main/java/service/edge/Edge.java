@@ -5,7 +5,7 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import service.core.*;
 import service.host.ServiceHost;
-import service.node.AbstractServiceNode;
+import service.node.ServiceNodeMecClient;
 import service.transfer.DockerController;
 import service.transfer.SecureTransferServer;
 import service.transfer.TransferClient;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Edge extends AbstractServiceNode {
+public class Edge extends ServiceNodeMecClient {
     SystemInfo nodeSystem = new SystemInfo();
     HardwareAbstractionLayer hal = nodeSystem.getHardware();
     DockerController dockerController;

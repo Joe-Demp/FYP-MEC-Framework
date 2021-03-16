@@ -14,11 +14,16 @@ import java.net.URI;
 
 // todo pull functions from the subclasses up
 // todo rethink this (at least the naming -> we want nodes to *use* WebSockets, not *be* them
-public abstract class AbstractServiceNode extends WebSocketClient {
+
+/**
+ * A superclass for WebSocket clients that facilitate the Multi-access Edge Cloud framework by communicating with a
+ * MEC orchestrator.
+ */
+public abstract class ServiceNodeMecClient extends WebSocketClient {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected Gson gson;
 
-    public AbstractServiceNode(URI serverUri) {
+    public ServiceNodeMecClient(URI serverUri) {
         super(serverUri);
         initializeGson();
     }

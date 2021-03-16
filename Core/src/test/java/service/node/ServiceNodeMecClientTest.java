@@ -9,12 +9,12 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class AbstractServiceNodeTest {
+class ServiceNodeMecClientTest {
     static InetSocketAddress socketAddress = new InetSocketAddress("www.irishtimes.com", 80);
     static String uuidString = "29d03298-9e3e-4f74-bb3f-57be11e4140c";
     static UUID someUUID = UUID.fromString(uuidString);
     static String serviceName = "myService";
-    AbstractServiceNode serviceNode = new MockAbstractServiceNode();
+    ServiceNodeMecClient serviceNode = new MockServiceNodeMecClient();
     Message message = new ServiceResponse(someUUID, someUUID, socketAddress, serviceName);
     String messageJson = "{\n" +
             "  \"targetNodeUuid\": \"29d03298-9e3e-4f74-bb3f-57be11e4140c\",\n" +
