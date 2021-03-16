@@ -16,6 +16,7 @@ import service.orchestrator.migration.Migrator;
 import service.orchestrator.nodes.ServiceNode;
 import service.orchestrator.nodes.ServiceNodeRegistry;
 import service.orchestrator.properties.OrchestratorProperties;
+import service.util.InetSocketAddressAdapter;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -75,8 +76,9 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                 }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
     }
 
+    // todo make sure MobileInfo.pingServer is not being fed into this (often pingServer.getHostString() == 0.0.0.0)
     private static URI mapToUri(InetSocketAddress address) {
-        String uriString = String.format("ws://%s", address);
+        String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
         logger.debug("Mapping {} to URI.", uriString);
         return URI.create(uriString);
     }
@@ -110,7 +112,12 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                 .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
                 .registerSubtype(NodeClientLatencyResponse.class, Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE)
                 .registerSubtype(MobileClientInfo.class, Message.MessageTypes.MOBILE_CLIENT_INFO);
-        gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapterFactory(adapter).create();
+
+        gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .registerTypeAdapterFactory(adapter)
+                .registerTypeAdapter(InetSocketAddress.class, new InetSocketAddressAdapter())
+                .create();
     }
 
     /*
@@ -188,12 +195,18 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     private void handleHostRequest(HostRequest request) {
         MobileClient requestor = mobileClientRegistry.get(request.getRequestorID());
+        if (isNull(requestor)) {
+            logger.info("Received a HostRequest from an unregistered MobileClient. Ignoring.");
+            return;
+        }
+
         ServiceNode bestNode = getBestServiceForClient(requestor);
-
-        // todo fix NullPointerException here
-        HostResponse response = new HostResponse(request.getRequestorID(), bestNode.serviceHostAddress);
-
-        sendAsJson(requestor.webSocket, response);
+        if (nonNull(bestNode)) {
+            HostResponse response = new HostResponse(request.getRequestorID(), bestNode.serviceHostAddress);
+            sendAsJson(requestor.webSocket, response);
+        } else {
+            logger.info("Couldn't find service for client. Ignoring HostRequest.");
+        }
     }
 
     // todo should be done by the selector
