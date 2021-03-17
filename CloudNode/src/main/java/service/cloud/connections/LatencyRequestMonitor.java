@@ -73,9 +73,6 @@ public class LatencyRequestMonitor implements Runnable {
         latencies.put(clientUuid, clientLatencies);
     }
 
-    /**
-     * @param request
-     */
     public void startLatencyRequest(NodeClientLatencyRequest request) {
         NodeClientLatencyResponse response = mapToResponse(request);
         PingTask task = new PingTask(request.getClientUri());
@@ -90,7 +87,6 @@ public class LatencyRequestMonitor implements Runnable {
         return latencySnapshot;
     }
 
-    // todo see if there's any way around this
     private Map<UUID, List<Long>> cloneLatencies() {
         Hashtable<UUID, List<Long>> latenciesHashtable = ((Hashtable<UUID, List<Long>>) latencies);
         return (Map<UUID, List<Long>>) latenciesHashtable.clone();
