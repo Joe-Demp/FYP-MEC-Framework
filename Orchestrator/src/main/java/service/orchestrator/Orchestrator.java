@@ -1,8 +1,6 @@
 package service.orchestrator;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -16,7 +14,7 @@ import service.orchestrator.migration.Migrator;
 import service.orchestrator.nodes.ServiceNode;
 import service.orchestrator.nodes.ServiceNodeRegistry;
 import service.orchestrator.properties.OrchestratorProperties;
-import service.util.InetSocketAddressAdapter;
+import service.util.Gsons;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -47,7 +45,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     public Orchestrator(int port) {
         super(new InetSocketAddress(port));
-        initializeGson();
+        gson = Gsons.orchestratorGson();
 
         // todo extract this to a method
         new Timer().schedule(
@@ -98,25 +96,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
             logger.error("Unknown host at {} ; message: {}", addressString, e.getMessage());
         }
         return webSocketAddress;
-    }
-
-    private void initializeGson() {
-        RuntimeTypeAdapterFactory<Message> adapter = RuntimeTypeAdapterFactory
-                .of(Message.class, "type")
-                .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
-                .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
-                .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
-                .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
-                .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
-                .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
-                .registerSubtype(NodeClientLatencyResponse.class, Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE)
-                .registerSubtype(MobileClientInfo.class, Message.MessageTypes.MOBILE_CLIENT_INFO);
-
-        gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .registerTypeAdapterFactory(adapter)
-                .registerTypeAdapter(InetSocketAddress.class, new InetSocketAddressAdapter())
-                .create();
     }
 
     /*
