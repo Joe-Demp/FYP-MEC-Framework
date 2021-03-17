@@ -131,11 +131,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                 logger.warn("Not calling transferServiceToBestNode. Fix this asap.");
                 handleHostRequest((HostRequest) messageObj);
                 break;
-            case Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE:
-                // todo get rid of this handler once NodeClientLatencyResponse is deleted
-                NodeClientLatencyResponse nclr = (NodeClientLatencyResponse) messageObj;
-                logger.error("Received a NodeClientLatencyResponse from {}", nclr.getNodeId());
-                break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
                 break;

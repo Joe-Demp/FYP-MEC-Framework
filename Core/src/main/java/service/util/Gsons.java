@@ -36,7 +36,6 @@ public class Gsons {
                     .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
                     .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
                     .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
-                    .registerSubtype(NodeClientLatencyResponse.class, Message.MessageTypes.NODE_CLIENT_LATENCY_RESPONSE)
                     .registerSubtype(MobileClientInfo.class, Message.MessageTypes.MOBILE_CLIENT_INFO);
 
     private Gsons() {
