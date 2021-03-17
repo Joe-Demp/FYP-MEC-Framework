@@ -80,4 +80,9 @@ public class OrchestratorProperties {
         String clientPingServerPort = properties.getProperty("client.pingserver.port", "8092");
         return Integer.parseInt(clientPingServerPort);
     }
+
+    public long getHeartbeatPeriod() {
+        String heartbeatFrequency = properties.getProperty("orchestrator.heartbeat.frequency", "10");
+        return Long.parseLong(heartbeatFrequency);
+    }
 }

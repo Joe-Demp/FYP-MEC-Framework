@@ -21,64 +21,46 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-// todo remove hard coded values and use a config file instead (or command line args)
-
+/**
+ * The Orchestrator's WebSocketServer.
+ *
+ * <br>This server sends a heartbeat to all clients every few seconds, as specified in orchestrator.properties.
+ */
 public class Orchestrator extends WebSocketServer implements Migrator {
-    public static final int PING_SERVER_PORTNUMBER = OrchestratorProperties.get().getClientPingServerPort();
     private static final Logger logger = LoggerFactory.getLogger(Orchestrator.class);
-    private static final long HEARTBEAT_REQUEST_PERIOD = 10L * 1000L;
+    private static final long HEARTBEAT_REQUEST_PERIOD = OrchestratorProperties.get().getHeartbeatPeriod();
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
     private static final ServiceNodeRegistry serviceNodeRegistry = ServiceNodeRegistry.get();
     private static final MobileClientRegistry mobileClientRegistry = MobileClientRegistry.get();
+    private static final ScheduledExecutorService heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
 
-    // todo consider removing this throughout the framework
+    // todo remove this from the framework
     private static final String serviceName = "docker.tar";
 
-    private Map<UUID, InetAddress> newWSClientAddresses = new HashMap<>();
+    private Map<UUID, InetAddress> newWSClientAddresses = new Hashtable<>();
     private Gson gson;
 
     public Orchestrator(int port) {
         super(new InetSocketAddress(port));
         gson = Gsons.orchestratorGson();
-
-        // todo extract this to a method
-        new Timer().schedule(
-                new TimerTask() {
-                    @Override
-                    public void run() {
-                        logger.debug("Current connections:");
-                        for (ServiceNode node : serviceNodeRegistry.getServiceNodes()) {
-                            logger.debug(node.toString());
-                        }
-                        for (MobileClient mobile : mobileClientRegistry.getMobileClients()) {
-                            logger.debug(mobile.toString());
-                        }
-                        logger.debug("End Current Connections.");
-
-                        logger.debug("Sending HeartbeatRequests");
-                        for (ServiceNode node : serviceNodeRegistry.getServiceNodes()) {
-                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(node.uuid);
-                            sendAsJson(node.webSocket, heartbeat);
-                        }
-                        for (MobileClient mobile : mobileClientRegistry.getMobileClients()) {
-                            ServerHeartbeatRequest heartbeat = new ServerHeartbeatRequest(mobile.uuid);
-                            sendAsJson(mobile.webSocket, heartbeat);
-                        }
-                    }
-                }, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD);
+        heartbeatScheduler.scheduleAtFixedRate(
+                this::broadcastHeartbeats, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD, TimeUnit.SECONDS);
     }
 
-        private static URI mapToUri(InetSocketAddress address) {
-            String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
-            logger.debug("Mapping {} to URI.", uriString);
-            return URI.create(uriString);
-        }
+    private static URI mapToUri(InetSocketAddress address) {
+        String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
+        logger.debug("Mapping {} to URI.", uriString);
+        return URI.create(uriString);
+    }
 
     private static InetAddress getClientAddress(WebSocket webSocket, ClientHandshake handshake) {
         String xForwardedFor = handshake.getFieldValue(X_FORWARDED_FOR);
@@ -111,34 +93,23 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
         logger.info("new connection :" + webSocket.getRemoteSocketAddress());
-        logger.debug("Http Headers:");
-        for (Iterator<String> it = clientHandshake.iterateHttpFields(); it.hasNext(); ) {
-            String field = it.next();
-            logger.debug("{} : {}", field, clientHandshake.getFieldValue(field));
-        }
-        logger.debug("END Http Headers.");
 
-        UUID UUIDToReturn = UUID.randomUUID();
+        UUID newClientUuid = UUID.randomUUID();
 
         // cache client addresses for safekeeping
         InetAddress newWSClientAddress = getClientAddress(webSocket, clientHandshake);
-        newWSClientAddresses.put(UUIDToReturn, newWSClientAddress);
-        logger.debug("Keeping UUID and WSocketAddress: {} {}", UUIDToReturn, newWSClientAddress);
-
-        // create a nodeInfoRequest and send it back to the node
-        NodeInfoRequest infoRequest = new NodeInfoRequest(UUIDToReturn);
-        sendAsJson(webSocket, infoRequest);
+        newWSClientAddresses.put(newClientUuid, newWSClientAddress);
+        logger.debug("Client {} has address {}", newClientUuid, newWSClientAddress);
+        sendAsJson(webSocket, new NodeInfoRequest(newClientUuid));
     }
 
     @Override
     public void onMessage(WebSocket webSocket, String message) {
         logger.debug("from {}", webSocket.getRemoteSocketAddress());
-
-        final int MAX_MESSAGE_LEN = 130;
-        logger.debug(message.substring(0, Integer.min(message.length(), MAX_MESSAGE_LEN)));
+        String reducedMessage = message.substring(0, Integer.min(message.length(), 130));
+        logger.debug(reducedMessage);
 
         Message messageObj = gson.fromJson(message, Message.class);
-
         // todo a good way to cut this down would be to:
         //  map messages to commands (separate switch in a separate class)
         //  execute commands polymorphically
@@ -278,6 +249,13 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         ws.send(json);
     }
 
+    void broadcastHeartbeats() {
+        ServerHeartbeatRequest request = new ServerHeartbeatRequest();
+        String json = gson.toJson(request);
+        logger.debug("Broadcasting ServerHeartbeatRequests.");
+        broadcast(json);
+    }
+
     /**
      * This method transfers the requested service to the best node available,
      * if that node is the current host, no transfer occurs
@@ -397,13 +375,10 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     @Override
     public void migrate(ServiceNode source, ServiceNode target) {
-        logger.info("--- In Orchestrator.migrate ---");
-
+        logger.info("In Orchestrator.migrate");
         ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
         serviceNodeRegistry.setToMigrating(source, target);
         sendAsJson(source.webSocket, request);
-
-        logger.info("--- End Orchestrator.migrate ---");
     }
 
     @Override
