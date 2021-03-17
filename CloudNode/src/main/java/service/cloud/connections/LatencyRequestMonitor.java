@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
 public class LatencyRequestMonitor implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(LatencyRequestMonitor.class);
 
-    private final Map<NodeClientLatencyResponse, Future<PingResult>> awaitedLatencyResponses = new HashMap<>();
+    private final Map<NodeClientLatencyResponse, Future<PingResult>> awaitedLatencyResponses = new Hashtable<>();
     private final ExecutorService executor = Executors.newFixedThreadPool(5);
     private final Map<UUID, List<Long>> latencies = new Hashtable<>();
 
@@ -73,9 +73,10 @@ public class LatencyRequestMonitor implements Runnable {
         latencies.put(clientUuid, clientLatencies);
     }
 
-    // synchronized since it accesses awaitedLatencyResponses
-    public synchronized void startLatencyRequest(NodeClientLatencyRequest request) {
-        // create the PingTask, submit it to the ExecutorService, store the Future.
+    /**
+     * @param request
+     */
+    public void startLatencyRequest(NodeClientLatencyRequest request) {
         NodeClientLatencyResponse response = mapToResponse(request);
         PingTask task = new PingTask(request.getClientUri());
         Future<PingResult> futurePingResult = executor.submit(task);
