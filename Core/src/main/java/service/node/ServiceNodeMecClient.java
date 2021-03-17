@@ -28,7 +28,7 @@ public abstract class ServiceNodeMecClient extends WebSocketClient {
     /**
      * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
      */
-    public void sendAsJson(Message message) {
+    public final void sendAsJson(Message message) {
         String json = gson.toJson(message);
         logger.debug("Sending: {}", json);
         send(json);
