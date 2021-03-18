@@ -14,5 +14,6 @@
         <module>DockerImage</module>
         <module>EdgeNode</module>
         <module>Orchestrator</module>
+        <module>ServiceNode</module>
     </modules>
 </project>

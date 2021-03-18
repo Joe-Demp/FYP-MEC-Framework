@@ -17,3 +17,4 @@ CloudNode/sental.tar
 
 # ignoring some logs
 CloudNode/hs_err_pid18512.log
+/ServiceNode/target/
