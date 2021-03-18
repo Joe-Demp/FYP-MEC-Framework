@@ -39,6 +39,13 @@
             <version>1.10.19</version>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-nop -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>1.7.30</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <!-- todo find out more about these plugins -->

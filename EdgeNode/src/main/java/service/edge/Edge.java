@@ -143,14 +143,19 @@ public class Edge extends ServiceNodeMecClient {
      */
     private void launchTransferClient(InetSocketAddress serverAddress) throws URISyntaxException, UnknownHostException {
         URI transferServerURI;
+        String uriString = String.format("ws://%s:%d", serverAddress.getHostString(), serverAddress.getPort());
+
         if (secureMode) {
+            logger.warn("Bug here: server address has a leading forward slash.");
             transferServerURI = URI.create("wss://" + serverAddress);
         } else {
-            transferServerURI = URI.create("ws://" + serverAddress);
+            transferServerURI = URI.create(uriString);
         }
 
         TransferClient transferClient = new TransferClient(transferServerURI, dockerController);
         transferClient.connect();
+
+        // todo use a new thread instead of spinning
         while (transferClient.dockerControllerReady() == null) {
         }
         // todo the method above does not make sure docker was launched. Fix it
