@@ -103,7 +103,7 @@ public class Edge extends ServiceNodeMecClient {
     private void sendHeartbeatResponse() {
         NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, null);
         nodeInfo.setServiceHostAddress(serviceAddress);
-        nodeInfo.setTrustyworthy(trustWorthyNode);
+        nodeInfo.setTrustworthy(trustWorthyNode);
         if (!historicalCPUload.isEmpty()) {
             nodeInfo.setCPUload(historicalCPUload);
         }

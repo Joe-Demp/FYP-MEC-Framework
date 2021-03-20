@@ -11,7 +11,10 @@ import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OperatingSystem;
 import service.core.*;
+import service.host.ServiceHost;
 import service.transfer.DockerController;
+import service.transfer.TransferClient;
+import service.transfer.TransferServer;
 import service.util.Gsons;
 
 import java.io.File;
@@ -43,7 +46,8 @@ public class ServiceNodeWsClient extends WebSocketClient {
     private File service;
     private UUID uuid;
     /**
-     * todo fill in
+     * Address of the current running service/application
+     * (In a Docker Container for now).
      */
     private URI serviceAddress;
     private Map<Integer, Double> historicalCPUload = new HashMap<>();
@@ -76,45 +80,28 @@ public class ServiceNodeWsClient extends WebSocketClient {
                 getRemoteSocketAddress(), getLocalSocketAddress());
     }
 
+    private static URI mapInetSocketAddressToWebSocketUri(InetSocketAddress address) {
+        String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
+        return URI.create(uriString);
+    }
+
     @Override
     public void onMessage(String message) {
         logger.debug("Received: {}", message);
 
         Message messageObj = gson.fromJson(message, Message.class);
-        //this routes inbound messages based on type and then moves them to other methods
         switch (messageObj.getType()) {
-            //A request for the nodes status when it initially joins
             case Message.MessageTypes.NODE_INFO_REQUEST:
-                NodeInfoRequest infoRequest = (NodeInfoRequest) messageObj;
-                uuid = infoRequest.getAssignedUUID();
-                sendHeartbeatResponse();
+                handleNodeInfoRequest((NodeInfoRequest) messageObj);
                 break;
-            //heartbeat request
             case Message.MessageTypes.SERVER_HEARTBEAT_REQUEST:
                 sendHeartbeatResponse();
                 break;
-            //request for the service on the node
             case Message.MessageTypes.SERVICE_REQUEST:
-                // transfers service from this node to the target
                 handleServiceRequest((ServiceRequest) messageObj);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
-                // * Service gets transferred to this Node here *
-
-                ServiceResponse response = (ServiceResponse) messageObj;
-
-                // todo figure out whether the CloudNode ever receives a ServiceResponse
-                logger.warn("The CloudNode received a ServiceResponse!");
-
-                try {
-                    // Inverse of what happens when a ServiceRequest message is received
-                    //
-                    launchTransferClient(response.getTransferServerAddress());
-                    MigrationSuccess migrationSuccess = new MigrationSuccess(uuid, response.getSourceNodeUuid(), response.getServiceName());
-                    sendAsJson(migrationSuccess);
-                } catch (URISyntaxException | UnknownHostException e) {
-                    e.printStackTrace();
-                }
+                handleServiceResponse((ServiceResponse) messageObj);
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST:
                 latencyRequestor.registerRequest((NodeClientLatencyRequest) messageObj);
@@ -125,26 +112,118 @@ public class ServiceNodeWsClient extends WebSocketClient {
         }
     }
 
+    /**
+     * Processes NodeInfoRequests, sent to the Service Node by the Orchestrator when a connection is opened.
+     *
+     * <p>Takes the assigned {@code UUID} and sends a heartbeat response.</p>
+     */
+    private void handleNodeInfoRequest(NodeInfoRequest request) {
+        uuid = request.getAssignedUUID();
+        sendHeartbeatResponse();
+    }
 
     private void sendHeartbeatResponse() {
-        throw new UnsupportedOperationException();
+        NodeInfo nodeInfo = new NodeInfo(uuid, service.getName(), serviceAddress);
+
+        // adding performance data
+        // todo replace these with recent values only, not the entire map
+        logger.warn("No updates made to historicalCPUload or historicalRamload or ...");
+        nodeInfo.setCPUload(historicalCPUload);
+        nodeInfo.setRamLoad(historicalRamload);
+        nodeInfo.setUnusedStorage(unusedStorage);
+        nodeInfo.setLatencies(latencyRequestMonitor.takeLatencySnapshot());
+        // END adding performance data
+
+        sendAsJson(nodeInfo);
     }
 
+    /**
+     * Starts the process wherein this Service Node will send its application to the target Service Node.
+     */
     private void handleServiceRequest(ServiceRequest request) {
-        throw new UnsupportedOperationException();
+        logger.info("{} received a ServiceRequest!", label);
+        InetSocketAddress transferServerAddress = launchTransferServer();
+        sendServiceResponse(request, transferServerAddress);
     }
 
-    private void launchTransferClient(InetSocketAddress transferServerAddress) throws URISyntaxException, UnknownHostException {
-        throw new UnsupportedOperationException();
+    /**
+     * Starts the process wherein this Service Node will receive an application from the source Service Node.
+     */
+    private void handleServiceResponse(ServiceResponse response) {
+        logger.info("{} received a ServiceResponse!", label);
+
+        try {
+            launchTransferClient(response.getTransferServerAddress());
+            MigrationSuccess migrationSuccess = new MigrationSuccess(uuid, response.getSourceNodeUuid(), response.getServiceName());
+            sendAsJson(migrationSuccess);
+        } catch (URISyntaxException | UnknownHostException ex) {
+            logger.error("Problem launching the TransferClient", ex);
+        }
+    }
+
+    /**
+     * This method launches this nodes Transfer Server using the service address define at node creation.
+     *
+     * @return the address of the newly launched transfer server.
+     */
+    private InetSocketAddress launchTransferServer() {
+        InetSocketAddress serverAddress = new InetSocketAddress(Constants.TRANSFER_SERVER_PORT);
+        logger.debug("Launching Transfer Server at {}", serverAddress);
+        TransferServer transferServer = new TransferServer(serverAddress, service);
+        transferServer.start();
+        return serverAddress;
+    }
+
+    private void launchTransferClient(InetSocketAddress serverAddress) throws URISyntaxException, UnknownHostException {
+        URI serverUri = mapInetSocketAddressToWebSocketUri(serverAddress);
+
+        TransferClient transferClient = new TransferClient(serverUri, dockerController);
+        transferClient.connect();
+
+        /* todo use a new thread instead of spinning
+            TransferAndStartService implements Runnable should:
+            * Start the TransferClient, await its completion.
+            * Start the DockerController
+            * exit
+         */
+
+        while (transferClient.dockerControllerReady() == null) {
+        }
+        // todo the method above does not make sure docker was launched. Fix it
+        // todo FIXME sometimes blocks here
+
+        logger.info("The transfer client says Docker was launched.");
+        DockerController dockerController = transferClient.dockerControllerReady();
+        transferClient.close();
+        logger.info("Closed the TransferClient and launching the service on Docker");
+        launchServiceOnDockerController();
+    }
+
+    private void sendServiceResponse(ServiceRequest request, InetSocketAddress transferServerAddress) {
+        ServiceResponse response = new ServiceResponse(
+                request.getTargetNodeUuid(), uuid, transferServerAddress, request.getDesiredServiceName());
+        sendAsJson(response);
+    }
+
+    /**
+     * This method will launch the host server that will allow users to communicate with the docker instance
+     * <p>
+     * todo delete
+     */
+    private void launchServiceOnDockerController() throws UnknownHostException {
+        ServiceHost serviceHost = new ServiceHost(serviceAddress.getPort(), dockerController);
+
+        logger.info("Starting the serviceHost");
+        serviceHost.start();
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-
+        logger.warn("Closing {}", label);
     }
 
     @Override
     public void onError(Exception ex) {
-
+        logger.error("Error in " + label, ex);
     }
 }

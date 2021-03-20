@@ -13,9 +13,8 @@
     <artifactId>ServiceNode</artifactId>
 
     <properties>
-        <java.version>13</java.version>
-        <!--        todo fix -->
         <main.class>ie.ucd.dempsey.mecframework.Main</main.class>
+        <java.version>13</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -83,10 +82,8 @@
                                 <argument>
                                     C:\Users\demps\IntelliJProjects\fyp\mec-framework\CloudNode\src\main\resources\docker.tar
                                 </argument>
-                                <argument>
-                                    ws://localhost:8090
-                                </argument>    <!-- address of the hosted service: placeholder for the moment -->
-                                <!-- The Orchestrator should really get the ip address, while the host can provide the port number -->
+                                <argument>ws://localhost:8090</argument>
+                                <argument>generic-service-node</argument>
                             </arguments>
                         </configuration>
                     </plugin>

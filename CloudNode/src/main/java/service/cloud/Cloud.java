@@ -128,7 +128,7 @@ public class Cloud extends ServiceNodeMecClient {
      * Constructs and sends Heartbeat responses when called
      */
     private void sendHeartbeatResponse() {
-        NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, service.getName());
+        NodeInfo nodeInfo = new NodeInfo(assignedUUID, service.getName(), serviceAddress);
         nodeInfo.setServiceHostAddress(serviceAddress);
 
         // adding performance data

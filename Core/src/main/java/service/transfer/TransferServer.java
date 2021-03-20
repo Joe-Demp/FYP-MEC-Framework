@@ -47,9 +47,7 @@ public class TransferServer extends WebSocketServer {
         logger.info("Reason: {}", reason);
         logger.info("Remote: {}", remote);
 
-        // todo remove the .close here?
-        webSocket.close();
-
+        // todo make sure the TransferServer stops i.e. make sure this method runs to completion
         try {
             // When the connection is closed, the server should be stopped
             logger.info("Trying to stop this TransferServer");
@@ -58,6 +56,7 @@ public class TransferServer extends WebSocketServer {
             logger.error("");
             e.printStackTrace();
         }
+        logger.info("TransferServer has stopped.");
     }
 
     @Override

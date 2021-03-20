@@ -18,21 +18,18 @@ public class NodeInfo extends Message {
     private Map<Integer, Double> RamLoad = Collections.emptyMap();
     private Map<Integer, Long> unusedStorage = Collections.emptyMap();
     private Map<UUID, List<Long>> latencies = Collections.emptyMap();
-    private double rollingCPUScore;
-    private double rollingRamScore;
-    private boolean trustyworthy = true;
+    private boolean trustworthy = true;
     private URI serviceHostAddress;
 
     public NodeInfo() {
         super(Message.MessageTypes.NODE_INFO);
     }
 
-    // todo remove CPUload from here
-    public NodeInfo(UUID uuid, Map<Integer, Double> CPUload, String serviceName) {
-        super(Message.MessageTypes.NODE_INFO);
+    public NodeInfo(UUID uuid, String serviceName, URI serviceUri) {
+        this();
         this.uuid = uuid;
-        this.CPUload = CPUload;
         this.serviceName = serviceName;
+        this.serviceHostAddress = serviceUri;
     }
 
     public Map<Integer, Long> getUnusedStorage() {
@@ -87,28 +84,12 @@ public class NodeInfo extends Message {
         RamLoad = ramLoad;
     }
 
-    public boolean isTrustyworthy() {
-        return trustyworthy;
+    public boolean isTrustworthy() {
+        return trustworthy;
     }
 
-    public void setTrustyworthy(boolean trustyworthy) {
-        this.trustyworthy = trustyworthy;
-    }
-
-    public double getRollingCPUScore() {
-        return rollingCPUScore;
-    }
-
-    public void setRollingCPUScore(double rollingCPUScore) {
-        this.rollingCPUScore = rollingCPUScore;
-    }
-
-    public double getRollingRamScore() {
-        return rollingRamScore;
-    }
-
-    public void setRollingRamScore(double rollingRamScore) {
-        this.rollingRamScore = rollingRamScore;
+    public void setTrustworthy(boolean trustworthy) {
+        this.trustworthy = trustworthy;
     }
 
     public URI getServiceHostAddress() {

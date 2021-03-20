@@ -40,7 +40,7 @@ public class ServiceNode {
         private double rollingRamScore;
         */
 
-    public boolean trustyworthy = true;
+    public boolean trustworthy = true;
     public URI serviceHostAddress;
 
     public ServiceNode(UUID uuid, WebSocket webSocket) {
@@ -120,8 +120,8 @@ public class ServiceNode {
     /**
      * Sets the {@code ServiceNode}'s state to {@code state} and returns the previous value of state.
      */
-    public State setState(State state) {
-        return stateAtomRef.getAndSet(state);
+    public void setState(State state) {
+        stateAtomRef.set(state);
     }
 
     private double getMean(Collection<? extends Number> numbers) {
@@ -135,6 +135,12 @@ public class ServiceNode {
 
     public boolean isHosting() {
         return nonNull(serviceName);
+    }
+
+    public double getCpuScore() {
+        // todo implement more Score methods
+        //  todo reconsider the Mean methods
+        throw new UnsupportedOperationException("ServiceNode.getCpuScore not implemented");
     }
 
     @Override

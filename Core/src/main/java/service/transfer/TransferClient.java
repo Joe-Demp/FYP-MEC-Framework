@@ -1,6 +1,5 @@
 package service.transfer;
 
-import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -37,11 +36,7 @@ public class TransferClient extends WebSocketClient {
      */
     @Override
     public void onMessage(String file) {
-        Gson gson = new Gson();
-        File gsonFile = gson.fromJson(file, File.class);
         logger.error("Unexpected TransferClient.onMessage(String) call");
-        dockerController.launchServiceOnNode(gsonFile);
-        dockerLaunched = true;
     }
 
     @Override

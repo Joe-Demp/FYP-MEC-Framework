@@ -160,12 +160,12 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     // Removes Address from newWSClientAddresses, used by the Orchestrator to track *MobileClients* (not ServiceNodes).
     //  FYI: called every time a NodeInfo is received.
-    private void registerServiceNode(NodeInfo nodeInfoMsg, WebSocket nodeWebSocket) {
-        nodeInfoMsg.setWebSocket(nodeWebSocket);
-        newWSClientAddresses.remove(nodeInfoMsg.getUuid());
-        serviceNodeRegistry.updateNode(nodeInfoMsg);
+    private void registerServiceNode(NodeInfo nodeInfo, WebSocket nodeWebSocket) {
+        nodeInfo.setWebSocket(nodeWebSocket);
+        newWSClientAddresses.remove(nodeInfo.getUuid());
+        serviceNodeRegistry.updateNode(nodeInfo);
 
-        askNodeToTrackAllLatencies(serviceNodeRegistry.get(nodeInfoMsg.getUuid()));
+        askNodeToTrackAllLatencies(serviceNodeRegistry.get(nodeInfo.getUuid()));
     }
 
     private void askNodeToTrackAllLatencies(ServiceNode serviceNode) {
