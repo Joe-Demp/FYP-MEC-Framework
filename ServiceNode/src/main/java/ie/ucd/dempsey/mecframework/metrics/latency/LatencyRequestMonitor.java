@@ -77,13 +77,8 @@ public class LatencyRequestMonitor implements Runnable {
 
     // synchronized since it queries and clears latencies
     public synchronized Map<UUID, List<Long>> takeLatencySnapshot() {
-        Map<UUID, List<Long>> latencySnapshot = Collections.unmodifiableMap(cloneLatencies());
+        Map<UUID, List<Long>> latencySnapshot = Map.copyOf(latencies);
         latencies.clear();
         return latencySnapshot;
-    }
-
-    private Map<UUID, List<Long>> cloneLatencies() {
-        Hashtable<UUID, List<Long>> latenciesHashtable = ((Hashtable<UUID, List<Long>>) latencies);
-        return (Map<UUID, List<Long>>) latenciesHashtable.clone();
     }
 }

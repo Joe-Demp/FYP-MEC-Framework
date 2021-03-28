@@ -11,7 +11,6 @@ import static java.util.Objects.isNull;
 
 public class PingTask implements Callable<PingResult> {
     private static final Logger logger = LoggerFactory.getLogger(PingTask.class);
-    private static final long DELAY = 100;
 
     private final WebSocketPingClient wsPingClient;
     private AtomicReference<PingResult> taskResult = new AtomicReference<>();
@@ -42,23 +41,10 @@ public class PingTask implements Callable<PingResult> {
 
     private synchronized void waitForWebSocket() {
         try {
+            // todo replace with a CountDownLatch
             wait();
         } catch (InterruptedException ie) {
             logger.error("PingTask was interrupted during wait for WebSocket: {}", ie.getMessage());
-        }
-    }
-
-    // todo remove this spinning lock
-    private void waitForTaskResult() {
-        while (isNull(taskResult.get())) delay();
-    }
-
-    private void delay() {
-        try {
-            Thread.sleep(DELAY);
-        } catch (InterruptedException ie) {
-            logger.error(ie.getMessage());
-            ie.printStackTrace();
         }
     }
 }
