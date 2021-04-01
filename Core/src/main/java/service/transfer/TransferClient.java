@@ -58,6 +58,13 @@ public class TransferClient extends WebSocketClient {
             logger.error("");
             e.printStackTrace();
         }
+
+        // Transfer done, close this client.
+        try {
+            closeBlocking();
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while closeBlocking.", e);
+        }
     }
 
     @Override

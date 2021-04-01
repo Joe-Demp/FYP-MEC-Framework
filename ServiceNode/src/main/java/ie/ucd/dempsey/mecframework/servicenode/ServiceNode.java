@@ -3,6 +3,7 @@ package ie.ucd.dempsey.mecframework.servicenode;
 import ie.ucd.dempsey.mecframework.metrics.ServiceNodeMetrics;
 import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestMonitor;
 import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestor;
+import ie.ucd.dempsey.mecframework.service.AcceptServiceTask;
 import ie.ucd.dempsey.mecframework.service.MigrationManager;
 import ie.ucd.dempsey.mecframework.service.ServiceController;
 import org.slf4j.Logger;
@@ -12,12 +13,8 @@ import service.core.*;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -25,6 +22,7 @@ public class ServiceNode implements Runnable {
     final String label;
     private final Logger logger = LoggerFactory.getLogger(ServiceNode.class);
     private final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
+    private final ExecutorService singleExecutor = Executors.newSingleThreadExecutor();
     private final ServiceNodeWsClient wsClient;
     private final LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor();
     private final LatencyRequestor latencyRequestor = new LatencyRequestor(latencyRequestMonitor);
@@ -34,6 +32,7 @@ public class ServiceNode implements Runnable {
     private final long pingDelay;
     private UUID uuid;
     private URI serviceAddress;
+    private State state = State.STABLE;
 
 
     public ServiceNode(URI orchestrator, ServiceController serviceController, File serviceFile, String label,
@@ -41,7 +40,7 @@ public class ServiceNode implements Runnable {
         this.wsClient = new ServiceNodeWsClient(orchestrator, this);
         this.metrics = new ServiceNodeMetrics();
         this.serviceController = serviceController;
-        this.migrationManager = new MigrationManager(serviceFile);
+        this.migrationManager = new MigrationManager(serviceFile, serviceController);
         this.label = label;
         this.pingDelay = pingDelay;
     }
@@ -51,6 +50,8 @@ public class ServiceNode implements Runnable {
         scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
         scheduleService.scheduleAtFixedRate(latencyRequestMonitor, 5, 5, TimeUnit.SECONDS);
         // start more threads!
+
+        logger.info("Service running? {}", serviceController.isServiceRunning());
 
         // this blocks (keeping the application from shutting down)
         wsClient.run();
@@ -97,8 +98,13 @@ public class ServiceNode implements Runnable {
      * Starts the process wherein this Service Node will send its application to the target Service Node.
      */
     void handleServiceRequest(ServiceRequest request) {
+        if (state != State.STABLE) {
+            throw new RuntimeException("ServiceNode not in a stable state. Probably migrated already.");
+        }
+
         logger.info("{} received a ServiceRequest!", label);
-        InetSocketAddress transferServerAddress = migrationManager.launchTransferServer();
+        state = State.TRANSFER_SERVER;
+        InetSocketAddress transferServerAddress = migrationManager.migrateService();
         sendServiceResponse(request, transferServerAddress);
     }
 
@@ -106,15 +112,22 @@ public class ServiceNode implements Runnable {
      * Starts the process wherein this Service Node will receive an application from the source Service Node.
      */
     void handleServiceResponse(ServiceResponse response) {
-        logger.info("{} received a ServiceResponse!", label);
-
-        try {
-            migrationManager.launchTransferClient(response.getTransferServerAddress());
-            MigrationSuccess migrationSuccess = new MigrationSuccess(uuid, response.getSourceNodeUuid(), response.getServiceName());
-            wsClient.sendAsJson(migrationSuccess);
-        } catch (URISyntaxException | UnknownHostException ex) {
-            logger.error("Problem launching the TransferClient", ex);
+        if (state != State.STABLE) {
+            throw new RuntimeException("ServiceNode not in a stable state. Probably migrated already.");
         }
+
+        logger.info("{} received a ServiceResponse!", label);
+        state = State.TRANSFER_CLIENT;
+
+        // todo extract the following
+        AcceptServiceTask acceptTask = new AcceptServiceTask(
+                migrationManager, response.getTransferServerAddress(), serviceController);
+        CompletableFuture<Void> task = CompletableFuture.runAsync(acceptTask, singleExecutor);
+        task.thenRunAsync(() -> {
+            MigrationSuccess migrationSuccess = new MigrationSuccess(
+                    uuid, response.getSourceNodeUuid(), response.getServiceName());
+            wsClient.sendAsJson(migrationSuccess);
+        }, singleExecutor);
     }
 
     private void sendServiceResponse(ServiceRequest request, InetSocketAddress transferServerAddress) {
@@ -126,4 +139,6 @@ public class ServiceNode implements Runnable {
     void handleLatencyRequest(NodeClientLatencyRequest request) {
         latencyRequestor.registerRequest(request);
     }
+
+    public enum State {STABLE, TRANSFER_SERVER, TRANSFER_CLIENT}
 }

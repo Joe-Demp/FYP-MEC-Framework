@@ -81,7 +81,10 @@
                             <mainClass>${main.class}</mainClass>
                             <arguments>
                                 <argument>ws://localhost:8080</argument>
-                                <argument>docker.tar</argument>
+                                <argument>
+                                    <!-- todo fix this-->
+                                    ../../streaming-sample/stream.tar
+                                </argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>generic-service-node</argument>
                                 <argument>0</argument>
@@ -163,7 +166,9 @@
                     <mainClass>${main.class}</mainClass>
                     <arguments>
                         <argument>ws://csi420-01-vm1.ucd.ie</argument>
-                        <argument>docker.tar</argument>
+                        <argument>
+                            C:\Users\demps\IntelliJProjects\fyp\mec-framework\ServiceNode\docker.tar
+                        </argument>
                         <argument>ws://localhost:8090</argument>
                         <argument>generic-service-node</argument>
                         <argument>0</argument>

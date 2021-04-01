@@ -1,11 +1,13 @@
 package ie.ucd.dempsey.mecframework.service;
 
-// todo provide an implementation: DockerController
 public interface ServiceController {
     void startService();
 
     boolean isServiceRunning();
 
+    /**
+     * Stops the service if it is running. Otherwise does nothing.
+     */
     void stopService();
 
     /**

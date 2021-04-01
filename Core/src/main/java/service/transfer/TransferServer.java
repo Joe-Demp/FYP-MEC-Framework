@@ -41,11 +41,9 @@ public class TransferServer extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket webSocket, int code, String reason, boolean remote) {
-        logger.info("In TransferClient#onClose");
+        logger.info("In TransferServer#onClose");
         logger.info("Remote WebSocket client {}", webSocket.getRemoteSocketAddress());
-        logger.info("Code: {}", code);
-        logger.info("Reason: {}", reason);
-        logger.info("Remote: {}", remote);
+        logger.info("Code, Reason, Remote: {}, {}, {}", code, reason, remote);
 
         // todo make sure the TransferServer stops i.e. make sure this method runs to completion
         try {
@@ -53,15 +51,19 @@ public class TransferServer extends WebSocketServer {
             logger.info("Trying to stop this TransferServer");
             stop();//if this is unstable this could be moved to the owner of this object and they could close it
         } catch (IOException | InterruptedException e) {
-            logger.error("");
-            e.printStackTrace();
+            logger.error("Error trying to stop the Transfer Server.", e);
         }
         logger.info("TransferServer has stopped.");
+
+        // todo remove the issue here: it doesn't make sense to have the "delete" code in the TransferServer.
+//        logger.info("Deleting the old service.");
+//        boolean fileDeleted = serviceFile.delete();
+//        logger.info("Old service deleted? {}", fileDeleted);
     }
 
     @Override
     public void onMessage(WebSocket webSocket, String s) {
-        // Does nothing with messages received
+        logger.error("in onMessage received: {}", s);
     }
 
     @Override

@@ -67,6 +67,7 @@ public class ServiceNodeWsClient extends WebSocketClient {
     @Override
     public void onClose(int code, String reason, boolean remote) {
         logger.warn("Closing {}", serviceNode.label);
+        logger.warn("{} {} {}", code, reason, remote);
     }
 
     @Override
