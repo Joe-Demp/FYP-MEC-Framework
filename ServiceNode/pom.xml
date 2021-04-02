@@ -81,10 +81,7 @@
                             <mainClass>${main.class}</mainClass>
                             <arguments>
                                 <argument>ws://localhost:8080</argument>
-                                <argument>
-                                    <!-- todo fix this-->
-                                    ../../streaming-sample/stream.tar
-                                </argument>
+                                <argument>../../streaming-sample/stream.tar</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>generic-service-node</argument>
                                 <argument>0</argument>
@@ -111,7 +108,7 @@
                             <mainClass>${main.class}</mainClass>
                             <arguments>
                                 <argument>ws://csi420-01-vm1.ucd.ie</argument>
-                                <argument>docker.tar</argument>
+                                <argument>../../streaming-sample/stream.tar</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>cloud-node</argument>
                                 <argument>1000</argument>
@@ -138,7 +135,7 @@
                             <mainClass>${main.class}</mainClass>
                             <arguments>
                                 <argument>ws://csi420-01-vm1.ucd.ie</argument>
-                                <argument>docker.tar</argument>
+                                <argument>../../streaming-sample/stream.tar</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>edge-node</argument>
                                 <argument>200</argument>
