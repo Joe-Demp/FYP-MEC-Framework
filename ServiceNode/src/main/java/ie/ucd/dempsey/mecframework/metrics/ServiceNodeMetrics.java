@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.stream.Collectors.toList;
 
 public class ServiceNodeMetrics {
-    private final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(10);
+    private final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
 
     // class fields
     private final SystemInfo nodeSystem = new SystemInfo();
@@ -37,16 +37,15 @@ public class ServiceNodeMetrics {
     public ServiceNodeMetrics(long pingDelay) {
         this.pingDelay = pingDelay;
 
-        // todo extract these out into separate methods
         scheduleService.scheduleAtFixedRate(() -> {
+            // CPU
             double load = hal.getProcessor().getSystemCpuLoadBetweenTicks(cpuTicks);
             synchronized (cpuLoad) {
                 cpuLoad.add(load);
             }
             cpuTicks = hal.getProcessor().getSystemCpuLoadTicks();
-        }, 2500, 1000, TimeUnit.MILLISECONDS);
 
-        scheduleService.scheduleAtFixedRate(() -> {
+            // Memory
             double totalMemory = hal.getMemory().getTotal();
             long availableMemory = hal.getMemory().getAvailable();
             double fractionMemoryUsed = 1.0 - (availableMemory / totalMemory);
