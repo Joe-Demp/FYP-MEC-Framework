@@ -4,7 +4,6 @@ import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestMonitor;
 import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestor;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
-import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import service.core.NodeClientLatencyRequest;
 import service.core.NodeInfo;
@@ -37,35 +36,35 @@ public class ServiceNodeMetrics {
     public ServiceNodeMetrics(long pingDelay) {
         this.pingDelay = pingDelay;
 
-        scheduleService.scheduleAtFixedRate(() -> {
-            // CPU
-            double load = hal.getProcessor().getSystemCpuLoadBetweenTicks(cpuTicks);
-            synchronized (cpuLoad) {
-                cpuLoad.add(load);
-            }
-            cpuTicks = hal.getProcessor().getSystemCpuLoadTicks();
-
-            // Memory
-            double totalMemory = hal.getMemory().getTotal();
-            long availableMemory = hal.getMemory().getAvailable();
-            double fractionMemoryUsed = 1.0 - (availableMemory / totalMemory);
-
-            synchronized (memoryLoad) {
-                memoryLoad.add(fractionMemoryUsed);
-            }
-            synchronized (mainMemory) {
-                mainMemory.add(availableMemory);
-            }
-        }, 5, 1, TimeUnit.SECONDS);
-
-        scheduleService.scheduleAtFixedRate(() -> {
-            long usableSpace = os.getFileSystem().getFileStores().stream()
-                    .mapToLong(OSFileStore::getUsableSpace)
-                    .sum();
-            synchronized (storage) {
-                storage.add(usableSpace);
-            }
-        }, 10, 60, TimeUnit.SECONDS);
+//        scheduleService.scheduleAtFixedRate(() -> {
+//            // CPU
+//            double load = hal.getProcessor().getSystemCpuLoadBetweenTicks(cpuTicks);
+//            synchronized (cpuLoad) {
+//                cpuLoad.add(load);
+//            }
+//            cpuTicks = hal.getProcessor().getSystemCpuLoadTicks();
+//
+//            // Memory
+//            double totalMemory = hal.getMemory().getTotal();
+//            long availableMemory = hal.getMemory().getAvailable();
+//            double fractionMemoryUsed = 1.0 - (availableMemory / totalMemory);
+//
+//            synchronized (memoryLoad) {
+//                memoryLoad.add(fractionMemoryUsed);
+//            }
+//            synchronized (mainMemory) {
+//                mainMemory.add(availableMemory);
+//            }
+//        }, 5, 1, TimeUnit.SECONDS);
+//
+//        scheduleService.scheduleAtFixedRate(() -> {
+//            long usableSpace = os.getFileSystem().getFileStores().stream()
+//                    .mapToLong(OSFileStore::getUsableSpace)
+//                    .sum();
+//            synchronized (storage) {
+//                storage.add(usableSpace);
+//            }
+//        }, 10, 60, TimeUnit.SECONDS);
 
         scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
         scheduleService.scheduleAtFixedRate(latencyMonitor, 5, 5, TimeUnit.SECONDS);

@@ -27,7 +27,7 @@ public class WebSocketPingClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-
+        logger.info("Connected to PingServer @ {}", getRemoteSocketAddress());
     }
 
     @Override
