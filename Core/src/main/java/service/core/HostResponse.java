@@ -12,7 +12,7 @@ public class HostResponse extends Message  {
     }
 
     public HostResponse(UUID requestorID, URI serviceHostAddress) {
-        super(MessageTypes.HOST_RESPONSE);
+        this();
         this.requestorID = requestorID;
         this.serviceHostAddress = serviceHostAddress;
     }

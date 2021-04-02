@@ -16,16 +16,14 @@ public class MobileClient {
     private static final Logger logger = LoggerFactory.getLogger(MobileClient.class);
 
     public UUID uuid;
-    public String desiredServiceName;
     /**
      * Always contains the address of the PingServer from the point of view of the Orchestrator.
      */
     public InetSocketAddress pingServer;
     public WebSocket webSocket;
 
-    public MobileClient(UUID uuid, String desiredServiceName, InetSocketAddress pingServer, WebSocket webSocket) {
+    public MobileClient(UUID uuid, InetSocketAddress pingServer, WebSocket webSocket) {
         this.uuid = uuid;
-        this.desiredServiceName = desiredServiceName;
         this.pingServer = pingServer;
         this.webSocket = webSocket;
     }
@@ -69,7 +67,6 @@ public class MobileClient {
 
     @Override
     public String toString() {
-        return String.format("MobileClient: %s %s %s", uuid, desiredServiceName, pingServer);
+        return String.format("MobileClient: %s ping=%s", uuid, pingServer);
     }
-
 }

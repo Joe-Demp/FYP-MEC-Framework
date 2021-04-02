@@ -53,7 +53,7 @@ public class MobileClientRegistry {
         return mobileClients.values().stream()
                 .filter(client -> client.webSocket.equals(webSocket))
                 .findFirst()
-                .orElse(new MobileClient(UUID.randomUUID(), "", null, webSocket));
+                .orElse(new MobileClient(UUID.randomUUID(), null, webSocket));
     }
 
     private MobileClient getOrCreateMobileClient(MobileClientInfo mobileClientInfo) {
@@ -63,7 +63,7 @@ public class MobileClientRegistry {
             return mobileClients.get(nodeUuid);
         } else {
             MobileClient mobileClient = new MobileClient(
-                    nodeUuid, mobileClientInfo.getDesiredServiceName(), mobileClientInfo.getPingServer(),
+                    nodeUuid, mobileClientInfo.getPingServer(),
                     mobileClientInfo.getWebSocket());
             mobileClients.put(nodeUuid, mobileClient);
 
