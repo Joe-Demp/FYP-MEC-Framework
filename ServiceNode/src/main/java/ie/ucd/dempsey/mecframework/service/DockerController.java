@@ -20,7 +20,7 @@ public class DockerController implements ServiceController {
     private final Path servicePath;
     private AtomicBoolean isServiceRunning = new AtomicBoolean();
     private Process dockerProcess;
-    private Runtime runtime = Runtime.getRuntime();
+    private OSRuntime runtime = OSRuntime.get();
     private Executor serviceOutputExecutor = Executors.newSingleThreadExecutor();
 
     /**
@@ -57,8 +57,7 @@ public class DockerController implements ServiceController {
     }
 
     private Process startLoadingProcess() {
-        String dockerCommand = "powershell.exe docker load --input " + servicePath;
-        logger.info("Issuing command {}", dockerCommand);
+        String dockerCommand = "docker load --input " + servicePath;
 
         try {
             return runtime.exec(dockerCommand);
@@ -79,7 +78,6 @@ public class DockerController implements ServiceController {
         }
     }
 
-    // todo see if this method ever exits
     private void logProcessOutput(Process process) {
         try (
                 Scanner standardOutScan = new Scanner(process.getInputStream());
@@ -104,9 +102,12 @@ public class DockerController implements ServiceController {
         startServiceOutputThread(dockerProcess);
     }
 
+    /**
+     * Starts a Docker container using the image accessible to this Controller. Maps port 8080 from the container to
+     * port 8090 on this machine.
+     */
     private void startDockerRunProcess() {
-        String runCommand = "powershell.exe docker run " + dockerImageName();
-        logger.info("Issuing '{}'", runCommand);
+        String runCommand = "docker run -p 8090:8080 " + dockerImageName();
         try {
             dockerProcess = runtime.exec(runCommand);
         } catch (IOException e) {
