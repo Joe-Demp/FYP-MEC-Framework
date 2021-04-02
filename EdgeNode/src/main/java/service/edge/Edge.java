@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Deprecated
 public class Edge extends ServiceNodeMecClient {
     SystemInfo nodeSystem = new SystemInfo();
     HardwareAbstractionLayer hal = nodeSystem.getHardware();
@@ -101,17 +102,17 @@ public class Edge extends ServiceNodeMecClient {
      * Constructs and sends Heartbeat responses when called
      */
     private void sendHeartbeatResponse() {
-        NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, null);
-        nodeInfo.setServiceHostAddress(serviceAddress);
-        nodeInfo.setTrustworthy(trustWorthyNode);
-        if (!historicalCPUload.isEmpty()) {
-            nodeInfo.setCPUload(historicalCPUload);
-        }
-        if (!historicalRamload.isEmpty()) {
-            nodeInfo.setRamLoad(historicalRamload);
-        }
-        String jsonStr = gson.toJson(nodeInfo);
-        send(jsonStr);
+//        NodeInfo nodeInfo = new NodeInfo(assignedUUID, null, null);
+//        nodeInfo.setServiceHostAddress(serviceAddress);
+//        nodeInfo.setTrustworthy(trustWorthyNode);
+//        if (!historicalCPUload.isEmpty()) {
+//            nodeInfo.setCPUload(historicalCPUload);
+//        }
+//        if (!historicalRamload.isEmpty()) {
+//            nodeInfo.setMemoryLoad(historicalRamload);
+//        }
+//        String jsonStr = gson.toJson(nodeInfo);
+//        send(jsonStr);
     }
 
     /**

@@ -31,9 +31,9 @@ public class ServiceNodeRegistry {
         return serviceNodes.values();
     }
 
-    private static void swapServiceNames(ServiceNode source, ServiceNode target) {
-        target.serviceName = source.serviceName;
-        source.serviceName = null;
+    private static void recordMigration(ServiceNode source, ServiceNode target) {
+        source.serviceRunning = false;
+        target.serviceRunning = true;
     }
 
     /**
@@ -56,7 +56,7 @@ public class ServiceNodeRegistry {
 
     public Collection<ServiceNode> getHostingAndStableServiceNodes() {
         return serviceNodes.values().stream()
-                .filter(ServiceNode::isHosting)
+                .filter(ServiceNode::isServiceRunning)
                 .filter(node -> (node.getState() == ServiceNode.State.STABLE))
                 .collect(Collectors.toList())
                 ;
@@ -67,7 +67,7 @@ public class ServiceNodeRegistry {
         ServiceNode targetNode = get(target);
 
 
-        swapServiceNames(sourceNode, targetNode);
+        recordMigration(sourceNode, targetNode);
         setToStable(sourceNode, targetNode);
     }
 

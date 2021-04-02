@@ -21,24 +21,13 @@ public class ServiceNode {
 
     public UUID uuid;
     public WebSocket webSocket;
-    /**
-     * The name of the service running on the node.
-     * <p>
-     * Todo check if this is necessary? This could be defined by the Orchestrator properties
-     * and used to make sure clients are in the right place
-     */
-    public String serviceName;
-    public Deque<Double> CPUload = new ArrayDeque<>();
-    public Deque<Double> RamLoad = new ArrayDeque<>();
-    public Deque<Long> unusedStorage = new ArrayDeque<>();
+    public boolean serviceRunning;
+    public Deque<Double> cpuLoad = new ArrayDeque<>();
+    public Deque<Double> ramLoad = new ArrayDeque<>();
+    public Deque<Long> storage = new ArrayDeque<>();
+    public Deque<Long> mainMemory = new ArrayDeque<>();
     private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
     private AtomicReference<State> stateAtomRef = new AtomicReference<>(State.STABLE);
-
-    // todo these scores need to be born out of methods. Remove the fields if not necessary
-        /*
-        private double rollingCPUScore;
-        private double rollingRamScore;
-        */
 
     public boolean trustworthy = true;
     public URI serviceHostAddress;
@@ -55,23 +44,26 @@ public class ServiceNode {
             return;
         }
 
-        // todo extract
+        recordWebSocket(nodeInfo);
+        recordMetrics(nodeInfo);
+        recordOtherFields(nodeInfo);
+    }
+
+    private void recordWebSocket(NodeInfo nodeInfo) {
         WebSocket otherWebSocket = nodeInfo.getWebSocket();
         webSocket = nonNull(otherWebSocket) ? otherWebSocket : webSocket;
+    }
 
-        // todo remove the maps from here: NodeInfo should only send the actual scores
-        SortedMap<Integer, Double> cpuMap = new TreeMap<>(nodeInfo.getCPUload());
-        SortedMap<Integer, Double> ramMap = new TreeMap<>(nodeInfo.getRamLoad());
-        SortedMap<Integer, Long> unusedStorageMap = new TreeMap<>(nodeInfo.getUnusedStorage());
-
-        CPUload.addAll(cpuMap.values());
-        RamLoad.addAll(ramMap.values());
-        unusedStorage.addAll(unusedStorageMap.values());
+    private void recordMetrics(NodeInfo nodeInfo) {
+        cpuLoad.addAll(nodeInfo.getCpuLoad());
+        ramLoad.addAll(nodeInfo.getMemoryLoad());
+        storage.addAll(nodeInfo.getStorage());
+        mainMemory.addAll(nodeInfo.getMainMemory());
         addAllLatencies(nodeInfo.getLatencies());
+    }
 
-        // todo maybe extract these to different methods
-        // update the semi static fields
-        serviceName = nodeInfo.getServiceName();
+    private void recordOtherFields(NodeInfo nodeInfo) {
+        serviceRunning = nodeInfo.isServiceRunning();
         serviceHostAddress = nodeInfo.getServiceHostAddress();
     }
 
@@ -93,15 +85,15 @@ public class ServiceNode {
     }
 
     public double getMeanCPU() {
-        return getMean(CPUload);
+        return getMean(cpuLoad);
     }
 
     public double getMeanRam() {
-        return getMean(RamLoad);
+        return getMean(ramLoad);
     }
 
     public double getMeanStorage() {
-        return getMean(unusedStorage);
+        return getMean(storage);
     }
 
     /**
@@ -133,8 +125,8 @@ public class ServiceNode {
                 ;
     }
 
-    public boolean isHosting() {
-        return nonNull(serviceName);
+    public boolean isServiceRunning() {
+        return serviceRunning;
     }
 
     public double getCpuScore() {
@@ -148,7 +140,7 @@ public class ServiceNode {
         return String.format("UUID=%s remoteSA=%s, serviceName=%s, serviceHostAddress=%s",
                 uuid,
                 webSocket.getRemoteSocketAddress(),
-                serviceName,
+                serviceRunning,
                 serviceHostAddress
         );
     }

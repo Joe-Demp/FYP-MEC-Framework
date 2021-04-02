@@ -13,10 +13,11 @@ public class NodeInfo extends Message {
 
     private UUID uuid;
     private WebSocket webSocket;
-    private String serviceName = "";
-    private Map<Integer, Double> CPUload = Collections.emptyMap();
-    private Map<Integer, Double> RamLoad = Collections.emptyMap();
-    private Map<Integer, Long> unusedStorage = Collections.emptyMap();
+    private boolean serviceRunning;
+    private List<Double> cpuLoad = Collections.emptyList();
+    private List<Double> memoryLoad = Collections.emptyList();
+    private List<Long> mainMemory = Collections.emptyList();
+    private List<Long> storage = Collections.emptyList();
     private Map<UUID, List<Long>> latencies = Collections.emptyMap();
     private boolean trustworthy = true;
     private URI serviceHostAddress;
@@ -25,19 +26,11 @@ public class NodeInfo extends Message {
         super(Message.MessageTypes.NODE_INFO);
     }
 
-    public NodeInfo(UUID uuid, String serviceName, URI serviceUri) {
+    public NodeInfo(UUID uuid, boolean serviceRunning, URI serviceUri) {
         this();
         this.uuid = uuid;
-        this.serviceName = serviceName;
+        this.serviceRunning = serviceRunning;
         this.serviceHostAddress = serviceUri;
-    }
-
-    public Map<Integer, Long> getUnusedStorage() {
-        return unusedStorage;
-    }
-
-    public void setUnusedStorage(Map<Integer, Long> unusedStorage) {
-        this.unusedStorage = unusedStorage;
     }
 
     public Map<UUID, List<Long>> getLatencies() {
@@ -56,32 +49,16 @@ public class NodeInfo extends Message {
         this.webSocket = webSocket;
     }
 
-    public String getServiceName() {
-        return serviceName;
+    public boolean isServiceRunning() {
+        return serviceRunning;
     }
 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
+    public void setServiceRunning(boolean serviceName) {
+        this.serviceRunning = serviceName;
     }
 
     public UUID getUuid() {
         return uuid;
-    }
-
-    public Map<Integer, Double> getCPUload() {
-        return CPUload;
-    }
-
-    public void setCPUload(Map<Integer, Double> CPUload) {
-        this.CPUload = CPUload;
-    }
-
-    public Map<Integer, Double> getRamLoad() {
-        return RamLoad;
-    }
-
-    public void setRamLoad(Map<Integer, Double> ramLoad) {
-        RamLoad = ramLoad;
     }
 
     public boolean isTrustworthy() {
@@ -100,12 +77,44 @@ public class NodeInfo extends Message {
         this.serviceHostAddress = serviceHostAddress;
     }
 
+    public List<Double> getCpuLoad() {
+        return cpuLoad;
+    }
+
+    public void setCpuLoad(List<Double> cpuLoad) {
+        this.cpuLoad = cpuLoad;
+    }
+
+    public List<Double> getMemoryLoad() {
+        return memoryLoad;
+    }
+
+    public void setMemoryLoad(List<Double> memoryLoad) {
+        this.memoryLoad = memoryLoad;
+    }
+
+    public List<Long> getMainMemory() {
+        return mainMemory;
+    }
+
+    public void setMainMemory(List<Long> mainMemory) {
+        this.mainMemory = mainMemory;
+    }
+
+    public List<Long> getStorage() {
+        return storage;
+    }
+
+    public void setStorage(List<Long> storage) {
+        this.storage = storage;
+    }
+
     @Override
     public String toString() {
         return String.format("UUID=%s remoteSA=%s, serviceName=%s, serviceHostAddress=%s",
                 uuid,
                 webSocket.getRemoteSocketAddress(),
-                serviceName,
+                serviceRunning,
                 serviceHostAddress
         );
     }

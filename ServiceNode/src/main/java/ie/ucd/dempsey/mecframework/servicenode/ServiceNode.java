@@ -66,10 +66,7 @@ public class ServiceNode implements Runnable {
     }
 
     void sendHeartbeatResponse() {
-        NodeInfo nodeInfo = new NodeInfo(uuid, serviceController.name(), serviceAddress);
-
-        // todo add a field to NodeInfo so it tells the server if the service is running
-        logger.warn("Service running? {}", serviceController.isServiceRunning());
+        NodeInfo nodeInfo = new NodeInfo(uuid, serviceController.isServiceRunning(), serviceAddress);
 
         // adding performance data
         // todo replace these with recent values only, not the entire map

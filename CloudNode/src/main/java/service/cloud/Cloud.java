@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.*;
 
+@Deprecated
 public class Cloud extends ServiceNodeMecClient {
     private final LatencyRequestMonitor latencyRequestMonitor;
     private final LatencyRequestor latencyRequestor;
@@ -128,23 +129,23 @@ public class Cloud extends ServiceNodeMecClient {
      * Constructs and sends Heartbeat responses when called
      */
     private void sendHeartbeatResponse() {
-        NodeInfo nodeInfo = new NodeInfo(assignedUUID, service.getName(), serviceAddress);
-        nodeInfo.setServiceHostAddress(serviceAddress);
-
-        // adding performance data
-        if (!historicalCPUload.isEmpty()) {
-            nodeInfo.setCPUload(historicalCPUload);
-        }
-        if (!historicalRamload.isEmpty()) {
-            nodeInfo.setRamLoad(historicalRamload);
-        }
-        if (!unusedStorage.isEmpty()) {
-            nodeInfo.setUnusedStorage(unusedStorage);
-        }
-        nodeInfo.setLatencies(latencyRequestMonitor.takeLatencySnapshot());
-        // END adding performance data
-
-        sendAsJson(nodeInfo);
+//        NodeInfo nodeInfo = new NodeInfo(assignedUUID, service.getName(), serviceAddress);
+//        nodeInfo.setServiceHostAddress(serviceAddress);
+//
+//        // adding performance data
+//        if (!historicalCPUload.isEmpty()) {
+//            nodeInfo.setCPUload(historicalCPUload);
+//        }
+//        if (!historicalRamload.isEmpty()) {
+//            nodeInfo.setMemoryLoad(historicalRamload);
+//        }
+//        if (!unusedStorage.isEmpty()) {
+//            nodeInfo.setUnusedStorage(unusedStorage);
+//        }
+//        nodeInfo.setLatencies(latencyRequestMonitor.takeLatencySnapshot());
+//        // END adding performance data
+//
+//        sendAsJson(nodeInfo);
     }
 
     /**
