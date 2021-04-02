@@ -1,8 +1,6 @@
 package ie.ucd.dempsey.mecframework.servicenode;
 
 import ie.ucd.dempsey.mecframework.metrics.ServiceNodeMetrics;
-import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestMonitor;
-import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestor;
 import ie.ucd.dempsey.mecframework.service.AcceptServiceTask;
 import ie.ucd.dempsey.mecframework.service.MigrationManager;
 import ie.ucd.dempsey.mecframework.service.ServiceController;
@@ -13,26 +11,19 @@ import service.core.*;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static java.util.stream.Collectors.toList;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ServiceNode implements Runnable {
     final String label;
     private final Logger logger = LoggerFactory.getLogger(ServiceNode.class);
-    private final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
     private final ExecutorService singleExecutor = Executors.newSingleThreadExecutor();
     private final ServiceNodeWsClient wsClient;
-
-    // todo migrate these to ServiceNodeMetrics
-    private final LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor();
-    private final LatencyRequestor latencyRequestor = new LatencyRequestor(latencyRequestMonitor);
-
     private final ServiceNodeMetrics metrics;
     private final ServiceController serviceController;
     private final MigrationManager migrationManager;
-    private final long pingDelay;
     private UUID uuid;
     private URI serviceAddress;     // todo remove?
     private State state = State.STABLE;
@@ -41,17 +32,14 @@ public class ServiceNode implements Runnable {
     public ServiceNode(URI orchestrator, ServiceController serviceController, File serviceFile, String label,
                        long pingDelay) {
         this.wsClient = new ServiceNodeWsClient(orchestrator, this);
-        this.metrics = new ServiceNodeMetrics();
+        this.metrics = new ServiceNodeMetrics(pingDelay);
         this.serviceController = serviceController;
         this.migrationManager = new MigrationManager(serviceFile, serviceController);
         this.label = label;
-        this.pingDelay = pingDelay;
     }
 
     @Override
     public void run() {
-        scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
-        scheduleService.scheduleAtFixedRate(latencyRequestMonitor, 5, 5, TimeUnit.SECONDS);
         wsClient.run();     // this blocks (keeping the application from shutting down)
     }
 
@@ -67,30 +55,8 @@ public class ServiceNode implements Runnable {
 
     void sendHeartbeatResponse() {
         NodeInfo nodeInfo = new NodeInfo(uuid, serviceController.isServiceRunning(), serviceAddress);
-
-        // adding performance data
-        // todo replace these with recent values only, not the entire map
-        logger.warn("No updates made to historicalCPUload or historicalRamload or ...");
         metrics.populateNodeInfo(nodeInfo);
-
-        // todo remove this once populateNodeInfo sorts out the latencies
-        Map<UUID, List<Long>> delayedLatencies = latenciesWithDelay(latencyRequestMonitor.takeLatencySnapshot());
-        nodeInfo.setLatencies(delayedLatencies);
-        // END adding performance data
-
         wsClient.sendAsJson(nodeInfo);
-    }
-
-    private Map<UUID, List<Long>> latenciesWithDelay(Map<UUID, List<Long>> latencies) {
-        Map<UUID, List<Long>> delayedLatencies = new HashMap<>();
-
-        for (Map.Entry<UUID, List<Long>> entry : latencies.entrySet()) {
-            List<Long> delayed = entry.getValue().stream()
-                    .map(latency -> latency + pingDelay)
-                    .collect(toList());
-            delayedLatencies.put(entry.getKey(), delayed);
-        }
-        return Collections.unmodifiableMap(delayedLatencies);
     }
 
     /**

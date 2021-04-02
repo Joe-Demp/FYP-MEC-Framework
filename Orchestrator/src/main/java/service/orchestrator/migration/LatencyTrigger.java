@@ -17,7 +17,7 @@ import static java.util.Objects.nonNull;
 public class LatencyTrigger implements Trigger {
     private static final Logger logger = LoggerFactory.getLogger(LatencyTrigger.class);
 
-    // todo extract this
+    // todo inject this
     private static final SimpleSelector selector = new SimpleSelector();
     private final Migrator migrator;
 
