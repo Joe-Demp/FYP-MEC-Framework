@@ -14,7 +14,7 @@
 
     <properties>
         <main.class>ie.ucd.dempsey.mecframework.Main</main.class>
-        <java.version>13</java.version>
+        <java.version>11</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
