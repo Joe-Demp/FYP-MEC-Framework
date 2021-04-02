@@ -57,12 +57,13 @@ public class Main implements Runnable {
      */
     private ServiceController initializeDockerController() {
         Path servicePath = getServiceFileCanonicalPath();
-        logger.info(serviceFile.toString());
+        logger.info(servicePath.toString());
         ServiceController controller = new DockerController(servicePath);
 
         if (serviceFile.exists() && startService) {
             controller.startService();
-        }
+        } else logger.info("Did not start service. serviceFile.exists()={} startService={}",
+                serviceFile.exists(), startService);
         return controller;
     }
 
