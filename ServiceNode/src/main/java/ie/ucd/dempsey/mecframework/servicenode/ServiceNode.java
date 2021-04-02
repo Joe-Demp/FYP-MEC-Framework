@@ -24,14 +24,17 @@ public class ServiceNode implements Runnable {
     private final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
     private final ExecutorService singleExecutor = Executors.newSingleThreadExecutor();
     private final ServiceNodeWsClient wsClient;
+
+    // todo migrate these to ServiceNodeMetrics
     private final LatencyRequestMonitor latencyRequestMonitor = new LatencyRequestMonitor();
     private final LatencyRequestor latencyRequestor = new LatencyRequestor(latencyRequestMonitor);
+
     private final ServiceNodeMetrics metrics;
     private final ServiceController serviceController;
     private final MigrationManager migrationManager;
     private final long pingDelay;
     private UUID uuid;
-    private URI serviceAddress;
+    private URI serviceAddress;     // todo remove?
     private State state = State.STABLE;
 
 
@@ -49,12 +52,7 @@ public class ServiceNode implements Runnable {
     public void run() {
         scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
         scheduleService.scheduleAtFixedRate(latencyRequestMonitor, 5, 5, TimeUnit.SECONDS);
-        // start more threads!
-
-        logger.info("Service running? {}", serviceController.isServiceRunning());
-
-        // this blocks (keeping the application from shutting down)
-        wsClient.run();
+        wsClient.run();     // this blocks (keeping the application from shutting down)
     }
 
     /**
@@ -70,11 +68,15 @@ public class ServiceNode implements Runnable {
     void sendHeartbeatResponse() {
         NodeInfo nodeInfo = new NodeInfo(uuid, serviceController.name(), serviceAddress);
 
+        // todo add a field to NodeInfo so it tells the server if the service is running
+        logger.warn("Service running? {}", serviceController.isServiceRunning());
+
         // adding performance data
         // todo replace these with recent values only, not the entire map
         logger.warn("No updates made to historicalCPUload or historicalRamload or ...");
         metrics.populateNodeInfo(nodeInfo);
 
+        // todo remove this once populateNodeInfo sorts out the latencies
         Map<UUID, List<Long>> delayedLatencies = latenciesWithDelay(latencyRequestMonitor.takeLatencySnapshot());
         nodeInfo.setLatencies(delayedLatencies);
         // END adding performance data
@@ -137,7 +139,7 @@ public class ServiceNode implements Runnable {
     }
 
     void handleLatencyRequest(NodeClientLatencyRequest request) {
-        latencyRequestor.registerRequest(request);
+        metrics.registerLatencyRequest(request);
     }
 
     public enum State {STABLE, TRANSFER_SERVER, TRANSFER_CLIENT}
