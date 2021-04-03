@@ -145,6 +145,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
         ServiceNode bestNode = getBestServiceForClient(requestor);
         if (nonNull(bestNode)) {
+            logger.debug("service address of best available node: {}", bestNode.serviceHostAddress);
             HostResponse response = new HostResponse(request.getRequestorID(), bestNode.serviceHostAddress);
             sendAsJson(requestor.webSocket, response);
         } else {

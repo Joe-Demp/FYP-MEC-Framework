@@ -25,7 +25,7 @@ public class ServiceNode implements Runnable {
     private final ServiceController serviceController;
     private final MigrationManager migrationManager;
     private UUID uuid;
-    private URI serviceAddress;     // todo remove?
+    private URI serviceAddress;     // todo implement
     private State state = State.STABLE;
 
 
