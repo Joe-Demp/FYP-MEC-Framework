@@ -5,12 +5,14 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Objects.isNull;
 
 public class PingTask implements Callable<PingResult> {
     private static final Logger logger = LoggerFactory.getLogger(PingTask.class);
+    private static final long WS_TIMEOUT_SECONDS = 10;
 
     private final WebSocketPingClient wsPingClient;
     private AtomicReference<PingResult> taskResult = new AtomicReference<>();
@@ -34,8 +36,9 @@ public class PingTask implements Callable<PingResult> {
         return taskResult.get();
     }
 
-    private void connectAndSendPing() throws Exception {
-        wsPingClient.connectBlocking();
+    private void connectAndSendPing() throws InterruptedException {
+        boolean connected = wsPingClient.connectBlocking(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        if (!connected) logger.warn("wsPingClient not connected after {} s!", WS_TIMEOUT_SECONDS);
         wsPingClient.sendLoadedPing();
     }
 
