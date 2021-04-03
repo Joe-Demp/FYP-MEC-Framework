@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -13,13 +14,13 @@ import static java.util.Objects.isNull;
 public class PingTask implements Callable<PingResult> {
     private static final Logger logger = LoggerFactory.getLogger(PingTask.class);
     private static final long WS_TIMEOUT_SECONDS = 10;
+    private final CountDownLatch finishedPingLatch = new CountDownLatch(1);
 
     private final WebSocketPingClient wsPingClient;
     private AtomicReference<PingResult> taskResult = new AtomicReference<>();
 
     public PingTask(URI clientUri) {
-        this.wsPingClient = new WebSocketPingClient(clientUri, this);
-        // wsPingClient.connect called in method call()
+        this.wsPingClient = new WebSocketPingClient(clientUri, this, finishedPingLatch);
     }
 
     public void submitPingResult(PingResult result) {
@@ -44,10 +45,10 @@ public class PingTask implements Callable<PingResult> {
 
     private synchronized void waitForWebSocket() {
         try {
-            // todo replace with a CountDownLatch
-            wait();
+            boolean countedDownToZero = finishedPingLatch.await(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!countedDownToZero) logger.warn("await for WebSocketPingClient failed in PingTask.");
         } catch (InterruptedException ie) {
-            logger.error("PingTask was interrupted during wait for WebSocket: {}", ie.getMessage());
+            logger.error("PingTask was interrupted during await for WebSocket.", ie);
         }
     }
 }

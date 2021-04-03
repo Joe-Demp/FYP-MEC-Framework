@@ -9,19 +9,22 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
 
 public class WebSocketPingClient extends WebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(WebSocketPingClient.class);
     private final PingTask pingTask;
+    private final CountDownLatch finishedPingLatch;
     private final PingResult result = new PingResult();
     private final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
             .create();
 
 
-    public WebSocketPingClient(URI serverUri, PingTask pingTask) {
+    public WebSocketPingClient(URI serverUri, PingTask pingTask, CountDownLatch finishedPingLatch) {
         super(serverUri);
         this.pingTask = pingTask;
+        this.finishedPingLatch = finishedPingLatch;
         logger.debug("Creating client for server at {}", serverUri);
     }
 
@@ -39,18 +42,7 @@ public class WebSocketPingClient extends WebSocketClient {
 
         result.finishTime = timeReceived;
         pingTask.submitPingResult(result);
-        notifyPingTask();
-    }
-
-    private void notifyPingTask() {
-        /* Have to use the synchronized block so that this Thread is the owner of the PingTask's monitor
-         *
-         * "A thread becomes the owner of the object's monitor ...
-         *      By executing the body of a synchronized statement that synchronizes on the object."
-         */
-        synchronized (pingTask) {
-            pingTask.notify();
-        }
+        finishedPingLatch.countDown();
     }
 
     @Override
