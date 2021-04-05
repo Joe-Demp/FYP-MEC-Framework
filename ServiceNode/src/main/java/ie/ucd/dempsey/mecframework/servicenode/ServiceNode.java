@@ -25,7 +25,9 @@ public class ServiceNode implements Runnable {
     private final ServiceController serviceController;
     private final MigrationManager migrationManager;
     private UUID uuid;
-    private URI serviceAddress;     // todo implement
+
+    // Note the port number must be the same as is in the ServiceController being used
+    private URI serviceAddress = URI.create("http://localhost:8090");
     private State state = State.STABLE;
 
 

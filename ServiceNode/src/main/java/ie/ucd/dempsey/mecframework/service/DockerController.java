@@ -107,6 +107,7 @@ public class DockerController implements ServiceController {
      * port 8090 on this machine.
      */
     private void startDockerRunProcess() {
+        // Running on port 8090. Has to be the same as the port in ServiceNode.
         String runCommand = "docker run -p 8090:8080 " + dockerImageName();
         try {
             dockerProcess = runtime.exec(runCommand);
