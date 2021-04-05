@@ -30,7 +30,6 @@ public class ServiceNode implements Runnable {
     private URI serviceAddress = URI.create("http://localhost:8090");
     private State state = State.STABLE;
 
-
     public ServiceNode(URI orchestrator, ServiceController serviceController, File serviceFile, String label,
                        long pingDelay) {
         this.wsClient = new ServiceNodeWsClient(orchestrator, this);
@@ -56,6 +55,7 @@ public class ServiceNode implements Runnable {
     }
 
     void sendHeartbeatResponse() {
+        logger.info("serviceController.isServiceRunning()={}", serviceController.isServiceRunning());
         NodeInfo nodeInfo = new NodeInfo(uuid, serviceController.isServiceRunning(), serviceAddress);
         metrics.populateNodeInfo(nodeInfo);
         wsClient.sendAsJson(nodeInfo);

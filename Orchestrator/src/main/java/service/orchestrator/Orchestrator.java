@@ -136,6 +136,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         }
     }
 
+    // todo take the port number of the node's serviceAddress and the IP address of the node itself
     private void handleHostRequest(HostRequest request) {
         MobileClient requestor = mobileClientRegistry.get(request.getRequestorID());
         if (isNull(requestor)) {

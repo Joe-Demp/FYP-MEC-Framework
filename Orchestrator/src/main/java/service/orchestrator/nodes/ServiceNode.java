@@ -28,8 +28,6 @@ public class ServiceNode {
     public Deque<Long> mainMemory = new ArrayDeque<>();
     private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
     private AtomicReference<State> stateAtomRef = new AtomicReference<>(State.STABLE);
-
-    public boolean trustworthy = true;
     public URI serviceHostAddress;
 
     public ServiceNode(UUID uuid, WebSocket webSocket) {
@@ -69,19 +67,19 @@ public class ServiceNode {
 
     public void addAllLatencies(Map<UUID, List<Long>> latencies) {
         for (Map.Entry<UUID, List<Long>> entry : latencies.entrySet()) {
-            addLatency(entry.getKey(), entry.getValue());
+            addLatencies(entry.getKey(), entry.getValue());
         }
     }
 
-    public synchronized void addLatency(UUID uuid, List<Long> latencies) {
+    public synchronized void addLatencies(UUID uuid, List<Long> latencies) {
         if (!mobileClientLatencies.containsKey(uuid)) {
             mobileClientLatencies.put(uuid, new ArrayList<>());
         }
         mobileClientLatencies.get(uuid).addAll(latencies);
     }
 
-    public synchronized Map<UUID, List<Long>> getLatencies() {
-        return mobileClientLatencies;
+    public synchronized Set<Map.Entry<UUID, List<Long>>> latencyEntries() {
+        return mobileClientLatencies.entrySet();
     }
 
     public double getMeanCPU() {

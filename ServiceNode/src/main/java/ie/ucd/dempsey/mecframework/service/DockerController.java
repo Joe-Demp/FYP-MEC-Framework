@@ -111,6 +111,7 @@ public class DockerController implements ServiceController {
         String runCommand = "docker run -p 8090:8080 " + dockerImageName();
         try {
             dockerProcess = runtime.exec(runCommand);
+            isServiceRunning.set(true);
         } catch (IOException e) {
             logger.error("Problem with " + runCommand, e);
             throw new ServiceException(e);
@@ -153,6 +154,7 @@ public class DockerController implements ServiceController {
     @Override
     public void stopService() {
         dockerProcess.destroyForcibly();
+        isServiceRunning.set(false);
     }
 
     @Override

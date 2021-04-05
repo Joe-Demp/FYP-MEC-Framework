@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.LongStream;
 
 import static java.util.Objects.nonNull;
 
@@ -24,7 +23,7 @@ public class LatencyTrigger implements Trigger {
     // this implementation gets the max latency, or Long.MAX_VALUE if latencies is the empty list
     private static long aggregateLatencies(List<Long> latencies) {
         return latencies.stream()
-                .flatMapToLong(LongStream::of)
+                .mapToLong(Long::longValue)
                 .max()
                 .orElse(Long.MAX_VALUE);
     }
@@ -36,23 +35,27 @@ public class LatencyTrigger implements Trigger {
     @Override
     public void examine(Collection<ServiceNode> nodes) {
         OrchestratorProperties properties = OrchestratorProperties.get();
+        logger.debug("{} nodes in examine", nodes.size());
 
         for (ServiceNode node : nodes) {
-            for (Map.Entry<UUID, List<Long>> mcLatencyEntry : node.getLatencies().entrySet()) {
+            for (Map.Entry<UUID, List<Long>> mcLatencyEntry : node.latencyEntries()) {
+                logger.debug("{} has {} latencies", mcLatencyEntry.getKey(), mcLatencyEntry.getValue().size());
+
                 long latencyAggregate = aggregateLatencies(mcLatencyEntry.getValue());
                 if (latencyAggregate > properties.getMaxLatency()) {
-                    // do something about it
                     logger.debug("{} has high latency {}", mcLatencyEntry.getKey(), latencyAggregate);
-                    ServiceNode migrationTarget = selector.selectMigrationTarget(node);
-
-                    if (nonNull(migrationTarget)) {
-                        migrator.migrate(node, migrationTarget);
-                    }
+                    handleHighLatencyNode(node);
                 } else {
-                    // todo remove this unnecessary branch
                     logger.debug("{} has low latency {}", mcLatencyEntry.getKey(), latencyAggregate);
                 }
             }
+        }
+    }
+
+    private void handleHighLatencyNode(ServiceNode node) {
+        ServiceNode migrationTarget = selector.selectMigrationTarget(node);
+        if (nonNull(migrationTarget)) {
+            migrator.migrate(node, migrationTarget);
         }
     }
 

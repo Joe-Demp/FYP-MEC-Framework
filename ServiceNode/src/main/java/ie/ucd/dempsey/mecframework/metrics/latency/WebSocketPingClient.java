@@ -36,7 +36,7 @@ public class WebSocketPingClient extends WebSocketClient {
     @Override
     public void onMessage(String message) {
         Instant timeReceived = Instant.now();
-        logger.debug("from {}\n{}", getRemoteSocketAddress(), message);
+        logger.debug("pong from {}", getRemoteSocketAddress());
 
         gson.fromJson(message, PingMessage.class);  // check if message was a PingMessage. Throw an error otherwise
 
@@ -65,7 +65,7 @@ public class WebSocketPingClient extends WebSocketClient {
 
     private void sendAndTime(PingMessage message) {
         String json = gson.toJson(message);
-        logger.debug("Sending: {}", json);
+        logger.debug("Sending ping");
         result.startTime = Instant.now();
         send(json);
     }
