@@ -21,11 +21,11 @@ public class LatencyTrigger implements Trigger {
     private final Migrator migrator;
 
     // this implementation gets the max latency, or Long.MAX_VALUE if latencies is the empty list
-    private static long aggregateLatencies(List<Long> latencies) {
+    private static double aggregateLatencies(List<Long> latencies) {
         return latencies.stream()
                 .mapToLong(Long::longValue)
-                .max()
-                .orElse(Long.MAX_VALUE);
+                .average()
+                .orElse(0);
     }
 
     public LatencyTrigger(Migrator migrator) {
@@ -41,7 +41,7 @@ public class LatencyTrigger implements Trigger {
             for (Map.Entry<UUID, List<Long>> mcLatencyEntry : node.latencyEntries()) {
                 logger.debug("{} has {} latencies", mcLatencyEntry.getKey(), mcLatencyEntry.getValue().size());
 
-                long latencyAggregate = aggregateLatencies(mcLatencyEntry.getValue());
+                double latencyAggregate = aggregateLatencies(mcLatencyEntry.getValue());
                 if (latencyAggregate > properties.getMaxLatency()) {
                     logger.debug("{} has high latency {}", mcLatencyEntry.getKey(), latencyAggregate);
                     handleHighLatencyNode(node);
