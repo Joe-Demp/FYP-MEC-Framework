@@ -9,7 +9,6 @@ import service.transfer.TransferServer;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
 
 public class MigrationManager {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -53,21 +52,6 @@ public class MigrationManager {
         // launch a TransferClient and wait for it to finish
         URI serverUri = mapInetSocketAddressToWebSocketUri(serverAddress);
         TransferClient transferClient = new TransferClient(serverUri, null);
-        tryConnectTransferClient(transferClient);
-
-        if (!transferClient.isOpen()) {
-            logger.warn("TransferClient not open, no transfer will occour!");
-        }
-        logger.debug("calling transferClient.run() to check if this does anything..");
         transferClient.run();
-        logger.debug("Finished transferClient.run");
-    }
-
-    private void tryConnectTransferClient(TransferClient transferClient) {
-        try {
-            transferClient.connectBlocking(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            logger.error("Interrupted during transferClient.connect", e);
-        }
     }
 }
