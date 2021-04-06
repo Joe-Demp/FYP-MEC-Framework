@@ -1,20 +1,8 @@
 package service.transfer;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URI;
-import java.security.KeyStore;
-
 public class SecureTransferClient {
 
-    public SecureTransferClient(URI serverUri, DockerController dockerController) throws Exception {
+    /*public SecureTransferClient(URI serverUri, DockerController dockerController) throws Exception {
         TransferClient transferClient = new TransferClient(serverUri,dockerController);
 
         // load up the key store
@@ -53,5 +41,5 @@ public class SecureTransferClient {
                 transferClient.send(line);
             }
         }
-    }
+    }*/
 }

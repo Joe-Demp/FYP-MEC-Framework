@@ -13,13 +13,11 @@ import java.nio.ByteBuffer;
 
 public class TransferClient extends WebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(TransferClient.class);
+    private final File service;
 
-    DockerController dockerController;
-    private boolean dockerLaunched = false;
-
-    public TransferClient(URI serverUri, DockerController dockerController) {
+    public TransferClient(URI serverUri, File service) {
         super(serverUri);
-        this.dockerController = dockerController;
+        this.service = service;
         logger.debug("Launching TransferClient for Server at {}", serverUri);
     }
 
@@ -41,22 +39,16 @@ public class TransferClient extends WebSocketClient {
 
     @Override
     public void onMessage(ByteBuffer bytes) {
-
         byte[] b = bytes.array();
-        String filename = "service.tar";
+        String filename = "stream.tar";
 
         logger.info("Trying to write file {}", filename);
-        try (FileOutputStream fos = new FileOutputStream(filename)) {
+        try (FileOutputStream fos = new FileOutputStream(service)) {
             fos.write(b);
             fos.close();
             logger.info("File written and FileOutputStream closed");
-
-            dockerController.launchServiceOnNode(new File(filename));
-            dockerLaunched = true;
-            logger.info("All Docker work should be done by now");
         } catch (IOException e) {
-            logger.error("");
-            e.printStackTrace();
+            logger.error("", e);
         }
 
         // Transfer done, close this client.
@@ -79,14 +71,5 @@ public class TransferClient extends WebSocketClient {
     public void onError(Exception e) {
         logger.error("In TransferClient#onError");
         e.printStackTrace();
-    }
-
-    // todo change this to return a boolean or a completable future or something useful
-    public DockerController dockerControllerReady() {
-        if (dockerController.isDockerRunning()) {
-            return dockerController;
-        } else {
-            return null;
-        }
     }
 }

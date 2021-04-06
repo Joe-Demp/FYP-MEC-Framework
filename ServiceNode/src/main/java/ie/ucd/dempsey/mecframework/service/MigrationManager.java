@@ -51,7 +51,7 @@ public class MigrationManager {
     public void acceptService(InetSocketAddress serverAddress) {
         // launch a TransferClient and wait for it to finish
         URI serverUri = mapInetSocketAddressToWebSocketUri(serverAddress);
-        TransferClient transferClient = new TransferClient(serverUri, null);
+        TransferClient transferClient = new TransferClient(serverUri, service);
         transferClient.run();
     }
 }

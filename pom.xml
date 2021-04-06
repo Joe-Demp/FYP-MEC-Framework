@@ -9,10 +9,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>CloudNode</module>
         <module>Core</module>
-        <module>DockerImage</module>
-        <module>EdgeNode</module>
         <module>Orchestrator</module>
         <module>ServiceNode</module>
     </modules>
