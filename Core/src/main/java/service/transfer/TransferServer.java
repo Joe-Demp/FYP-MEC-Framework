@@ -46,19 +46,15 @@ public class TransferServer extends WebSocketServer {
         logger.info("Code, Reason, Remote: {}, {}, {}", code, reason, remote);
 
         // todo make sure the TransferServer stops i.e. make sure this method runs to completion
-        try {
-            // When the connection is closed, the server should be stopped
-            logger.info("Trying to stop this TransferServer");
-            stop();//if this is unstable this could be moved to the owner of this object and they could close it
-        } catch (IOException | InterruptedException e) {
-            logger.error("Error trying to stop the Transfer Server.", e);
-        }
-        logger.info("TransferServer has stopped.");
-
-        // todo remove the issue here: it doesn't make sense to have the "delete" code in the TransferServer.
-//        logger.info("Deleting the old service.");
-//        boolean fileDeleted = serviceFile.delete();
-//        logger.info("Old service deleted? {}", fileDeleted);
+        logger.info("Trying to stop this TransferServer");
+        new Thread(() -> {
+            try {
+                this.stop();
+                logger.info("TransferServer has stopped.");
+            } catch (IOException | InterruptedException e) {
+                logger.error("Problem trying to stop TransferServer", e);
+            }
+        }).start();
     }
 
     @Override

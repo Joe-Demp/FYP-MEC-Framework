@@ -164,7 +164,7 @@
                     <arguments>
                         <argument>ws://csi420-01-vm1.ucd.ie</argument>
                         <argument>
-                            C:\Users\demps\IntelliJProjects\fyp\mec-framework\ServiceNode\docker.tar
+                            ../../streaming-sample/stream.tar
                         </argument>
                         <argument>ws://localhost:8090</argument>
                         <argument>generic-service-node</argument>

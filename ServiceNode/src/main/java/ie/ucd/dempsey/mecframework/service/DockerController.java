@@ -138,11 +138,15 @@ public class DockerController implements ServiceController {
     private String dockerImageName() {
         final String TAR = ".tar";
         final String LATEST = ":latest";
+
         String filename = servicePath.getFileName().toString();
+        logger.debug(servicePath.toString());
+        logger.debug(filename);
 
         if (filename.endsWith(".tar")) {
             return filename.substring(0, filename.length() - TAR.length()) + LATEST;
         }
+        logger.debug("DockerController.dockerImageName()={}", filename + LATEST);
         return filename + LATEST;
     }
 
@@ -159,11 +163,13 @@ public class DockerController implements ServiceController {
 
     @Override
     public boolean serviceExists() {
+        logger.debug("Checking Files.exists({})?={}", servicePath, Files.exists(servicePath));
         return Files.exists(servicePath);
     }
 
     @Override
     public String name() {
+        logger.debug("DockerController.name()={}", servicePath.getFileName().toString());
         return servicePath.getFileName().toString();
     }
 }
