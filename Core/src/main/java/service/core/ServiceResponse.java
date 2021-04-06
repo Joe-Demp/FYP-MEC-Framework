@@ -11,6 +11,11 @@ import java.util.UUID;
 public class ServiceResponse extends Message {
     private UUID targetNodeUuid;
     private UUID sourceNodeUuid;
+
+    public void setTransferServerAddress(InetSocketAddress transferServerAddress) {
+        this.transferServerAddress = transferServerAddress;
+    }
+
     /**
      * The address of the transfer server provided by the source ServiceNode during migration.
      */

@@ -205,8 +205,10 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         mobileClientRegistry.updateClient(mobileClientInfo);
     }
 
-    private static InetSocketAddress fixTransferServerAddress(ServiceResponse response, ServiceNode serverNode) {
-        return new InetSocketAddress(serverNode.globalIpAddress, response.getTransferServerAddress().getPort());
+    private static void fixTransferServerAddress(ServiceResponse response, ServiceNode serverNode) {
+        response.setTransferServerAddress(
+                new InetSocketAddress(serverNode.globalIpAddress, response.getTransferServerAddress().getPort())
+        );
     }
 
     // Routes a ServiceResponse from a source ServiceNode to a target ServiceNode.
