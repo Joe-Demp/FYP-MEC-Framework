@@ -119,7 +119,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
                 registerServiceNode((NodeInfo) messageObj, webSocket);
                 break;
             case Message.MessageTypes.MOBILE_CLIENT_INFO:
-                handleMobileClientInfo((MobileClientInfo) messageObj, webSocket);
+                registerMobileClient((MobileClientInfo) messageObj, webSocket);
                 break;
             case Message.MessageTypes.SERVICE_RESPONSE:
                 handleServiceResponse((ServiceResponse) messageObj);
@@ -146,8 +146,9 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
         ServiceNode bestNode = getBestServiceForClient(requestor);
         if (nonNull(bestNode)) {
-            logger.debug("service address of best available node: {}", bestNode.serviceHostAddress);
-            HostResponse response = new HostResponse(request.getRequestorID(), bestNode.serviceHostAddress);
+            URI serviceAddress = bestNode.getServiceAddressUri();
+            logger.debug("service address of best available node: {}", serviceAddress);
+            HostResponse response = new HostResponse(request.getRequestorID(), serviceAddress);
             sendAsJson(requestor.webSocket, response);
         } else {
             logger.info("Couldn't find service for client. Ignoring HostRequest.");
@@ -159,13 +160,16 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         return serviceNodeRegistry.getServiceNodes().stream().findAny().orElse(null);
     }
 
-    // Removes Address from newWSClientAddresses, used by the Orchestrator to track *MobileClients* (not ServiceNodes).
-    //  FYI: called every time a NodeInfo is received.
     private void registerServiceNode(NodeInfo nodeInfo, WebSocket nodeWebSocket) {
         nodeInfo.setWebSocket(nodeWebSocket);
-        newWSClientAddresses.remove(nodeInfo.getUuid());
-        serviceNodeRegistry.updateNode(nodeInfo);
 
+        boolean isNewServiceNode = newWSClientAddresses.containsKey(nodeInfo.getUuid());
+        if (isNewServiceNode) {
+            InetAddress globalIpAddress = newWSClientAddresses.remove(nodeInfo.getUuid());
+            nodeInfo.setGlobalIpAddress(globalIpAddress);
+        }
+
+        serviceNodeRegistry.updateNode(nodeInfo);
         askNodeToTrackAllLatencies(serviceNodeRegistry.get(nodeInfo.getUuid()));
     }
 
@@ -180,7 +184,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         }
     }
 
-    private void handleMobileClientInfo(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
+    private void registerMobileClient(MobileClientInfo mobileClientInfo, WebSocket webSocket) {
         boolean isNewClient = newWSClientAddresses.containsKey(mobileClientInfo.getUuid());
 
         if (isNewClient) {

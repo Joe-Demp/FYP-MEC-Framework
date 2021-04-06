@@ -2,6 +2,7 @@ package service.core;
 
 import org.java_websocket.WebSocket;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,7 @@ public class NodeInfo extends Message {
     private Map<UUID, List<Long>> latencies = Collections.emptyMap();
     private boolean trustworthy = true;
     private URI serviceHostAddress;
+    private InetAddress globalIpAddress;
 
     public NodeInfo() {
         super(Message.MessageTypes.NODE_INFO);
@@ -107,6 +109,14 @@ public class NodeInfo extends Message {
 
     public void setStorage(List<Long> storage) {
         this.storage = storage;
+    }
+
+    public InetAddress getGlobalIpAddress() {
+        return globalIpAddress;
+    }
+
+    public void setGlobalIpAddress(InetAddress globalIpAddress) {
+        this.globalIpAddress = globalIpAddress;
     }
 
     @Override

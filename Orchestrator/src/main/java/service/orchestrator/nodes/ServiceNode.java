@@ -5,12 +5,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.core.NodeInfo;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 /**
@@ -29,6 +31,7 @@ public class ServiceNode {
     private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
     private AtomicReference<State> stateAtomRef = new AtomicReference<>(State.STABLE);
     public URI serviceHostAddress;
+    public InetAddress globalIpAddress;
 
     public ServiceNode(UUID uuid, WebSocket webSocket) {
         this.uuid = uuid;
@@ -63,6 +66,12 @@ public class ServiceNode {
     private void recordOtherFields(NodeInfo nodeInfo) {
         serviceRunning = nodeInfo.isServiceRunning();
         serviceHostAddress = nodeInfo.getServiceHostAddress();
+        updateGlobalIp(nodeInfo.getGlobalIpAddress());
+        logger.debug("global ip={}", globalIpAddress);
+    }
+
+    private void updateGlobalIp(InetAddress address) {
+        globalIpAddress = isNull(address) ? globalIpAddress : address;
     }
 
     public void addAllLatencies(Map<UUID, List<Long>> latencies) {
@@ -141,6 +150,10 @@ public class ServiceNode {
                 serviceRunning,
                 serviceHostAddress
         );
+    }
+
+    public URI getServiceAddressUri() {
+        return URI.create("http://" + globalIpAddress.getHostAddress() + ":" + serviceHostAddress.getPort());
     }
 
     public enum State {
