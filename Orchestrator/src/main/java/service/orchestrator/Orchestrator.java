@@ -44,7 +44,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     private static final ScheduledExecutorService heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
 
     // todo remove this from the framework
-    private static final String serviceName = "docker.tar";
+    private static final String serviceName = "stream.tar";
 
     private Map<UUID, InetAddress> newWSClientAddresses = new Hashtable<>();
     private Gson gson;
