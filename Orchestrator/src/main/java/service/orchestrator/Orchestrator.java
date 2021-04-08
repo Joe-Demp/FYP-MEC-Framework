@@ -10,6 +10,7 @@ import service.core.*;
 import service.orchestrator.clients.MobileClient;
 import service.orchestrator.clients.MobileClientRegistry;
 import service.orchestrator.migration.Migrator;
+import service.orchestrator.migration.Selector;
 import service.orchestrator.nodes.ServiceNode;
 import service.orchestrator.nodes.ServiceNodeRegistry;
 import service.orchestrator.properties.OrchestratorProperties;
@@ -46,11 +47,13 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     // todo remove this from the framework
     private static final String serviceName = "stream.tar";
 
+    private final Selector selector;
     private Map<UUID, InetAddress> newWSClientAddresses = new Hashtable<>();
     private Gson gson;
 
-    public Orchestrator(int port) {
+    public Orchestrator(int port, Selector selector) {
         super(new InetSocketAddress(port));
+        this.selector = selector;
         gson = Gsons.orchestratorGson();
         heartbeatScheduler.scheduleAtFixedRate(
                 this::broadcastHeartbeats, HEARTBEAT_REQUEST_PERIOD, HEARTBEAT_REQUEST_PERIOD, TimeUnit.SECONDS);
@@ -144,7 +147,8 @@ public class Orchestrator extends WebSocketServer implements Migrator {
             return;
         }
 
-        ServiceNode bestNode = getBestServiceForClient(requestor);
+        Collection<ServiceNode> viableServiceNodes = ServiceNodeRegistry.get().getHostingAndStableServiceNodes();
+        ServiceNode bestNode = selector.select(viableServiceNodes, requestor);
         if (nonNull(bestNode)) {
             URI serviceAddress = bestNode.getServiceAddressUri();
             logger.debug("service address of best available node: {}", serviceAddress);
@@ -153,11 +157,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         } else {
             logger.info("Couldn't find service for client. Ignoring HostRequest.");
         }
-    }
-
-    // todo should be done by the selector
-    private ServiceNode getBestServiceForClient(MobileClient mobileClient) {
-        return serviceNodeRegistry.getServiceNodes().stream().findAny().orElse(null);
     }
 
     private void registerServiceNode(NodeInfo nodeInfo, WebSocket nodeWebSocket) {
@@ -227,26 +226,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         serviceNodeRegistry.recordMigration(sourceUuid, targetUuid);
     }
 
-//    /**
-//     * This method transfers the requested service to the best node available,
-//     * but for testing purposes states that it can't stay on the cloud where it currently is
-//     *
-//     * @param serviceRequest the requested service
-//     * @return the NodeInfo for the node that was deemed best
-//     */
-//    public NodeInfo transferServiceToEdgeNode(ServiceRequest serviceRequest) {
-//        Map<UUID, NodeInfo> connectedNodesWithoutHosts = connectedNodes;
-//        NodeInfo worstCurrentOwner = findWorstServiceOwner(serviceRequest);
-//        connectedNodesWithoutHosts.remove(worstCurrentOwner.getSystemID());
-//        NodeInfo bestNode = findBestNode(connectedNodesWithoutHosts);
-//        ServiceRequest request = new ServiceRequest(bestNode.getSystemID(), serviceRequest.getServiceName());
-//        Gson gson = new Gson();
-//        String jsonStr = gson.toJson(request);
-//        worstCurrentOwner.getWebSocket().send(jsonStr);//this tells the current worst owner of a service that its relived of duty and can send away its service
-//        System.out.println("Told worst current owner to transfer the file to best Node  --TIME " + System.currentTimeMillis());
-//        return bestNode;
-//    }
-
     /**
      * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
      */
@@ -256,129 +235,12 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         ws.send(json);
     }
 
-    void broadcastHeartbeats() {
+    private void broadcastHeartbeats() {
         ServerHeartbeatRequest request = new ServerHeartbeatRequest();
         String json = gson.toJson(request);
         logger.debug("Broadcasting ServerHeartbeatRequests.");
         broadcast(json);
     }
-
-//    /**
-//     * This method transfers the requested service to the best node available,
-//     * if that node is the current host, no transfer occurs
-//     * <p>
-//     * // todo fix this: Trigger should be able to call this? Or Selector..
-//     *
-//     * @param serviceRequest the requested service
-//     * @return the NodeInfo for the node that was deemed best
-//     */
-//    public ServiceNode transferServiceToBestNode(ServiceRequest serviceRequest) {
-//        ServiceNode dormantServiceNode = anyDormantServiceNode();
-//        ServiceNode worstCurrentOwner = findWorstServiceOwner(serviceRequest);
-//
-//        if (isNull(dormantServiceNode) || isNull(worstCurrentOwner)) {
-//            logger.warn("One of the following is null. No transfer made." +
-//                    "\ndormantServiceNode={}\nworstCurrentOwner={}", dormantServiceNode, worstCurrentOwner);
-//            return null;
-//        }
-//
-//        if (worstCurrentOwner.uuid.equals(dormantServiceNode.uuid)) {
-//            return dormantServiceNode;
-//        }
-//
-//        // tells the worstCurrentOwner to send its service to the dormantServiceNode
-//        ServiceRequest request = new ServiceRequest(dormantServiceNode.uuid, serviceRequest.getDesiredServiceName());
-//        sendAsJson(worstCurrentOwner.webSocket, request);
-//
-//        return dormantServiceNode;
-//    }
-
-    // Currently returns any ServiceNode running the service.
-//    public ServiceNode findWorstServiceOwner(ServiceRequest serviceRequest) {
-//        // todo remove this method when reimplementing the Selector
-//
-//        // let the worst ServiceOwner be any Node running the service
-//        List<ServiceNode> nodes = new ArrayList<>(findAllServiceOwners(serviceRequest).values());
-//        return nodes.size() > 0 ? nodes.get(0) : null;
-//    }
-
-//    /**
-//     * This method finds the best owner of a service, for a MobileClient.
-//     *
-//     * @param serviceRequest
-//     * @return the nodeInfo of the best owner
-//     */
-//    public ServiceNode findBestServiceOwner(ServiceRequest serviceRequest) {
-//        ServiceNode bestNode = null;
-//        Map<UUID, ServiceNode> allServiceOwnerAddresses = findAllServiceOwners(serviceRequest);
-//        if (allServiceOwnerAddresses == null) {
-//            //noone had this service, inform edgenode
-//        } else {
-//            bestNode = anyDormantServiceNode();
-//        }
-//        return bestNode;
-//    }
-
-//    /**
-//     * This method finds every node that is currently hosting a service specified by the given {@code ServiceRequest}.
-//     */
-//    public Map<UUID, ServiceNode> findAllServiceOwners(ServiceRequest serviceRequest) {
-//        Collection<ServiceNode> serviceNodes = serviceNodeRegistry.getServiceNodes();
-//        String desiredServiceName = serviceRequest.getDesiredServiceName();
-//        return serviceNodes.stream()
-//                .filter(node -> nonNull(node.serviceName))
-//                .filter(node -> node.serviceName.equals(desiredServiceName))
-//                .collect(Collectors.toMap(node -> node.uuid, Function.identity()));
-//    }
-
-//    // finds any Node that is not hosting a service (is Dormant)
-//    private ServiceNode anyDormantServiceNode() {
-//        ServiceNode bestNode = null;
-//        try {
-//            bestNode = serviceNodeRegistry.getServiceNodes().stream()
-//                    .filter(node -> isNull(node.serviceName))
-//                    .findAny()
-//                    .orElseThrow(NoSuchNodeException::new);
-//        } catch (NoSuchNodeException nsne) {
-//            logger.warn("Could not find an unoccupied node ");
-//        }
-//        return bestNode;
-//    }
-
-//    /**
-//     * Takes in a map of cpuload and the current rolling score for CPU
-//     *
-//     * @param entryCPULoad
-//     * @param rollingCPUScore
-//     * @return the adjusted new rolling average
-//     */
-//    public double calculateRecentCPULoad(Map<Integer, Double> entryCPULoad, double rollingCPUScore) {
-//        double runningTotal = -1;
-//        if (entryCPULoad.size() >= 5) {
-//            for (int i = entryCPULoad.size() - 1; i > entryCPULoad.size() - 5; i--) {
-//                runningTotal = +entryCPULoad.get(i);
-//            }
-//        }
-//
-//        return -1; // ((1 - rollingAverage) * rollingCPUScore) + (rollingAverage * (runningTotal / 5));
-//    }
-//
-//    /**
-//     * Takes in a map of cpuload and the current rolling score for CPU
-//     *
-//     * @param entryRamLoad
-//     * @param rollingRamScore
-//     * @return the adjusted new rolling average
-//     */
-//    public double calculateRecentRamLoad(Map<Integer, Double> entryRamLoad, double rollingRamScore) {
-//        double runningTotal = -1;
-//        if (entryRamLoad.size() >= 5) {
-//            for (int i = entryRamLoad.size() - 1; i > entryRamLoad.size() - 5; i--) {
-//                runningTotal = +entryRamLoad.get(i);
-//            }
-//        }
-//        return -1; //((1 - rollingAverage) * rollingRamScore) + (rollingAverage * (runningTotal / 5));
-//    }
 
     @Override
     public void migrate(ServiceNode source, ServiceNode target) {

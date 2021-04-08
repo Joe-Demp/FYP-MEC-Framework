@@ -1,12 +1,9 @@
 package service.orchestrator.migration;
 
-import service.core.MobileClientInfo;
-import service.core.NodeInfo;
+import service.orchestrator.clients.MobileClient;
 import service.orchestrator.nodes.ServiceNode;
 
 import java.util.Collection;
-
-// todo revisit
 
 /**
  * A type for objects that choose optimal target nodes for migration.
@@ -14,8 +11,9 @@ import java.util.Collection;
 public interface Selector {
     /**
      * Chooses the most optimal Node
+     *
+     * @return a {@code ServiceNode} that is a suitable target for migration,
+     * or null if there is no such {@code ServiceNode}
      */
-    NodeInfo select(Collection<ServiceNode> nodes, MobileClientInfo mobileClient);
-
-    // todo create an implementation of this
+    ServiceNode select(Collection<ServiceNode> nodes, MobileClient mobileClient);
 }

@@ -11,7 +11,7 @@ import java.security.KeyStore;
 public class SecureOrchestrator {
     SecureOrchestrator(int port,int rollingAverage) throws Exception {
         Orchestrator orchestrator;
-        orchestrator = new Orchestrator(port);
+        orchestrator = new Orchestrator(port, null);
 
         // load up the key store
         String STORETYPE = "JKS";

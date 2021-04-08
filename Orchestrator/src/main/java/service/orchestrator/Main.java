@@ -6,6 +6,9 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import service.orchestrator.migration.LatencyTrigger;
+import service.orchestrator.migration.Selector;
+import service.orchestrator.migration.SimpleSelector;
+import service.orchestrator.migration.Trigger;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,9 +38,12 @@ public class Main implements Runnable {
     @Override
     public void run() {
         if (!secure) {
+            // todo refactor ( long and wordy )
             logger.info("Starting Orchestrator");
-            Orchestrator orchestrator = new Orchestrator(port);
-            scheduledService.scheduleAtFixedRate(new LatencyTrigger(orchestrator), 5, 5, TimeUnit.SECONDS);
+            Selector selector = new SimpleSelector();
+            Orchestrator orchestrator = new Orchestrator(port, selector);
+            Trigger trigger = new LatencyTrigger(selector, orchestrator);
+            scheduledService.scheduleAtFixedRate(trigger, 5, 5, TimeUnit.SECONDS);
             orchestrator.run();
         } else {
             try {
