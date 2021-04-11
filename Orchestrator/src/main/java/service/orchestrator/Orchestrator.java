@@ -113,10 +113,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         logger.debug(reducedMessage);
 
         Message messageObj = gson.fromJson(message, Message.class);
-        // todo a good way to cut this down would be to:
-        //  map messages to commands (separate switch in a separate class)
-        //  execute commands polymorphically
-        //this routes inbound messages based on type and then moves them to other methods
         switch (messageObj.getType()) {
             case Message.MessageTypes.NODE_INFO:
                 registerServiceNode((NodeInfo) messageObj, webSocket);
