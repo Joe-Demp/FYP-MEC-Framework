@@ -108,11 +108,8 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     @Override
     public void onMessage(WebSocket webSocket, String message) {
-        logger.debug("from {}", webSocket.getRemoteSocketAddress());
-        String reducedMessage = message.substring(0, Integer.min(message.length(), 130));
-        logger.debug(reducedMessage);
-
         Message messageObj = gson.fromJson(message, Message.class);
+        logger.debug("Received: {}", messageObj);
         switch (messageObj.getType()) {
             case Message.MessageTypes.NODE_INFO:
                 registerServiceNode((NodeInfo) messageObj, webSocket);
