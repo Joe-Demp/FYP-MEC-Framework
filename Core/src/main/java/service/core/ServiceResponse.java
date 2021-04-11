@@ -50,4 +50,10 @@ public class ServiceResponse extends Message {
     public String getServiceName() {
         return serviceName;
     }
+
+    @Override
+    public String toString() {
+        return String.format("type=%s target=%s source%s transferServer=%s",
+                getType(), targetNodeUuid, sourceNodeUuid, transferServerAddress);
+    }
 }

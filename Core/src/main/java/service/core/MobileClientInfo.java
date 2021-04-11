@@ -55,6 +55,6 @@ public class MobileClientInfo extends Message {
 
     @Override
     public String toString() {
-        return String.format("%s: %s %s", getType(), getUuid(), getPingServer());
+        return String.format("type=%s uuid=%s pingServer=%s", getType(), getUuid(), getPingServer());
     }
 }

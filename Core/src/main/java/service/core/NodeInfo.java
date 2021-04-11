@@ -9,9 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+// todo remove unnecessary fields
 public class NodeInfo extends Message {
-    // todo remove unnecessary fields from here. Some are now held in ServiceNode
-
     private UUID uuid;
     private WebSocket webSocket;
     private boolean serviceRunning;
@@ -119,13 +118,19 @@ public class NodeInfo extends Message {
         this.globalIpAddress = globalIpAddress;
     }
 
+    private static String mapToString(Map<?, ?> map) {
+        return map.entrySet().stream()
+                .map(e -> new StringBuilder().append(e.getKey()).append(": ").append(e.getValue()).append('\n'))
+                .reduce(new StringBuilder(), StringBuilder::append)
+                .toString();
+    }
+
     @Override
     public String toString() {
-        return String.format("UUID=%s remoteSA=%s, serviceName=%s, serviceHostAddress=%s",
-                uuid,
-                webSocket.getRemoteSocketAddress(),
-                serviceRunning,
-                serviceHostAddress
+        return String.format(" type=%s UUID=%s remoteSA=%s servicePort=%d serviceRunning=%b cpuLoad=%s memoryLoad=%s" +
+                        "mainMemory=%s storage=%s latencies=%s",
+                getType(), uuid, webSocket.getRemoteSocketAddress(), serviceHostAddress.getPort(), serviceRunning,
+                cpuLoad, memoryLoad, mainMemory, storage, mapToString(latencies)
         );
     }
 }

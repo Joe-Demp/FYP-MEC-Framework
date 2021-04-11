@@ -40,6 +40,7 @@ public class LatencyTrigger implements Trigger {
         logger.debug("{} nodes in examine", nodes.size());
 
         for (ServiceNode node : nodes) {
+            logger.debug("examining {}", node.uuid);
             for (Map.Entry<UUID, List<Long>> mcLatencyEntry : node.latencyEntries()) {
                 logger.debug("{} has {} latencies", mcLatencyEntry.getKey(), mcLatencyEntry.getValue().size());
 
