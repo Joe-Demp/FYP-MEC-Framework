@@ -127,9 +127,9 @@ public class NodeInfo extends Message {
 
     @Override
     public String toString() {
-        return String.format(" type=%s UUID=%s remoteSA=%s servicePort=%d serviceRunning=%b cpuLoad=%s memoryLoad=%s" +
+        return String.format(" type=%s UUID=%s servicePort=%d serviceRunning=%b cpuLoad=%s memoryLoad=%s" +
                         "mainMemory=%s storage=%s latencies=%s",
-                getType(), uuid, webSocket.getRemoteSocketAddress(), serviceHostAddress.getPort(), serviceRunning,
+                getType(), uuid, serviceHostAddress.getPort(), serviceRunning,
                 cpuLoad, memoryLoad, mainMemory, storage, mapToString(latencies)
         );
     }
