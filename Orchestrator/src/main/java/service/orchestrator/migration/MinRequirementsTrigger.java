@@ -22,13 +22,13 @@ public class MinRequirementsTrigger implements Trigger {
     }
 
     @Override
-    public void examine(Collection<ServiceNode> nodes) {
+    public void examine(Collection<ServiceNode> hostingNodes) {
         OrchestratorProperties properties = OrchestratorProperties.get();
         List<ServiceNode> failingNodes = new LinkedList<>();
 
         // todo nodes
 
-        for (ServiceNode node : nodes) {
+        for (ServiceNode node : hostingNodes) {
             double meanCpu = node.getMeanCPU();
             double meanRam = node.getMeanRam();
             double meanStorage = node.getMeanStorage();
@@ -59,6 +59,6 @@ public class MinRequirementsTrigger implements Trigger {
 
     @Override
     public void run() {
-        examine(ServiceNodeRegistry.get().getServiceNodes());
+        examine(ServiceNodeRegistry.get().getHostingAndStableServiceNodes());
     }
 }

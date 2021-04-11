@@ -35,11 +35,11 @@ public class LatencyTrigger implements Trigger {
     }
 
     @Override
-    public void examine(Collection<ServiceNode> nodes) {
+    public void examine(Collection<ServiceNode> hostingNodes) {
         OrchestratorProperties properties = OrchestratorProperties.get();
-        logger.debug("{} nodes in examine", nodes.size());
+        logger.debug("{} nodes in examine", hostingNodes.size());
 
-        for (ServiceNode node : nodes) {
+        for (ServiceNode node : hostingNodes) {
             logger.debug("examining {}", node.uuid);
             for (Map.Entry<UUID, List<Long>> mcLatencyEntry : node.latencyEntries()) {
                 logger.debug("{} has {} latencies", mcLatencyEntry.getKey(), mcLatencyEntry.getValue().size());
@@ -47,7 +47,7 @@ public class LatencyTrigger implements Trigger {
                 double latencyAggregate = meanLatency(mcLatencyEntry.getValue());
                 if (latencyAggregate > properties.getMaxLatency()) {
                     logger.debug("{} has high latency {}", mcLatencyEntry.getKey(), latencyAggregate);
-                    handleHighLatencyNode(nodes, node, mcLatencyEntry.getKey());
+                    handleHighLatencyNode(node, mcLatencyEntry.getKey());
                 } else {
                     logger.debug("{} has low latency {}", mcLatencyEntry.getKey(), latencyAggregate);
                 }
@@ -56,11 +56,11 @@ public class LatencyTrigger implements Trigger {
     }
 
     // todo remove some of the parameters here
-    private void handleHighLatencyNode(Collection<ServiceNode> nodes, ServiceNode highLatency, UUID mobileClientUuid) {
-        // todo this is messy, extract?
+    private void handleHighLatencyNode(ServiceNode highLatency, UUID mobileClientUuid) {
         MobileClient mobile = MobileClientRegistry.get().get(mobileClientUuid);
+        Collection<ServiceNode> allServiceNodes = ServiceNodeRegistry.get().getServiceNodes();
 
-        ServiceNode migrationTarget = selector.select(nodes, mobile);
+        ServiceNode migrationTarget = selector.select(allServiceNodes, mobile);
         if (nonNull(migrationTarget)) {
             migrator.migrate(highLatency, migrationTarget);
         }
