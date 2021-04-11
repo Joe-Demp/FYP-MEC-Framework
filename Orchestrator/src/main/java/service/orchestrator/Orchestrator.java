@@ -240,10 +240,13 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     @Override
     public void migrate(ServiceNode source, ServiceNode target) {
-        logger.info("In Orchestrator.migrate");
-        ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
-        serviceNodeRegistry.setToMigrating(source, target);
-        sendAsJson(source.webSocket, request);
+        if (source.equals(target)) logger.info("Refusing to migrate: source==target.");
+        else {
+            logger.info("Migrating {} -> {}", source, target);
+            ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
+            serviceNodeRegistry.setToMigrating(source, target);
+            sendAsJson(source.webSocket, request);
+        }
     }
 
     @Override
