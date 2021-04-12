@@ -10,6 +10,8 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.util.Objects.isNull;
+
 public class MobileClientRegistry {
     private static final Logger logger = LoggerFactory.getLogger(MobileClientRegistry.class);
     private static final MobileClientRegistry instance = new MobileClientRegistry();
@@ -27,7 +29,7 @@ public class MobileClientRegistry {
     }
 
     public MobileClient get(UUID uuid) {
-        return mobileClients.get(uuid);
+        return isNull(uuid) ? null : mobileClients.get(uuid);
     }
 
     public Collection<MobileClient> getMobileClients() {
