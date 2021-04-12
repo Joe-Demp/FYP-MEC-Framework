@@ -13,14 +13,21 @@ import java.util.concurrent.Future;
 /**
  * A class that handles NodeClientLatencyRequests, between this node and mobile clients.
  *
- * <p>Clients call startLatencyRequest and takeLatencySnapshot.
+ * <p>
+ * Clients call startLatencyRequest and takeLatencySnapshot.
  * This class will monitor request progress and store results.
+ * </p>
+ * <p>
+ * Note that at present this class uses a single threaded {@code ExecutorService} to run latency requests.
+ * Ideally, if there were more than 1 mobile client, there would be more than 1 thread here to allow for concurrent
+ * {@code PingTask}s.
+ * </p>
  */
 public class LatencyRequestMonitor implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(LatencyRequestMonitor.class);
 
     private final Map<UUID, Future<PingResult>> awaitedLatencyResponses = new Hashtable<>();
-    private final ExecutorService executor = Executors.newFixedThreadPool(5);
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Map<UUID, List<Long>> latencies = new Hashtable<>();
 
     private static PingResult extractFinishedPingResult(Future<PingResult> pingResultFuture) {
