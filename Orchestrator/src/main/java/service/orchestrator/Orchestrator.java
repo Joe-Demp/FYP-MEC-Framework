@@ -217,6 +217,13 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         UUID sourceUuid = migrationSuccess.getSourceHostUuid();
         UUID targetUuid = migrationSuccess.getTargetHostUuid();
         serviceNodeRegistry.recordMigration(sourceUuid, targetUuid);
+        broadcast(migrationSuccess);
+    }
+
+    private void broadcast(MigrationSuccess migrationSuccess) {
+        logger.debug("Broadcasting");
+        String json = gson.toJson(migrationSuccess);
+        broadcast(json);
     }
 
     /**

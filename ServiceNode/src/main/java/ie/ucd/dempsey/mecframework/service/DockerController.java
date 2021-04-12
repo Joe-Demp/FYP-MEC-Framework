@@ -155,8 +155,13 @@ public class DockerController implements ServiceController {
         return isServiceRunning.get();
     }
 
+    /**
+     * At present, this method does nothing. We cannot stop the Docker container without knowing the container id.<br>
+     * todo fix this issue once using a proper Docker connector.
+     */
     @Override
     public void stopService() {
+        logger.info("Trying to stop the Docker process. dockerProcess.isAlive?={}", dockerProcess.isAlive());
         dockerProcess.destroyForcibly();
         isServiceRunning.set(false);
     }

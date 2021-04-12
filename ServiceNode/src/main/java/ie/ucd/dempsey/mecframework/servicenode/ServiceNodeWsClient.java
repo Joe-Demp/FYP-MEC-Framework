@@ -36,7 +36,6 @@ public class ServiceNodeWsClient extends WebSocketClient {
                 getRemoteSocketAddress(), getLocalSocketAddress());
     }
 
-
     @Override
     public void onMessage(String message) {
         Message messageObj = gson.fromJson(message, Message.class);
@@ -56,6 +55,8 @@ public class ServiceNodeWsClient extends WebSocketClient {
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST:
                 serviceNode.handleLatencyRequest((NodeClientLatencyRequest) messageObj);
+                break;
+            case Message.MessageTypes.MIGRATION_SUCCESS:
                 break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
