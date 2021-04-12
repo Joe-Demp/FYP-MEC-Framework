@@ -30,7 +30,6 @@ public class TransferClient extends WebSocketClient {
      * Note this method is not used (so far that I can see)
      * Prefer `onMessage(ByteBuffer bytes)`
      * <p>
-     * todo remove asap
      */
     @Override
     public void onMessage(String file) {
@@ -42,7 +41,10 @@ public class TransferClient extends WebSocketClient {
         byte[] b = bytes.array();
         String filename = "stream.tar";
 
-        logger.info("Trying to write file {}", filename);
+        logger.info("Trying to write file {} @ {}", filename, service.getAbsoluteFile());
+        logger.info("File.exists?={}", service.exists());
+        logger.info("File.canWrite?={}", service.canWrite());
+
         try (FileOutputStream fos = new FileOutputStream(service)) {
             fos.write(b);
             fos.close();
