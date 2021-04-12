@@ -44,6 +44,10 @@ public class TransferClient extends WebSocketClient {
         logger.info("Trying to write file {} @ {}", filename, service.getAbsoluteFile());
         logger.info("File.exists?={}", service.exists());
         logger.info("File.canWrite?={}", service.canWrite());
+        try {
+            logger.info("File.getCanonicalPath={}", service.getCanonicalPath());
+        } catch (Exception removeMe) {
+        }
 
         try (FileOutputStream fos = new FileOutputStream(service)) {
             fos.write(b);
