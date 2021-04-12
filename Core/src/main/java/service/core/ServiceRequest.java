@@ -9,21 +9,21 @@ import java.util.UUID;
 // todo question the wisdom of sending the desiredServiceName all over the framework, when it's constant
 
 public class ServiceRequest extends Message {
-    private UUID targetNodeUuid;
+    private UUID targetUuid;
     private String desiredServiceName;
 
     public ServiceRequest() {
         super(Message.MessageTypes.SERVICE_REQUEST);
     }
 
-    public ServiceRequest(UUID targetNodeUuid, String desiredServiceName) {
+    public ServiceRequest(UUID targetUuid, String desiredServiceName) {
         this();
-        this.targetNodeUuid = targetNodeUuid;
+        this.targetUuid = targetUuid;
         this.desiredServiceName = desiredServiceName;
     }
 
-    public UUID getTargetNodeUuid() {
-        return targetNodeUuid;
+    public UUID getTargetUuid() {
+        return targetUuid;
     }
 
     public String getDesiredServiceName() {
@@ -32,6 +32,9 @@ public class ServiceRequest extends Message {
 
     @Override
     public String toString() {
-        return String.format("ServiceRequest: requestorID=%s serviceName=%s", targetNodeUuid, desiredServiceName);
+        return "ServiceRequest{" +
+                "targetUuid=" + targetUuid +
+                ", desiredServiceName='" + desiredServiceName + '\'' +
+                '}';
     }
 }

@@ -55,7 +55,6 @@ public class ServiceNode implements Runnable {
     }
 
     void sendHeartbeatResponse() {
-        logger.info("serviceController.isServiceRunning()={}", serviceController.isServiceRunning());
         NodeInfo nodeInfo = new NodeInfo(uuid, serviceController.isServiceRunning(), serviceAddress);
         metrics.populateNodeInfo(nodeInfo);
         wsClient.sendAsJson(nodeInfo);
@@ -92,14 +91,14 @@ public class ServiceNode implements Runnable {
         CompletableFuture<Void> task = CompletableFuture.runAsync(acceptTask, singleExecutor);
         task.thenRunAsync(() -> {
             MigrationSuccess migrationSuccess = new MigrationSuccess(
-                    uuid, response.getSourceNodeUuid(), response.getServiceName());
+                    uuid, response.getSourceUuid(), response.getServiceName());
             wsClient.sendAsJson(migrationSuccess);
         }, singleExecutor);
     }
 
     private void sendServiceResponse(ServiceRequest request, InetSocketAddress transferServerAddress) {
         ServiceResponse response = new ServiceResponse(
-                request.getTargetNodeUuid(), uuid, transferServerAddress, request.getDesiredServiceName());
+                request.getTargetUuid(), uuid, transferServerAddress, request.getDesiredServiceName());
         wsClient.sendAsJson(response);
     }
 

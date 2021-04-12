@@ -47,7 +47,7 @@ public class LatencyTrigger implements Trigger {
                 double latencyAggregate = meanLatency(mcLatencyEntry.getValue());
                 if (latencyAggregate > properties.getMaxLatency()) {
                     logger.debug("{} has high latency {}", mcLatencyEntry.getKey(), latencyAggregate);
-                    handleHighLatencyNode(node, mcLatencyEntry.getKey());
+                    findBetterServiceNodeForClient(mcLatencyEntry.getKey(), node);
                 } else {
                     logger.debug("{} has low latency {}", mcLatencyEntry.getKey(), latencyAggregate);
                 }
@@ -55,20 +55,18 @@ public class LatencyTrigger implements Trigger {
         }
     }
 
-    // todo remove some of the parameters here
-    private void handleHighLatencyNode(ServiceNode highLatency, UUID mobileClientUuid) {
-        MobileClient mobile = MobileClientRegistry.get().get(mobileClientUuid);
+    private void findBetterServiceNodeForClient(UUID clientUuid, ServiceNode currentServiceNode) {
+        MobileClient mobileClient = MobileClientRegistry.get().get(clientUuid);
         Collection<ServiceNode> allServiceNodes = ServiceNodeRegistry.get().getServiceNodes();
 
-        ServiceNode migrationTarget = selector.select(allServiceNodes, mobile);
+        ServiceNode migrationTarget = selector.select(allServiceNodes, mobileClient);
         if (nonNull(migrationTarget)) {
-            migrator.migrate(highLatency, migrationTarget);
+            migrator.migrate(currentServiceNode, migrationTarget);
         }
     }
 
     @Override
     public void run() {
-        logger.debug("Running LatencyTrigger");
         examine(ServiceNodeRegistry.get().getHostingAndStableServiceNodes());
     }
 }

@@ -61,7 +61,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     private static URI mapToUri(InetSocketAddress address) {
         String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
-        logger.debug("Mapping {} to URI.", uriString);
         return URI.create(uriString);
     }
 
@@ -153,16 +152,18 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     }
 
     private void registerServiceNode(NodeInfo nodeInfo, WebSocket nodeWebSocket) {
+        UUID serviceNodeUuid = nodeInfo.getUuid();
         nodeInfo.setWebSocket(nodeWebSocket);
 
-        boolean isNewServiceNode = newWSClientAddresses.containsKey(nodeInfo.getUuid());
+        boolean isNewServiceNode = newWSClientAddresses.containsKey(serviceNodeUuid);
         if (isNewServiceNode) {
-            InetAddress globalIpAddress = newWSClientAddresses.remove(nodeInfo.getUuid());
+            InetAddress globalIpAddress = newWSClientAddresses.remove(serviceNodeUuid);
             nodeInfo.setGlobalIpAddress(globalIpAddress);
         }
 
         serviceNodeRegistry.updateNode(nodeInfo);
-        askNodeToTrackAllLatencies(serviceNodeRegistry.get(nodeInfo.getUuid()));
+        ServiceNode updatedNode = serviceNodeRegistry.get(serviceNodeUuid);
+        askNodeToTrackAllLatencies(updatedNode);
     }
 
     private void askNodeToTrackAllLatencies(ServiceNode serviceNode) {
@@ -206,8 +207,8 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     // Routes a ServiceResponse from a source ServiceNode to a target ServiceNode.
     // has to add the globalIp to the transfer server address.
     private void handleServiceResponse(ServiceResponse response) {
-        fixTransferServerAddress(response, serviceNodeRegistry.get(response.getSourceNodeUuid()));
-        UUID targetUuid = response.getTargetNodeUuid();
+        fixTransferServerAddress(response, serviceNodeRegistry.get(response.getSourceUuid()));
+        UUID targetUuid = response.getTargetUuid();
         WebSocket returnSocket = serviceNodeRegistry.get(targetUuid).webSocket;
         sendAsJson(returnSocket, response);
     }
@@ -230,15 +231,14 @@ public class Orchestrator extends WebSocketServer implements Migrator {
      * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
      */
     private void sendAsJson(WebSocket ws, Message message) {
+        logger.debug("Sending: {}", message);
         String json = gson.toJson(message);
-        logger.debug("Sending: {}", json);
         ws.send(json);
     }
 
     private void broadcastHeartbeats() {
         ServerHeartbeatRequest request = new ServerHeartbeatRequest();
         String json = gson.toJson(request);
-        logger.debug("Broadcasting ServerHeartbeatRequests.");
         broadcast(json);
     }
 

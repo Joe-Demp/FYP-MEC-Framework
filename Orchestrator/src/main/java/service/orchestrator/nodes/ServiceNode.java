@@ -67,7 +67,6 @@ public class ServiceNode {
         serviceRunning = nodeInfo.isServiceRunning();
         serviceHostAddress = nodeInfo.getServiceHostAddress();
         updateGlobalIp(nodeInfo.getGlobalIpAddress());
-        logger.debug("global ip={}", globalIpAddress);
     }
 
     private void updateGlobalIp(InetAddress address) {

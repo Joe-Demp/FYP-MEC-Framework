@@ -17,8 +17,8 @@ class ServiceNodeMecClientTest {
     ServiceNodeMecClient serviceNode = new MockServiceNodeMecClient();
     Message message = new ServiceResponse(someUUID, someUUID, socketAddress, serviceName);
     String messageJson = "{\n" +
-            "  \"targetNodeUuid\": \"29d03298-9e3e-4f74-bb3f-57be11e4140c\",\n" +
-            "  \"sourceNodeUuid\": \"29d03298-9e3e-4f74-bb3f-57be11e4140c\",\n" +
+            "  \"targetUuid\": \"29d03298-9e3e-4f74-bb3f-57be11e4140c\",\n" +
+            "  \"sourceUuid\": \"29d03298-9e3e-4f74-bb3f-57be11e4140c\",\n" +
             "  \"transferServerAddress\": \"www.irishtimes.com:80\",\n" +
             "  \"serviceName\": \"myService\",\n" +
             "  \"type\": \"ServiceResponse\"\n" +
@@ -38,8 +38,8 @@ class ServiceNodeMecClientTest {
         Message deserialized = serviceNode.gson.fromJson(messageJson, Message.class);
         ServiceResponse response = (ServiceResponse) deserialized;
 
-        assertEquals(someUUID, response.getSourceNodeUuid());
-        assertEquals(someUUID, response.getTargetNodeUuid());
+        assertEquals(someUUID, response.getSourceUuid());
+        assertEquals(someUUID, response.getTargetUuid());
         assertEquals(socketAddress, response.getTransferServerAddress());
         assertEquals(serviceName, response.getServiceName());
     }

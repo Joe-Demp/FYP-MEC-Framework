@@ -9,8 +9,8 @@ import java.util.UUID;
  * Shows that the Source approves the transfer.
  */
 public class ServiceResponse extends Message {
-    private UUID targetNodeUuid;
-    private UUID sourceNodeUuid;
+    private UUID targetUuid;
+    private UUID sourceUuid;
 
     public void setTransferServerAddress(InetSocketAddress transferServerAddress) {
         this.transferServerAddress = transferServerAddress;
@@ -26,21 +26,21 @@ public class ServiceResponse extends Message {
         super(Message.MessageTypes.SERVICE_RESPONSE);
     }
 
-    public ServiceResponse(UUID targetNodeUuid, UUID sourceNodeUuid, InetSocketAddress transferServerAddress,
+    public ServiceResponse(UUID targetUuid, UUID sourceUuid, InetSocketAddress transferServerAddress,
                            String serviceName) {
         this();
-        this.targetNodeUuid = targetNodeUuid;
-        this.sourceNodeUuid = sourceNodeUuid;
+        this.targetUuid = targetUuid;
+        this.sourceUuid = sourceUuid;
         this.transferServerAddress = transferServerAddress;
         this.serviceName = serviceName;
     }
 
-    public UUID getTargetNodeUuid() {
-        return targetNodeUuid;
+    public UUID getTargetUuid() {
+        return targetUuid;
     }
 
-    public UUID getSourceNodeUuid() {
-        return sourceNodeUuid;
+    public UUID getSourceUuid() {
+        return sourceUuid;
     }
 
     public InetSocketAddress getTransferServerAddress() {
@@ -53,7 +53,11 @@ public class ServiceResponse extends Message {
 
     @Override
     public String toString() {
-        return String.format("type=%s target=%s source%s transferServer=%s",
-                getType(), targetNodeUuid, sourceNodeUuid, transferServerAddress);
+        return "ServiceResponse{" +
+                "targetUuid=" + targetUuid +
+                ", sourceUuid=" + sourceUuid +
+                ", transferServerAddress=" + transferServerAddress +
+                ", serviceName='" + serviceName + '\'' +
+                '}';
     }
 }

@@ -21,6 +21,10 @@ public class NodeInfo extends Message {
     private Map<UUID, List<Long>> latencies = Collections.emptyMap();
     private boolean trustworthy = true;
     private URI serviceHostAddress;
+
+    // todo Only reason why this is here is so that the Orchestrator can update globalIpAddress in its
+    //  ServiceNodeRegistry
+    //  Not a good enough reason to include it as a field in a message shared between hosts. Remove this field.
     private InetAddress globalIpAddress;
 
     public NodeInfo() {
@@ -119,18 +123,24 @@ public class NodeInfo extends Message {
     }
 
     private static String mapToString(Map<?, ?> map) {
-        return map.entrySet().stream()
-                .map(e -> new StringBuilder().append(e.getKey()).append(": ").append(e.getValue()).append('\n'))
+        String mapContents = map.entrySet().stream()
+                .map(e -> new StringBuilder().append(e.getKey()).append(": ").append(e.getValue()).append(' '))
                 .reduce(new StringBuilder(), StringBuilder::append)
                 .toString();
+        return "{ " + mapContents + " }";
     }
 
     @Override
     public String toString() {
-        return String.format(" type=%s UUID=%s servicePort=%d serviceRunning=%b cpuLoad=%s memoryLoad=%s" +
-                        "mainMemory=%s storage=%s latencies=%s",
-                getType(), uuid, serviceHostAddress.getPort(), serviceRunning,
-                cpuLoad, memoryLoad, mainMemory, storage, mapToString(latencies)
-        );
+        return "NodeInfo{" +
+                "uuid=" + uuid +
+                ", servicePort=" + serviceHostAddress.getPort() +
+                ", serviceRunning=" + serviceRunning +
+                ", cpuLoad=" + cpuLoad +
+                ", memoryLoad=" + memoryLoad +
+                ", mainMemory=" + mainMemory +
+                ", storage=" + storage +
+                ", latencies=" + mapToString(latencies) +
+                '}';
     }
 }

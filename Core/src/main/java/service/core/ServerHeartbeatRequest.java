@@ -7,6 +7,6 @@ public class ServerHeartbeatRequest extends Message {
 
     @Override
     public String toString() {
-        return String.format("type=%s", getType());
+        return getClass().getSimpleName();
     }
 }

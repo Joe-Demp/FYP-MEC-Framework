@@ -20,6 +20,8 @@ public class NodeInfoRequest extends Message {
 
     @Override
     public String toString() {
-        return String.format("type=%s uuid=%s", getType(), uuid);
+        return "NodeInfoRequest{" +
+                "uuid=" + uuid +
+                '}';
     }
 }

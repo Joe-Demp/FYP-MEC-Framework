@@ -20,6 +20,8 @@ public class HostRequest extends Message {
 
     @Override
     public String toString() {
-        return String.format("HostRequest: requestorId=%s", requestorID);
+        return "HostRequest{" +
+                "requestorID=" + requestorID +
+                '}';
     }
 }
