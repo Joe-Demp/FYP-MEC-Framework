@@ -41,11 +41,8 @@ public class TransferClient extends WebSocketClient {
         byte[] b = bytes.array();
         String filename = "stream.tar";
 
-        logger.info("Trying to write file {} @ {}", filename, service.getAbsoluteFile());
-        logger.info("File.exists?={}", service.exists());
-        logger.info("File.canWrite?={}", service.canWrite());
         try {
-            logger.info("File.getCanonicalPath={}", service.getCanonicalPath());
+            logger.info("Trying to write file {} @ {}", filename, service.getCanonicalPath());
         } catch (Exception removeMe) {
         }
 
