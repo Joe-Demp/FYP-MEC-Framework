@@ -25,8 +25,8 @@ public class ServiceNodeWsClient extends WebSocketClient {
      * Converts the given message to JSON, and sends that JSON String along the given WebSocket.
      */
     public final void sendAsJson(Message message) {
+        logger.debug("Sending: {}", message);
         String json = gson.toJson(message);
-        logger.debug("Sending: {}", json);
         send(json);
     }
 
@@ -39,9 +39,8 @@ public class ServiceNodeWsClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        logger.debug("Received: {}", message);
-
         Message messageObj = gson.fromJson(message, Message.class);
+        logger.debug("Received: {}", messageObj);
         switch (messageObj.getType()) {
             case Message.MessageTypes.NODE_INFO_REQUEST:
                 serviceNode.handleNodeInfoRequest((NodeInfoRequest) messageObj);

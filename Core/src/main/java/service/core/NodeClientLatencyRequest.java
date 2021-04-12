@@ -61,4 +61,13 @@ public class NodeClientLatencyRequest extends Message {
     public int hashCode() {
         return nodeId.hashCode() ^ clientId.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "NodeClientLatencyRequest{" +
+                "nodeId=" + nodeId +
+                ", clientId=" + clientId +
+                ", clientUri=" + clientUri +
+                '}';
+    }
 }

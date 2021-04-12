@@ -3,18 +3,23 @@ package service.core;
 import java.util.UUID;
 
 public class NodeInfoRequest extends Message {
-    UUID assignedUUID;
+    UUID uuid;
 
-    public NodeInfoRequest(){
+    public NodeInfoRequest() {
         super(MessageTypes.NODE_INFO_REQUEST);
     }
 
-    public NodeInfoRequest(UUID assignedUUID) {
+    public NodeInfoRequest(UUID uuid) {
         this();
-        this.assignedUUID = assignedUUID;
+        this.uuid = uuid;
     }
 
-    public UUID getAssignedUUID() {
-        return assignedUUID;
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("type=%s uuid=%s", getType(), uuid);
     }
 }

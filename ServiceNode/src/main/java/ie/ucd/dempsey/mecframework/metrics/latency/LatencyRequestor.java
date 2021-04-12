@@ -23,7 +23,7 @@ public class LatencyRequestor implements Runnable {
 
     @Override
     public void run() {
-        logger.debug("Running LatencyRequestor");
+        logger.debug("Starting Latency Requests");
         for (NodeClientLatencyRequest nclRequest : requests) {
             latencyRequestMonitor.startLatencyRequest(nclRequest);
         }

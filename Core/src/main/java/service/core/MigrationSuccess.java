@@ -29,6 +29,15 @@ public class MigrationSuccess extends Message {
     public UUID getSourceHostUuid() {
         return sourceHostUuid;
     }
+
+    @Override
+    public String toString() {
+        return "MigrationSuccess{" +
+                "targetHostUuid=" + targetHostUuid +
+                ", sourceHostUuid=" + sourceHostUuid +
+                ", serviceName='" + serviceName + '\'' +
+                '}';
+    }
 }
 
 

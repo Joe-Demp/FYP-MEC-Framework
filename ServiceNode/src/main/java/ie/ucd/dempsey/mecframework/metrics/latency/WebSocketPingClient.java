@@ -25,18 +25,15 @@ public class WebSocketPingClient extends WebSocketClient {
         super(serverUri);
         this.pingTask = pingTask;
         this.finishedPingLatch = finishedPingLatch;
-        logger.debug("Creating client for server at {}", serverUri);
     }
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-        logger.info("Connected to PingServer @ {}", getRemoteSocketAddress());
     }
 
     @Override
     public void onMessage(String message) {
         Instant timeReceived = Instant.now();
-        logger.debug("pong from {}", getRemoteSocketAddress());
 
         gson.fromJson(message, PingMessage.class);  // check if message was a PingMessage. Throw an error otherwise
 
@@ -47,13 +44,12 @@ public class WebSocketPingClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        logger.debug("Closing. code={} reason={} remote?={}", code, reason, remote);
+        logger.debug("Finished. Closing. code={} reason={} remote?={}", code, reason, remote);
     }
 
     @Override
     public void onError(Exception ex) {
-        logger.error(ex.getMessage());
-        // could print the stack trace here
+        logger.error(ex.getMessage(), ex);
     }
 
     /**
@@ -65,7 +61,6 @@ public class WebSocketPingClient extends WebSocketClient {
 
     private void sendAndTime(PingMessage message) {
         String json = gson.toJson(message);
-        logger.debug("Sending ping");
         result.startTime = Instant.now();
         send(json);
     }

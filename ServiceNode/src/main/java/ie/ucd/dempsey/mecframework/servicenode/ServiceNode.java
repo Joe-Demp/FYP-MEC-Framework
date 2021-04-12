@@ -50,7 +50,7 @@ public class ServiceNode implements Runnable {
      * <p>Takes the assigned {@code UUID} and sends a heartbeat response.</p>
      */
     void handleNodeInfoRequest(NodeInfoRequest request) {
-        uuid = request.getAssignedUUID();
+        uuid = request.getUuid();
         sendHeartbeatResponse();
     }
 
