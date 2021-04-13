@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import service.orchestrator.migration.LatencySelector;
 import service.orchestrator.migration.LatencyTrigger;
 import service.orchestrator.migration.Selector;
-import service.orchestrator.migration.SimpleSelector;
 import service.orchestrator.migration.Trigger;
 
 import java.util.concurrent.Executors;
@@ -38,11 +38,10 @@ public class Main implements Runnable {
     @Override
     public void run() {
         if (!secure) {
-            // todo refactor ( long and wordy )
             logger.info("Starting Orchestrator");
-            Selector selector = new SimpleSelector();
+            Selector selector = getSelector();
             Orchestrator orchestrator = new Orchestrator(port, selector);
-            Trigger trigger = new LatencyTrigger(selector, orchestrator);
+            Trigger trigger = getTrigger(selector, orchestrator);
             scheduledService.scheduleAtFixedRate(trigger, 5, 5, TimeUnit.SECONDS);
             orchestrator.run();
         } else {
@@ -52,5 +51,14 @@ public class Main implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    private Selector getSelector() {
+//        return new SimpleSelector();
+        return new LatencySelector();
+    }
+
+    private Trigger getTrigger(Selector selector, Orchestrator orchestrator) {
+        return new LatencyTrigger(selector, orchestrator);
     }
 }

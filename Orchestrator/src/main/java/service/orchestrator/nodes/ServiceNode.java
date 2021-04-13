@@ -28,10 +28,10 @@ public class ServiceNode {
     public Deque<Double> ramLoad = new ArrayDeque<>();
     public Deque<Long> storage = new ArrayDeque<>();
     public Deque<Long> mainMemory = new ArrayDeque<>();
-    private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
-    private AtomicReference<State> stateAtomRef = new AtomicReference<>(State.STABLE);
     public URI serviceHostAddress;
     public InetAddress globalIpAddress;
+    private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
+    private AtomicReference<State> stateAtomRef = new AtomicReference<>(State.STABLE);
 
     public ServiceNode(UUID uuid, WebSocket webSocket) {
         this.uuid = uuid;
@@ -139,6 +139,14 @@ public class ServiceNode {
         // todo implement more Score methods
         //  todo reconsider the Mean methods
         throw new UnsupportedOperationException("ServiceNode.getCpuScore not implemented");
+    }
+
+    public double getMeanLatency(UUID clientUuid) {
+        List<Long> latencies = mobileClientLatencies.get(clientUuid);
+        int cutoff = latencies.size();
+        List<Long> snapshot = latencies.subList(0, cutoff);
+
+        return getMean(snapshot);
     }
 
     @Override
