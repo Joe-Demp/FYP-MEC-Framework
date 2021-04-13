@@ -29,8 +29,8 @@ public class LatencySelector implements Selector {
         }
 
         @Override
-        public int compareTo(NodeLatencyPair nodeLatencyPair) {
-            return Double.compare(latency, nodeLatencyPair.latency);
+        public int compareTo(NodeLatencyPair other) {
+            return Double.compare(latency, other.latency);
         }
     }
 }

@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import service.orchestrator.migration.LatencySelector;
-import service.orchestrator.migration.LatencyTrigger;
+import service.orchestrator.migration.CpuSelector;
+import service.orchestrator.migration.CpuTrigger;
 import service.orchestrator.migration.Selector;
 import service.orchestrator.migration.Trigger;
 
@@ -55,10 +55,12 @@ public class Main implements Runnable {
 
     private Selector getSelector() {
 //        return new SimpleSelector();
-        return new LatencySelector();
+//        return new LatencySelector();
+        return new CpuSelector();
     }
 
     private Trigger getTrigger(Selector selector, Orchestrator orchestrator) {
-        return new LatencyTrigger(selector, orchestrator);
+//        return new LatencyTrigger(selector, orchestrator);
+        return new CpuTrigger(selector, orchestrator);
     }
 }

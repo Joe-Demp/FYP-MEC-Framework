@@ -24,10 +24,10 @@ public class ServiceNode {
     public UUID uuid;
     public WebSocket webSocket;
     public boolean serviceRunning;
-    public Deque<Double> cpuLoad = new ArrayDeque<>();
-    public Deque<Double> ramLoad = new ArrayDeque<>();
-    public Deque<Long> storage = new ArrayDeque<>();
-    public Deque<Long> mainMemory = new ArrayDeque<>();
+    public List<Double> cpuLoad = new ArrayList<>();
+    public List<Double> ramLoad = new ArrayList<>();
+    public List<Long> storage = new ArrayList<>();
+    public List<Long> mainMemory = new ArrayList<>();
     public URI serviceHostAddress;
     public InetAddress globalIpAddress;
     private Map<UUID, List<Long>> mobileClientLatencies = new Hashtable<>();
@@ -135,10 +135,14 @@ public class ServiceNode {
         return serviceRunning;
     }
 
+    /**
+     * @return the mean of the past 10 cpu utilization scores.
+     */
     public double getCpuScore() {
-        // todo implement more Score methods
-        //  todo reconsider the Mean methods
-        throw new UnsupportedOperationException("ServiceNode.getCpuScore not implemented");
+        int upperBound = cpuLoad.size();
+        int lowerBound = Integer.max(upperBound - 10, 0);
+        List<Double> cpuUtilizations = cpuLoad.subList(lowerBound, upperBound);
+        return getMean(cpuUtilizations);
     }
 
     public double getMeanLatency(UUID clientUuid) {
