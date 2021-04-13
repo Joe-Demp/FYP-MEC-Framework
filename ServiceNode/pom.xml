@@ -112,6 +112,7 @@
                                 <argument>ws://localhost:8090</argument>
                                 <argument>cloud-node</argument>
                                 <argument>1000</argument>
+                                <argument>false</argument>
                             </arguments>
                         </configuration>
                     </plugin>
