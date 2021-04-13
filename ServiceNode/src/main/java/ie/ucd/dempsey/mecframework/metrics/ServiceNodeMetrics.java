@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.stream.Collectors.toList;
 
 public class ServiceNodeMetrics {
-    private final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
+    private static final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
 
     // class fields
     private final SystemInfo nodeSystem = new SystemInfo();
@@ -36,13 +36,13 @@ public class ServiceNodeMetrics {
     public ServiceNodeMetrics(long pingDelay) {
         this.pingDelay = pingDelay;
 
-//        scheduleService.scheduleAtFixedRate(() -> {
-//            // CPU
-//            double load = hal.getProcessor().getSystemCpuLoadBetweenTicks(cpuTicks);
-//            synchronized (cpuLoad) {
-//                cpuLoad.add(load);
-//            }
-//            cpuTicks = hal.getProcessor().getSystemCpuLoadTicks();
+        scheduleService.scheduleAtFixedRate(() -> {
+            // CPU
+            double load = hal.getProcessor().getSystemCpuLoadBetweenTicks(cpuTicks);
+            synchronized (cpuLoad) {
+                cpuLoad.add(load);
+            }
+            cpuTicks = hal.getProcessor().getSystemCpuLoadTicks();
 //
 //            // Memory
 //            double totalMemory = hal.getMemory().getTotal();
@@ -64,7 +64,7 @@ public class ServiceNodeMetrics {
 //            synchronized (storage) {
 //                storage.add(usableSpace);
 //            }
-//        }, 10, 60, TimeUnit.SECONDS);
+        }, 10, 60, TimeUnit.SECONDS);
 
         scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
         scheduleService.scheduleAtFixedRate(latencyMonitor, 5, 5, TimeUnit.SECONDS);
@@ -80,26 +80,26 @@ public class ServiceNodeMetrics {
         }
         nodeInfo.setCpuLoad(cpuCopy);
 
-        List<Double> memoryLoadCopy;
-        synchronized (memoryLoad) {
-            memoryLoadCopy = new ArrayList<>(memoryLoad);
-            memoryLoad.clear();
-        }
-        nodeInfo.setMemoryLoad(memoryLoadCopy);
-
-        List<Long> mainMemoryCopy;
-        synchronized (mainMemory) {
-            mainMemoryCopy = new ArrayList<>(mainMemory);
-            mainMemory.clear();
-        }
-        nodeInfo.setMainMemory(mainMemoryCopy);
-
-        List<Long> storageCopy;
-        synchronized (storage) {
-            storageCopy = new ArrayList<>(storage);
-            storage.clear();
-        }
-        nodeInfo.setStorage(storageCopy);
+//        List<Double> memoryLoadCopy;
+//        synchronized (memoryLoad) {
+//            memoryLoadCopy = new ArrayList<>(memoryLoad);
+//            memoryLoad.clear();
+//        }
+//        nodeInfo.setMemoryLoad(memoryLoadCopy);
+//
+//        List<Long> mainMemoryCopy;
+//        synchronized (mainMemory) {
+//            mainMemoryCopy = new ArrayList<>(mainMemory);
+//            mainMemory.clear();
+//        }
+//        nodeInfo.setMainMemory(mainMemoryCopy);
+//
+//        List<Long> storageCopy;
+//        synchronized (storage) {
+//            storageCopy = new ArrayList<>(storage);
+//            storage.clear();
+//        }
+//        nodeInfo.setStorage(storageCopy);
 
         Map<UUID, List<Long>> delayedLatencies = latenciesWithDelay(latencyMonitor.takeLatencySnapshot());
         nodeInfo.setLatencies(delayedLatencies);
