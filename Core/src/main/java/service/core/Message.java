@@ -28,5 +28,6 @@ public class Message implements Serializable {
         final public static String HOST_RESPONSE = "HostResponse";
         final public static String NODE_CLIENT_LATENCY_REQUEST = "NodeClientLatencyRequest";
         final public static String MOBILE_CLIENT_INFO = "MobileClientInfo";
+        final public static String MIGRATION_ALERT = "MigrationAlert";
     }
 }

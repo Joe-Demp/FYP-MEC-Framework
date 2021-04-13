@@ -250,7 +250,15 @@ public class Orchestrator extends WebSocketServer implements Migrator {
             ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
             serviceNodeRegistry.setToMigrating(source, target);
             sendAsJson(source.webSocket, request);
+            broadcastMigrationAlert(source, target);
         }
+    }
+
+    private void broadcastMigrationAlert(ServiceNode source, ServiceNode target) {
+        MigrationAlert alert = new MigrationAlert(source.globalIpAddress, target.globalIpAddress);
+        logger.debug("Sending: {}", alert);
+        String json = gson.toJson(alert);
+        broadcast(json);
     }
 
     @Override
