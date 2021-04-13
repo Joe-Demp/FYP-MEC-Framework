@@ -143,9 +143,10 @@ public class ServiceNode {
 
     public double getMeanLatency(UUID clientUuid) {
         List<Long> latencies = mobileClientLatencies.get(clientUuid);
+        if (isNull(latencies)) return Double.MAX_VALUE;
+
         int cutoff = latencies.size();
         List<Long> snapshot = latencies.subList(0, cutoff);
-
         return getMean(snapshot);
     }
 
