@@ -64,7 +64,7 @@ public class ServiceNodeMetrics {
 //            synchronized (storage) {
 //                storage.add(usableSpace);
 //            }
-        }, 10, 60, TimeUnit.SECONDS);
+        }, 10, 2, TimeUnit.SECONDS);
 
         scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
         scheduleService.scheduleAtFixedRate(latencyMonitor, 5, 5, TimeUnit.SECONDS);
