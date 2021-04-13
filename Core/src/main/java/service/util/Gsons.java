@@ -17,6 +17,7 @@ public class Gsons {
                     .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
                     .registerSubtype(HostRequest.class, Message.MessageTypes.HOST_REQUEST)
                     .registerSubtype(HostResponse.class, Message.MessageTypes.HOST_RESPONSE)
+                    .registerSubtype(MigrationAlert.class, Message.MessageTypes.MIGRATION_ALERT)
                     .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
                     .registerSubtype(ServerHeartbeatRequest.class, Message.MessageTypes.SERVER_HEARTBEAT_REQUEST);
 
@@ -27,6 +28,7 @@ public class Gsons {
                     .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
                     .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
                     .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
+                    .registerSubtype(MigrationAlert.class, Message.MessageTypes.MIGRATION_ALERT)
                     .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
                     .registerSubtype(NodeClientLatencyRequest.class, Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST);
 

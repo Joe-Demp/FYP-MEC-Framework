@@ -57,6 +57,7 @@ public class ServiceNodeWsClient extends WebSocketClient {
                 serviceNode.handleLatencyRequest((NodeClientLatencyRequest) messageObj);
                 break;
             case Message.MessageTypes.MIGRATION_SUCCESS:
+            case Message.MessageTypes.MIGRATION_ALERT:
                 break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
