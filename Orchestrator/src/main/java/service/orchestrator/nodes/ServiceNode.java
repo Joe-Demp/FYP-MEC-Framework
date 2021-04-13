@@ -127,7 +127,7 @@ public class ServiceNode {
                 .map(Number::doubleValue)
                 .flatMapToDouble(DoubleStream::of)
                 .average()
-                .orElse(Double.MAX_VALUE)
+                .orElse(0)
                 ;
     }
 
