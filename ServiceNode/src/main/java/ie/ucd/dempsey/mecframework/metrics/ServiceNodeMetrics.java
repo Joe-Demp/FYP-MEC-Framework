@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.stream.Collectors.toList;
 
 public class ServiceNodeMetrics {
-    private static final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(5);
+    private static final ScheduledExecutorService scheduleService = Executors.newScheduledThreadPool(3);
 
     // class fields
     private final SystemInfo nodeSystem = new SystemInfo();
@@ -64,7 +64,7 @@ public class ServiceNodeMetrics {
 //            synchronized (storage) {
 //                storage.add(usableSpace);
 //            }
-        }, 10, 2, TimeUnit.SECONDS);
+        }, 10, 5, TimeUnit.SECONDS);
 
         scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
         scheduleService.scheduleAtFixedRate(latencyMonitor, 5, 5, TimeUnit.SECONDS);
