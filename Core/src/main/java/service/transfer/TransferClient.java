@@ -55,11 +55,7 @@ public class TransferClient extends WebSocketClient {
         }
 
         // Transfer done, close this client.
-        try {
-            closeBlocking();
-        } catch (InterruptedException e) {
-            logger.warn("Interrupted while closeBlocking.", e);
-        }
+        close(0, "Transfer Finished");
     }
 
     @Override
