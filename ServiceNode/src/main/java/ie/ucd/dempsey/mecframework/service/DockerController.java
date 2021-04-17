@@ -122,7 +122,8 @@ public class DockerController implements ServiceController {
         serviceOutputExecutor.execute(() -> {
             Logger logger = LoggerFactory.getLogger("ServiceOutput");
 
-            try (InputStream input = process.getInputStream(); Scanner scan = new Scanner(input)) {
+            try (InputStream input = process.getInputStream();
+                 Scanner scan = new Scanner(input)) {
                 while (process.isAlive()) {
                     logger.info(scan.nextLine());
                 }
