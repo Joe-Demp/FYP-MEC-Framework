@@ -55,7 +55,13 @@ public class TransferClient extends WebSocketClient {
         }
 
         // Transfer done, close this client.
+        logger.info("Calling TransferClient.close().");
         close(0, "Transfer Finished");
+        logger.info("close invoked, TransferClient should now stop.");
+//        this.closeConnection();
+
+        // todo check if the above works. If not, pass in a Lock (transferFinished) to notify
+        //  MigrationManager.acceptService that the file has been written and that TransferClient should close.
     }
 
     @Override
