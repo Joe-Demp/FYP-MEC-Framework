@@ -72,6 +72,7 @@ public class TransferClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
+        transferFinished.countDown();
         logger.info("In TransferClient#onClose");
         logger.info("Code: {}", code);
         logger.info("Reason: {}", reason);
