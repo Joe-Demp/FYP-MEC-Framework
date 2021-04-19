@@ -9,6 +9,7 @@ import service.transfer.TransferServer;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
 
 public class MigrationManager {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -41,7 +42,6 @@ public class MigrationManager {
         InetSocketAddress serverAddress = new InetSocketAddress(Constants.TRANSFER_SERVER_PORT);
         logger.debug("Launching Transfer Server at {}", serverAddress);
         TransferServer transferServer = new TransferServer(serverAddress, service);
-        transferServer.setConnectionLostTimeout(-1);    // no timeout for lost connections
         transferServer.start();
         return serverAddress;
     }
@@ -50,10 +50,23 @@ public class MigrationManager {
      * Makes this node set up a {@code TransferClient} and waits for the client to finish accepting the migrated service.
      */
     public void acceptService(InetSocketAddress serverAddress) {
-        // launch a TransferClient and wait for it to finish
         URI serverUri = mapInetSocketAddressToWebSocketUri(serverAddress);
-        TransferClient transferClient = new TransferClient(serverUri, service);
-        transferClient.setConnectionLostTimeout(-1);    // no connection lost timeout
-        transferClient.run();
+        CountDownLatch transferFinished = new CountDownLatch(1);
+        TransferClient transferClient = new TransferClient(serverUri, service, transferFinished);
+        doTransfer(transferClient, transferFinished);
+    }
+
+    private void doTransfer(TransferClient transferClient, CountDownLatch transferFinished) {
+        transferClient.connect();
+        waitForTransferClient(transferFinished);
+        transferClient.close();
+    }
+
+    private void waitForTransferClient(CountDownLatch cdl) {
+        try {
+            cdl.await();
+        } catch (InterruptedException ie) {
+            logger.error("Interrupted exception in waitForCountDownLatch!", ie);
+        }
     }
 }
