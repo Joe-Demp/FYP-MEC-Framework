@@ -1,6 +1,8 @@
 package service.transfer;
 
+import org.java_websocket.WebSocket;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,7 @@ public class TransferClient extends WebSocketClient {
 
     @Override
     public void onMessage(ByteBuffer bytes) {
+        logger.debug("In TransferClient#onMessage");
         byte[] b = bytes.array();
         String filename = "stream.tar";
 
@@ -76,5 +79,11 @@ public class TransferClient extends WebSocketClient {
     public void onError(Exception e) {
         logger.error("In TransferClient#onError");
         e.printStackTrace();
+    }
+
+    @Override
+    public void onWebsocketPing(WebSocket connection, Framedata data) {
+        super.onWebsocketPing(connection, data);
+        logger.debug("Pinged by the TransferServer!");
     }
 }
