@@ -42,6 +42,7 @@ public class MigrationManager {
         InetSocketAddress serverAddress = new InetSocketAddress(Constants.TRANSFER_SERVER_PORT);
         logger.debug("Launching Transfer Server at {}", serverAddress);
         TransferServer transferServer = new TransferServer(serverAddress, service);
+        transferServer.setConnectionLostTimeout(-1);
         transferServer.start();
         return serverAddress;
     }
@@ -53,6 +54,7 @@ public class MigrationManager {
         URI serverUri = mapInetSocketAddressToWebSocketUri(serverAddress);
         CountDownLatch transferFinished = new CountDownLatch(1);
         TransferClient transferClient = new TransferClient(serverUri, service, transferFinished);
+        transferClient.setConnectionLostTimeout(-1);
         doTransfer(transferClient, transferFinished);
     }
 
