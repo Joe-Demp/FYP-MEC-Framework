@@ -24,6 +24,7 @@ public class ServiceNode {
     public UUID uuid;
     public WebSocket webSocket;
     public boolean serviceRunning;
+    public boolean serviceInstalled;
     public List<Double> cpuLoad = new ArrayList<>();
     public List<Double> ramLoad = new ArrayList<>();
     public List<Long> storage = new ArrayList<>();
@@ -65,6 +66,7 @@ public class ServiceNode {
 
     private void recordOtherFields(NodeInfo nodeInfo) {
         serviceRunning = nodeInfo.isServiceRunning();
+        serviceInstalled = nodeInfo.isServiceInstalled();
         serviceHostAddress = nodeInfo.getServiceHostAddress();
         updateGlobalIp(nodeInfo.getGlobalIpAddress());
     }

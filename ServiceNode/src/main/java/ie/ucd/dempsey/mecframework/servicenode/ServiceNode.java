@@ -56,6 +56,7 @@ public class ServiceNode implements Runnable {
 
     void sendHeartbeatResponse() {
         NodeInfo nodeInfo = new NodeInfo(uuid, serviceController.isServiceRunning(), serviceAddress);
+        nodeInfo.setServiceInstalled(serviceController.serviceExists());
         metrics.populateNodeInfo(nodeInfo);
         wsClient.sendAsJson(nodeInfo);
     }
