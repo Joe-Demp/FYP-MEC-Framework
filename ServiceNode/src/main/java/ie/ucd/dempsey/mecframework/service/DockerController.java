@@ -10,7 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +21,7 @@ public class DockerController implements ServiceController {
     private AtomicBoolean isServiceRunning = new AtomicBoolean();
     private Process dockerProcess;
     private OSRuntime runtime = OSRuntime.get();
-    private Executor serviceOutputExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService serviceOutputExecutor = Executors.newSingleThreadExecutor();
 
     /**
      * @param servicePath the path to the location where the Controller expects to find a tar file to load into Docker.
@@ -122,7 +122,8 @@ public class DockerController implements ServiceController {
         serviceOutputExecutor.execute(() -> {
             Logger logger = LoggerFactory.getLogger("ServiceOutput");
 
-            try (InputStream input = process.getInputStream(); Scanner scan = new Scanner(input)) {
+            try (InputStream input = process.getInputStream();
+                 Scanner scan = new Scanner(input)) {
                 while (process.isAlive()) {
                     logger.info(scan.nextLine());
                 }
@@ -176,5 +177,10 @@ public class DockerController implements ServiceController {
     public String name() {
         logger.debug("DockerController.name()={}", servicePath.getFileName().toString());
         return servicePath.getFileName().toString();
+    }
+
+    @Override
+    public void shutdown() {
+        serviceOutputExecutor.shutdown();
     }
 }

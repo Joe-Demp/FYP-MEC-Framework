@@ -222,7 +222,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     }
 
     private void broadcast(MigrationSuccess migrationSuccess) {
-        logger.debug("Broadcasting");
+        logger.debug("Broadcasting {}", migrationSuccess);
         String json = gson.toJson(migrationSuccess);
         broadcast(json);
     }

@@ -14,6 +14,17 @@ public class NodeInfo extends Message {
     private UUID uuid;
     private WebSocket webSocket;
     private boolean serviceRunning;
+
+    private boolean serviceInstalled;
+
+    public boolean isServiceInstalled() {
+        return serviceInstalled;
+    }
+
+    public void setServiceInstalled(boolean serviceInstalled) {
+        this.serviceInstalled = serviceInstalled;
+    }
+
     private List<Double> cpuLoad = Collections.emptyList();
     private List<Double> memoryLoad = Collections.emptyList();
     private List<Long> mainMemory = Collections.emptyList();

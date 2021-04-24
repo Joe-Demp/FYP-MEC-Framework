@@ -20,4 +20,9 @@ public interface ServiceController {
      * @return The name of the service running at present, or the empty string if no service is running.
      */
     String name();
+
+    /**
+     * Cleans up any Threads, executors, etc.
+     */
+    void shutdown();
 }
