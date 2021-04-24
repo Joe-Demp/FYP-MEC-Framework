@@ -43,9 +43,9 @@ public class TransferClient extends WebSocketClient {
 
         try {
             logger.info("Trying to write file {} @ {}", filename, service.getCanonicalPath());
-        } catch (Exception removeMe) {
+        } catch (IOException ioe) {
+            logger.warn("Exception in onMessage", ioe);
         }
-
         try (FileOutputStream fos = new FileOutputStream(service)) {
             fos.write(b);
             fos.close();
