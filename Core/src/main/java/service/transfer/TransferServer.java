@@ -1,6 +1,7 @@
 package service.transfer;
 
 import org.java_websocket.WebSocket;
+import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class TransferServer extends WebSocketServer {
         byte[] bytesArray = new byte[(int) serviceFile.length()];
 
         // todo array above is of limited size
-
+        webSocket.sendPing();
         int readResult = Integer.MAX_VALUE;
         logger.debug("Trying to send the file");
         try (FileInputStream fileInputStream = new FileInputStream(serviceFile)) {
@@ -37,6 +38,7 @@ public class TransferServer extends WebSocketServer {
             e.printStackTrace();
             logger.debug("readResult={}", readResult);
         }
+        webSocket.sendPing();
     }
 
     @Override
@@ -71,5 +73,11 @@ public class TransferServer extends WebSocketServer {
     @Override
     public void onStart() {
         logger.debug("Launched TransferServer listening on {}", getAddress());
+    }
+
+    @Override
+    public void onWebsocketPong(WebSocket connection, Framedata data) {
+        super.onWebsocketPong(connection, data);
+        logger.debug("Got a Pong from TransferClient!");
     }
 }
