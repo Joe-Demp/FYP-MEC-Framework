@@ -6,10 +6,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -19,7 +20,7 @@ public class JarController implements ServiceController {
     private AtomicBoolean isServiceRunning = new AtomicBoolean();
     private Process javaProcess;
     private OSRuntime runtime = OSRuntime.get();
-    private Executor serviceOutputExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService serviceOutputExecutor = Executors.newSingleThreadExecutor();
 
     public JarController(Path servicePath) {
         this.servicePath = servicePath;
@@ -61,30 +62,47 @@ public class JarController implements ServiceController {
             } catch (NoSuchElementException nsee) {
                 logger.info("javaProcess seems to have stopped. JarController does not know this.", nsee);
             }
+            logger.info("process.isAlive()={}", process.isAlive());
         });
     }
 
     private void startJavaProcess() {
-
+        String command = "java -jar " + servicePath;
+        try {
+            javaProcess = runtime.exec(command);
+            isServiceRunning.set(true);
+        } catch (IOException ioe) {
+            logger.error("Problem with " + command, ioe);
+            throw new ServiceException(ioe);
+        }
     }
 
     @Override
     public boolean isServiceRunning() {
-        return false;
+        return isServiceRunning.get();
     }
 
     @Override
     public void stopService() {
-
+        logger.info("Trying to stop the Java process. javaProcess.isAlive?={}", javaProcess.isAlive());
+        javaProcess.destroyForcibly();
+        isServiceRunning.set(false);
     }
 
     @Override
     public boolean serviceExists() {
-        return false;
+        logger.debug("Checking Files.exists({})?={}", servicePath, Files.exists(servicePath));
+        return Files.exists(servicePath);
     }
 
     @Override
     public String name() {
-        return null;
+        logger.debug("JarController.name()={}", servicePath.getFileName().toString());
+        return servicePath.getFileName().toString();
+    }
+
+    @Override
+    public void shutdown() {
+        serviceOutputExecutor.shutdown();
     }
 }
