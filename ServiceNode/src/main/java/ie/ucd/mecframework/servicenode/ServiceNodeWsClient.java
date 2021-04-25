@@ -1,6 +1,7 @@
 package ie.ucd.mecframework.servicenode;
 
 import com.google.gson.Gson;
+import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -55,6 +56,9 @@ public class ServiceNodeWsClient extends WebSocketClient {
                 break;
             case Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST:
                 serviceNode.handleLatencyRequest((NodeClientLatencyRequest) messageObj);
+                break;
+            case Message.MessageTypes.START_SERVICE_REQUEST:
+                serviceNode.handleStartServiceRequest((StartServiceRequest) messageObj);
                 break;
             case Message.MessageTypes.MIGRATION_SUCCESS:
             case Message.MessageTypes.MIGRATION_ALERT:

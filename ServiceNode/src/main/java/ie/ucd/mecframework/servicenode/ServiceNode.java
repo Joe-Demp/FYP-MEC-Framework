@@ -1,5 +1,7 @@
 package ie.ucd.mecframework.servicenode;
 
+import ie.ucd.mecframework.messages.service.StartServiceRequest;
+import ie.ucd.mecframework.messages.service.StartServiceResponse;
 import ie.ucd.mecframework.metrics.ServiceNodeMetrics;
 import ie.ucd.mecframework.service.AcceptServiceTask;
 import ie.ucd.mecframework.service.MigrationManager;
@@ -105,6 +107,19 @@ public class ServiceNode implements Runnable {
 
     void handleLatencyRequest(NodeClientLatencyRequest request) {
         metrics.registerLatencyRequest(request);
+    }
+
+    void handleStartServiceRequest(StartServiceRequest request) {
+        CompletableFuture<Void> startServiceTask =
+                CompletableFuture.runAsync(this::startServiceIfItExists, singleExecutor);
+
+        StartServiceResponse response =
+                new StartServiceResponse(request.getUuid(), serviceController.isServiceRunning());
+        startServiceTask.thenRunAsync(() -> wsClient.sendAsJson(response), singleExecutor);
+    }
+
+    private void startServiceIfItExists() {
+        if (serviceController.serviceExists()) serviceController.startService();
     }
 
     public enum State {STABLE, TRANSFER_SERVER, TRANSFER_CLIENT}
