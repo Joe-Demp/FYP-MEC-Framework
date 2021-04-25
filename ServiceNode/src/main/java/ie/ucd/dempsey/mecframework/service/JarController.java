@@ -84,6 +84,8 @@ public class JarController implements ServiceController {
 
     @Override
     public void stopService() {
+        if (isServiceRunning()) return;
+
         logger.info("Trying to stop the Java process. javaProcess.isAlive?={}", javaProcess.isAlive());
         javaProcess.destroyForcibly();
         try {
