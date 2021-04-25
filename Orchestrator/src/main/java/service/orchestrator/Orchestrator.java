@@ -253,7 +253,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         if (source.equals(target)) logger.info("Refusing to migrate: source==target.");
         else if (target.serviceInstalled) {
             logger.info("Service installed: starting service on {}", target);
-            StartServiceRequest request = new StartServiceRequest(target.uuid, serviceName);
+            StartServiceRequest request = new StartServiceRequest(target.uuid);
             sendAsJson(target.webSocket, request);
             broadcastMigrationAlert(NULL_SERVICE_NODE, target);
         } else {

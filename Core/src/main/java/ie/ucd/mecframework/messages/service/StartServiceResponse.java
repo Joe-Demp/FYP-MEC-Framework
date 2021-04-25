@@ -5,27 +5,21 @@ import service.core.Message;
 import java.util.UUID;
 
 public class StartServiceResponse extends Message {
-    private UUID targetUuid;
-    private String desiredServiceName;
+    private UUID uuid;
     private boolean serviceStarted;
 
     public StartServiceResponse() {
         super(MessageTypes.START_SERVICE_RESPONSE);
     }
 
-    public StartServiceResponse(UUID uuid, String desiredServiceName, boolean serviceStarted) {
+    public StartServiceResponse(UUID uuid, boolean serviceStarted) {
         this();
-        this.targetUuid = uuid;
-        this.desiredServiceName = desiredServiceName;
+        this.uuid = uuid;
         this.serviceStarted = serviceStarted;
     }
 
-    public UUID getTargetUuid() {
-        return targetUuid;
-    }
-
-    public String getDesiredServiceName() {
-        return desiredServiceName;
+    public UUID getUuid() {
+        return uuid;
     }
 
     public boolean isServiceStarted() {
@@ -35,8 +29,7 @@ public class StartServiceResponse extends Message {
     @Override
     public String toString() {
         return "StartServiceResponse{" +
-                "targetUuid=" + targetUuid +
-                ", desiredServiceName='" + desiredServiceName + '\'' +
+                "targetUuid=" + uuid +
                 ", serviceStarted=" + serviceStarted +
                 '}';
     }

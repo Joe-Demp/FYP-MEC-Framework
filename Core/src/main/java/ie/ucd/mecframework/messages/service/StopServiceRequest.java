@@ -5,32 +5,25 @@ import service.core.Message;
 import java.util.UUID;
 
 public class StopServiceRequest extends Message {
-    private UUID targetUuid;
-    private String desiredServiceName;
+    private UUID uuid;
 
     public StopServiceRequest() {
         super(MessageTypes.STOP_SERVICE_REQUEST);
     }
 
-    public StopServiceRequest(UUID targetUuid, String desiredServiceName) {
+    public StopServiceRequest(UUID uuid) {
         this();
-        this.targetUuid = targetUuid;
-        this.desiredServiceName = desiredServiceName;
+        this.uuid = uuid;
     }
 
-    public UUID getTargetUuid() {
-        return targetUuid;
-    }
-
-    public String getDesiredServiceName() {
-        return desiredServiceName;
+    public UUID getUuid() {
+        return uuid;
     }
 
     @Override
     public String toString() {
         return "StopServiceRequest{" +
-                "targetUuid=" + targetUuid +
-                ", desiredServiceName='" + desiredServiceName + '\'' +
+                "uuid=" + uuid +
                 '}';
     }
 }
