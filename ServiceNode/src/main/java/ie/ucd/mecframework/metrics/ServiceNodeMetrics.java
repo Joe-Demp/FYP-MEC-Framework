@@ -1,7 +1,7 @@
-package ie.ucd.dempsey.mecframework.metrics;
+package ie.ucd.mecframework.metrics;
 
-import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestMonitor;
-import ie.ucd.dempsey.mecframework.metrics.latency.LatencyRequestor;
+import ie.ucd.mecframework.metrics.latency.LatencyRequestMonitor;
+import ie.ucd.mecframework.metrics.latency.LatencyRequestor;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.OperatingSystem;

@@ -13,7 +13,7 @@
     <artifactId>ServiceNode</artifactId>
 
     <properties>
-        <main.class>ie.ucd.dempsey.mecframework.Main</main.class>
+        <main.class>ie.ucd.mecframework.Main</main.class>
         <java.version>11</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>

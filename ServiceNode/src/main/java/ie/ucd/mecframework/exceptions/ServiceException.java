@@ -1,4 +1,4 @@
-package ie.ucd.dempsey.mecframework.exceptions;
+package ie.ucd.mecframework.exceptions;
 
 public class ServiceException extends RuntimeException {
     public ServiceException() {

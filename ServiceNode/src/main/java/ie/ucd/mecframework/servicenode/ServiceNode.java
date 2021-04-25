@@ -1,9 +1,9 @@
-package ie.ucd.dempsey.mecframework.servicenode;
+package ie.ucd.mecframework.servicenode;
 
-import ie.ucd.dempsey.mecframework.metrics.ServiceNodeMetrics;
-import ie.ucd.dempsey.mecframework.service.AcceptServiceTask;
-import ie.ucd.dempsey.mecframework.service.MigrationManager;
-import ie.ucd.dempsey.mecframework.service.ServiceController;
+import ie.ucd.mecframework.metrics.ServiceNodeMetrics;
+import ie.ucd.mecframework.service.AcceptServiceTask;
+import ie.ucd.mecframework.service.MigrationManager;
+import ie.ucd.mecframework.service.ServiceController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.core.*;

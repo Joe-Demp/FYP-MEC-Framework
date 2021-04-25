@@ -1,4 +1,4 @@
-package ie.ucd.dempsey.mecframework.servicenode;
+package ie.ucd.mecframework.servicenode;
 
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;

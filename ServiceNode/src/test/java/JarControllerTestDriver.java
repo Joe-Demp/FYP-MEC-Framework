@@ -1,11 +1,11 @@
-import ie.ucd.dempsey.mecframework.service.JarController;
-import ie.ucd.dempsey.mecframework.service.ServiceController;
+import ie.ucd.mecframework.service.JarController;
+import ie.ucd.mecframework.service.ServiceController;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * A test driver for class {@link ie.ucd.dempsey.mecframework.service.JarController}.
+ * A test driver for class {@link JarController}.
  * <p>
  * This should be ignored by JUnit during the `mvn test` phase.
  */

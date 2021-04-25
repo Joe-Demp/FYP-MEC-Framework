@@ -1,4 +1,4 @@
-package ie.ucd.dempsey.mecframework.metrics.latency;
+package ie.ucd.mecframework.metrics.latency;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

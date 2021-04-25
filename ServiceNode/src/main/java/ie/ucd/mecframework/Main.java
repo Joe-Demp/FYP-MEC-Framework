@@ -1,9 +1,9 @@
-package ie.ucd.dempsey.mecframework;
+package ie.ucd.mecframework;
 
-import ie.ucd.dempsey.mecframework.service.DockerController;
-import ie.ucd.dempsey.mecframework.service.JarController;
-import ie.ucd.dempsey.mecframework.service.ServiceController;
-import ie.ucd.dempsey.mecframework.servicenode.ServiceNode;
+import ie.ucd.mecframework.service.DockerController;
+import ie.ucd.mecframework.service.JarController;
+import ie.ucd.mecframework.service.ServiceController;
+import ie.ucd.mecframework.servicenode.ServiceNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;

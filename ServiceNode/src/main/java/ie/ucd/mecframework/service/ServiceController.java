@@ -1,4 +1,4 @@
-package ie.ucd.dempsey.mecframework.service;
+package ie.ucd.mecframework.service;
 
 public interface ServiceController {
     void startService();

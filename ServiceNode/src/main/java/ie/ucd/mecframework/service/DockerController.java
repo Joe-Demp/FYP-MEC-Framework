@@ -1,6 +1,6 @@
-package ie.ucd.dempsey.mecframework.service;
+package ie.ucd.mecframework.service;
 
-import ie.ucd.dempsey.mecframework.exceptions.ServiceException;
+import ie.ucd.mecframework.exceptions.ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

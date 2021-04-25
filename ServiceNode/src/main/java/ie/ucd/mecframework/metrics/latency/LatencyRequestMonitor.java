@@ -1,4 +1,4 @@
-package ie.ucd.dempsey.mecframework.metrics.latency;
+package ie.ucd.mecframework.metrics.latency;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

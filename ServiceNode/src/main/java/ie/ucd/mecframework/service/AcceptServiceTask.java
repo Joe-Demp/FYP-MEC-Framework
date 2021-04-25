@@ -1,4 +1,4 @@
-package ie.ucd.dempsey.mecframework.service;
+package ie.ucd.mecframework.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
