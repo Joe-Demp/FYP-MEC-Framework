@@ -128,6 +128,9 @@ public class Orchestrator extends WebSocketServer implements Migrator {
             case Message.MessageTypes.HOST_REQUEST:
                 handleHostRequest((HostRequest) messageObj);
                 break;
+            case Message.MessageTypes.START_SERVICE_RESPONSE:
+                System.out.println(messageObj);
+                break;
             default:
                 logger.error("Message received with unrecognised type: {}", messageObj.getType());
                 break;
