@@ -154,7 +154,18 @@ public class Orchestrator extends WebSocketServer implements Migrator {
             sendAsJson(requestor.webSocket, response);
         } else {
             logger.info("Couldn't find service for client. Ignoring HostRequest.");
+            tryStartAService();
         }
+    }
+
+    // Starts a service on any node that has serviceInstalled && !serviceRunning
+    private void tryStartAService() {
+        ServiceNode serviceNode = ServiceNodeRegistry.get().getServiceNodes().stream()
+                .filter(node -> node.serviceInstalled)
+                .filter(node -> !node.serviceRunning)
+                .findAny()
+                .orElse(null);
+        if (nonNull(serviceNode)) sendStartServiceRequest(serviceNode);
     }
 
     private void registerServiceNode(NodeInfo nodeInfo, WebSocket nodeWebSocket) {
@@ -253,9 +264,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         if (source.equals(target)) logger.info("Refusing to migrate: source==target.");
         else if (target.serviceInstalled) {
             logger.info("Service installed: starting service on {}", target);
-            StartServiceRequest request = new StartServiceRequest(target.uuid);
-            sendAsJson(target.webSocket, request);
-            broadcastMigrationAlert(NULL_SERVICE_NODE, target);
+            sendStartServiceRequest(target);
         } else {
             logger.info("Migrating {} -> {}", source, target);
             ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
@@ -263,6 +272,12 @@ public class Orchestrator extends WebSocketServer implements Migrator {
             sendAsJson(source.webSocket, request);
             broadcastMigrationAlert(source, target);
         }
+    }
+
+    private void sendStartServiceRequest(ServiceNode target) {
+        StartServiceRequest request = new StartServiceRequest(target.uuid);
+        sendAsJson(target.webSocket, request);
+        broadcastMigrationAlert(NULL_SERVICE_NODE, target);
     }
 
     private void broadcastMigrationAlert(ServiceNode source, ServiceNode target) {
