@@ -15,6 +15,7 @@ import java.util.stream.DoubleStream;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
+// todo fix this class: public fields, some getters/setters. Hard to know how to use
 /**
  * A class to represent Service Nodes as they are visible to the Orchestrator.
  */

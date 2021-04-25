@@ -1,6 +1,7 @@
 package service.orchestrator;
 
 import com.google.gson.Gson;
+import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -43,9 +44,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     private static final ServiceNodeRegistry serviceNodeRegistry = ServiceNodeRegistry.get();
     private static final MobileClientRegistry mobileClientRegistry = MobileClientRegistry.get();
     private static final ScheduledExecutorService heartbeatScheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final ServiceNode NULL_SERVICE_NODE =
+            new ServiceNode(UUID.fromString("00000000-0000-0000-0000-000000000000"), null);
 
     // todo remove this from the framework
-    private static final String serviceName = "stream.tar";
+    private static final String serviceName = "stream";
 
     private final Selector selector;
     private Map<UUID, InetAddress> newWSClientAddresses = new Hashtable<>();
@@ -245,7 +248,12 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     @Override
     public void migrate(ServiceNode source, ServiceNode target) {
         if (source.equals(target)) logger.info("Refusing to migrate: source==target.");
-        else {
+        else if (target.serviceInstalled) {
+            logger.info("Service installed: starting service on {}", target);
+            StartServiceRequest request = new StartServiceRequest(target.uuid, serviceName);
+            sendAsJson(target.webSocket, request);
+            broadcastMigrationAlert(NULL_SERVICE_NODE, target);
+        } else {
             logger.info("Migrating {} -> {}", source, target);
             ServiceRequest request = new ServiceRequest(target.uuid, serviceName);
             serviceNodeRegistry.setToMigrating(source, target);
