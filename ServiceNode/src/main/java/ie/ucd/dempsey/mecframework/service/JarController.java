@@ -86,6 +86,11 @@ public class JarController implements ServiceController {
     public void stopService() {
         logger.info("Trying to stop the Java process. javaProcess.isAlive?={}", javaProcess.isAlive());
         javaProcess.destroyForcibly();
+        try {
+            javaProcess.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         isServiceRunning.set(false);
     }
 

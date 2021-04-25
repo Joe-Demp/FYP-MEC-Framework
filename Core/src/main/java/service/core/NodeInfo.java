@@ -147,6 +147,7 @@ public class NodeInfo extends Message {
                 "uuid=" + uuid +
                 ", servicePort=" + serviceHostAddress.getPort() +
                 ", serviceRunning=" + serviceRunning +
+                ", serviceInstalled=" + serviceInstalled +
                 ", cpuLoad=" + cpuLoad +
                 ", memoryLoad=" + memoryLoad +
                 ", mainMemory=" + mainMemory +

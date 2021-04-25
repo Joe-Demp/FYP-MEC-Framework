@@ -173,6 +173,33 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>edge-jar</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <mainClass>${main.class}</mainClass>
+                            <arguments>
+                                <argument>ws://csi420-01-vm1.ucd.ie</argument>
+                                <argument>../../streaming-sample/streaming-sample-1.jar</argument>
+                                <argument>ws://localhost:8090</argument>
+                                <argument>edge-node</argument>
+                                <argument>0</argument>
+                            </arguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>

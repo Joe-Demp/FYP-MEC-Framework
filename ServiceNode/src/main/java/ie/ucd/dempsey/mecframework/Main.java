@@ -1,6 +1,7 @@
 package ie.ucd.dempsey.mecframework;
 
 import ie.ucd.dempsey.mecframework.service.DockerController;
+import ie.ucd.dempsey.mecframework.service.JarController;
 import ie.ucd.dempsey.mecframework.service.ServiceController;
 import ie.ucd.dempsey.mecframework.servicenode.ServiceNode;
 import org.slf4j.Logger;
@@ -44,10 +45,18 @@ public class Main implements Runnable {
 
     @Override
     public void run() {
-        ServiceController dockerController = initializeDockerController();
-        ServiceNode serviceNode = new ServiceNode(serverUri, dockerController, serviceFile, nodeLabel, latencyDelay);
+        ServiceController serviceController = getServiceController();
+        ServiceNode serviceNode = new ServiceNode(serverUri, serviceController, serviceFile, nodeLabel, latencyDelay);
         serviceNode.run();  // run instead of start a Thread to stop the program from finishing immediately
+        serviceController.stopService();
     }
+
+    private ServiceController getServiceController() {
+//        return initializeDockerController();
+        return initializeJarController();
+    }
+
+    // todo use reflection to keep below DRY. Or use the strategy pattern.
 
     /**
      * Initializes the {@code ServiceController} for this Node and starts the service if the file exists and
@@ -59,6 +68,18 @@ public class Main implements Runnable {
         Path servicePath = getServiceFileCanonicalPath();
         logger.info(servicePath.toString());
         ServiceController controller = new DockerController(servicePath);
+
+        if (serviceFile.exists() && startService) {
+            controller.startService();
+        } else logger.info("Did not start service. serviceFile.exists()={} startService={}",
+                serviceFile.exists(), startService);
+        return controller;
+    }
+
+    private ServiceController initializeJarController() {
+        Path servicePath = getServiceFileCanonicalPath();
+        logger.info(servicePath.toString());
+        ServiceController controller = new JarController(servicePath);
 
         if (serviceFile.exists() && startService) {
             controller.startService();
