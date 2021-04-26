@@ -38,15 +38,15 @@ public class MigrationManager {
         controller.stopService();
 
         // todo refactor to use both port numbers: maybe use a Set of available ports.
-        launchTransferServer();
+        launchTransferServer(nodeProperties.getActualTransferServerPortNumber1());
         return new InetSocketAddress(nodeProperties.getAdvertisedTransferServerPortNumber1());
     }
 
     /**
      * This method launches this nodes Transfer Server according to the constants defined in service.core.Constants.
      */
-    private void launchTransferServer() {
-        InetSocketAddress serverAddress = new InetSocketAddress(nodeProperties.getActualTransferServerPortNumber1());
+    private void launchTransferServer(int transferServerPortNumber) {
+        InetSocketAddress serverAddress = new InetSocketAddress(transferServerPortNumber);
         logger.debug("Launching Transfer Server at {}", serverAddress);
         TransferServer transferServer = new TransferServer(serverAddress, service);
         transferServer.setConnectionLostTimeout(-1);
