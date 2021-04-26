@@ -29,7 +29,7 @@ public class ServiceNode implements Runnable {
     private UUID uuid;
 
     // Note the port number must be the same as is in the ServiceController being used
-    private URI serviceAddress = URI.create("http://localhost:8090");
+    private URI serviceAddress;
     private State state = State.STABLE;
 
     public ServiceNode(URI orchestrator, ServiceController serviceController, File serviceFile, String label,
@@ -39,6 +39,12 @@ public class ServiceNode implements Runnable {
         this.serviceController = serviceController;
         this.migrationManager = new MigrationManager(serviceFile, serviceController);
         this.label = label;
+        serviceAddress = makeServiceAddress();
+    }
+
+    private static URI makeServiceAddress() {
+        int portNumber = ServiceNodeProperties.get().getAdvertisedServicePortNumber();
+        return URI.create("http://localhost:" + portNumber);
     }
 
     @Override
