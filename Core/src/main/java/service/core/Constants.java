@@ -3,12 +3,21 @@ package service.core;
 public interface Constants {
 	int MOBILE_PING_SERVER_PORT = 8071;
 
-	// Note: this has to be constant to get past firewalls
-	/*
-	 * todo note there is an issue coming down the line: Robert-PC has ports 8090-8100 exposed.
-	 *  Need TransferServer on port 8095!
-	 * */
-	int TRANSFER_SERVER_PORT = 8095;
+	// Robert-PC Port Numbers
+	int ROBERT_PC_SERVICE_PORT = 8090;
+	int ROBERT_PC_TRANSFER_PORT_1 = 8091;
+	int ROBERT_PC_TRANSFER_PORT_2 = 8092;
 
-	int SERVICE_PORT = 8090;
+	/*
+		Note that the Raspberry Pi exposes the same ports as Robert-PC on the subnet.
+		The Raspberry Pi should use ports 8090-8092 and the subnet router should map ports 8093-8095 to those on the
+		Raspberry Pi.
+
+		This way, the service migrates and still uses the same port. The client uses the "global" IP address which
+		gets forwarded to the correct port on the correct host, via the router.
+	 */
+	// Raspberry Pi Port Numbers
+	int RPI_SERVICE_PORT = 8093;
+	int RPI_TRANSFER_PORT_1 = 8094;
+	int RPI_TRANSFER_PORT_2 = 8095;
 }

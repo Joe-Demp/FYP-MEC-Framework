@@ -1,8 +1,8 @@
 package ie.ucd.mecframework.service;
 
+import ie.ucd.mecframework.servicenode.ServiceNodeProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.core.Constants;
 import service.transfer.TransferClient;
 import service.transfer.TransferServer;
 
@@ -12,6 +12,7 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 
 public class MigrationManager {
+    private static final ServiceNodeProperties nodeProperties = ServiceNodeProperties.get();
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private File service;
     private ServiceController controller;
@@ -26,25 +27,30 @@ public class MigrationManager {
         return URI.create(uriString);
     }
 
+    /**
+     * Stops the running service, launches a {@code TransferServer} and returns the {@code InetSocketAddress} that the
+     * {@code TransferClient} on the target node can use to connect to the {@code TransferServer}.
+     *
+     * @return the address that the {@code TransferClient} can use to connect to the {@code TransferServer}.
+     * The {@code TransferServer} port number might not be the same as the advertised port number because of NAT rules.
+     */
     public InetSocketAddress migrateService() {
         controller.stopService();
-        return launchTransferServer();
 
-        // todo deletion done by the TransferServer, ideally this should be done here.
+        // todo refactor to use both port numbers: maybe use a Set of available ports.
+        launchTransferServer();
+        return new InetSocketAddress(nodeProperties.getAdvertisedTransferServerPortNumber1());
     }
 
     /**
-     * This method launches this nodes Transfer Server using the service address defined at node creation.
-     *
-     * @return the address of the newly launched transfer server.
+     * This method launches this nodes Transfer Server according to the constants defined in service.core.Constants.
      */
-    private InetSocketAddress launchTransferServer() {
-        InetSocketAddress serverAddress = new InetSocketAddress(Constants.TRANSFER_SERVER_PORT);
+    private void launchTransferServer() {
+        InetSocketAddress serverAddress = new InetSocketAddress(nodeProperties.getActualTransferServerPortNumber1());
         logger.debug("Launching Transfer Server at {}", serverAddress);
         TransferServer transferServer = new TransferServer(serverAddress, service);
         transferServer.setConnectionLostTimeout(-1);
         transferServer.start();
-        return serverAddress;
     }
 
     /**
