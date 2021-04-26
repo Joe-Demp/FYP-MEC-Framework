@@ -85,6 +85,12 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         return webSocketAddress;
     }
 
+    private static void fixTransferServerAddress(ServiceResponse response, ServiceNode serverNode) {
+        response.setTransferServerAddress(
+                new InetSocketAddress(serverNode.globalIpAddress, response.getTransferServerAddress().getPort())
+        );
+    }
+
     /*
     Note the somewhat complicated 'dance' here.
     WebSocketClients connect to this Server, but we don't know whether they are ServiceNodes or MobileClients
@@ -138,6 +144,15 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     }
 
     // todo take the port number of the node's serviceAddress and the IP address of the node itself
+    /*
+     * Procedure:
+     *  Get the MobileClient as the host requestor
+     *  Select a viable service node as a host for the requestor
+     *  if such a service node exists
+     *      send a HostResponse back to the requestor
+     *  else
+     *      try and get a service running on a node, but don't return a HostResponse.
+     */
     private void handleHostRequest(HostRequest request) {
         MobileClient requestor = mobileClientRegistry.get(request.getRequestorID());
         if (isNull(requestor)) {
@@ -213,12 +228,6 @@ public class Orchestrator extends WebSocketServer implements Migrator {
 
     private void updateExistingMobileClient(MobileClientInfo mobileClientInfo) {
         mobileClientRegistry.updateClient(mobileClientInfo);
-    }
-
-    private static void fixTransferServerAddress(ServiceResponse response, ServiceNode serverNode) {
-        response.setTransferServerAddress(
-                new InetSocketAddress(serverNode.globalIpAddress, response.getTransferServerAddress().getPort())
-        );
     }
 
     // Routes a ServiceResponse from a source ServiceNode to a target ServiceNode.
