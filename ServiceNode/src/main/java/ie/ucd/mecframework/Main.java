@@ -1,5 +1,8 @@
 package ie.ucd.mecframework;
 
+import ie.ucd.mecframework.migration.MigrationManager;
+import ie.ucd.mecframework.migration.MigrationStrategy;
+import ie.ucd.mecframework.migration.StatelessMigrationStrategy;
 import ie.ucd.mecframework.service.DockerController;
 import ie.ucd.mecframework.service.JarController;
 import ie.ucd.mecframework.service.ServiceController;
@@ -46,9 +49,17 @@ public class Main implements Runnable {
     @Override
     public void run() {
         ServiceController serviceController = getServiceController();
-        ServiceNode serviceNode = new ServiceNode(serverUri, serviceController, serviceFile, nodeLabel, latencyDelay);
+        MigrationStrategy migrationStrategy = getMigrationStrategy(serviceController);
+        ServiceNode serviceNode =
+                new ServiceNode(serverUri, serviceController, new MigrationManager(migrationStrategy),
+                        nodeLabel, latencyDelay
+                );
         serviceNode.run();  // run instead of start a Thread to stop the program from finishing immediately
         serviceController.stopService();
+    }
+
+    private MigrationStrategy getMigrationStrategy(ServiceController serviceController) {
+        return new StatelessMigrationStrategy(serviceController, serviceFile);
     }
 
     private ServiceController getServiceController() {

@@ -3,14 +3,13 @@ package ie.ucd.mecframework.servicenode;
 import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import ie.ucd.mecframework.messages.service.StartServiceResponse;
 import ie.ucd.mecframework.metrics.ServiceNodeMetrics;
-import ie.ucd.mecframework.service.AcceptServiceTask;
-import ie.ucd.mecframework.service.MigrationManager;
+import ie.ucd.mecframework.migration.AcceptServiceTask;
+import ie.ucd.mecframework.migration.MigrationManager;
 import ie.ucd.mecframework.service.ServiceController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.core.*;
 
-import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.UUID;
@@ -32,12 +31,12 @@ public class ServiceNode implements Runnable {
     private URI serviceAddress;
     private State state = State.STABLE;
 
-    public ServiceNode(URI orchestrator, ServiceController serviceController, File serviceFile, String label,
-                       long pingDelay) {
+    public ServiceNode(URI orchestrator, ServiceController serviceController, MigrationManager migrationManager,
+                       String label, long pingDelay) {
         this.wsClient = new ServiceNodeWsClient(orchestrator, this);
         this.metrics = new ServiceNodeMetrics(pingDelay);
         this.serviceController = serviceController;
-        this.migrationManager = new MigrationManager(serviceFile, serviceController);
+        this.migrationManager = migrationManager;
         this.label = label;
         serviceAddress = makeServiceAddress();
     }
