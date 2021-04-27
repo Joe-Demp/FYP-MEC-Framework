@@ -4,35 +4,30 @@ import ie.ucd.mecframework.service.ServiceController;
 import ie.ucd.mecframework.servicenode.ServiceNodeProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.transfer.TransferClient;
 import service.transfer.TransferServer;
 
 import java.io.File;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.concurrent.CountDownLatch;
 
-public class StatelessMigrationStrategy implements MigrationStrategy {
+public class StatefulMigrationStrategy implements MigrationStrategy {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ServiceController controller;
     private final ServiceNodeProperties nodeProperties = ServiceNodeProperties.get();
     private final File service;
+    private final File state;
 
-    public StatelessMigrationStrategy(ServiceController controller, File service) {
+    public StatefulMigrationStrategy(ServiceController controller, File service, File state) {
         this.controller = controller;
         this.service = service;
-    }
-
-    private static URI mapInetSocketAddressToWebSocketUri(InetSocketAddress address) {
-        String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
-        return URI.create(uriString);
+        this.state = state;
     }
 
     @Override
     public InetSocketAddress migrateService() {
         controller.stopService();
         launchTransferServer(nodeProperties.getActualTransferServerPortNumber1());
-        return new InetSocketAddress(nodeProperties.getAdvertisedTransferServerPortNumber1());
+
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -48,24 +43,6 @@ public class StatelessMigrationStrategy implements MigrationStrategy {
 
     @Override
     public void acceptService(InetSocketAddress serverAddress) {
-        URI serverUri = mapInetSocketAddressToWebSocketUri(serverAddress);
-        CountDownLatch transferFinished = new CountDownLatch(1);
-        TransferClient transferClient = new TransferClient(serverUri, service, transferFinished);
-        transferClient.setConnectionLostTimeout(-1);
-        doTransfer(transferClient, transferFinished);
-    }
-
-    private void doTransfer(TransferClient transferClient, CountDownLatch transferFinished) {
-        transferClient.connect();
-        waitForTransferClient(transferFinished);
-        transferClient.close();
-    }
-
-    private void waitForTransferClient(CountDownLatch cdl) {
-        try {
-            cdl.await();
-        } catch (InterruptedException ie) {
-            logger.error("Interrupted exception in waitForCountDownLatch!", ie);
-        }
+        throw new UnsupportedOperationException();
     }
 }
