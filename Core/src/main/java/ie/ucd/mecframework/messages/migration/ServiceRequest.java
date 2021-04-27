@@ -1,4 +1,6 @@
-package service.core;
+package ie.ucd.mecframework.messages.migration;
+
+import service.core.Message;
 
 import java.util.UUID;
 

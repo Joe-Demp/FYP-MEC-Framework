@@ -3,6 +3,8 @@ package service.util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
+import ie.ucd.mecframework.messages.migration.ServiceRequest;
+import ie.ucd.mecframework.messages.migration.ServiceResponse;
 import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import ie.ucd.mecframework.messages.service.StartServiceResponse;
 import ie.ucd.mecframework.messages.service.StopServiceRequest;

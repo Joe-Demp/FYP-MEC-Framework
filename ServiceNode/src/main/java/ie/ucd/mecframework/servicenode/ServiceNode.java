@@ -1,5 +1,7 @@
 package ie.ucd.mecframework.servicenode;
 
+import ie.ucd.mecframework.messages.migration.ServiceRequest;
+import ie.ucd.mecframework.messages.migration.ServiceResponse;
 import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import ie.ucd.mecframework.messages.service.StartServiceResponse;
 import ie.ucd.mecframework.metrics.ServiceNodeMetrics;
@@ -8,7 +10,10 @@ import ie.ucd.mecframework.migration.MigrationManager;
 import ie.ucd.mecframework.service.ServiceController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.core.*;
+import service.core.MigrationSuccess;
+import service.core.NodeClientLatencyRequest;
+import service.core.NodeInfo;
+import service.core.NodeInfoRequest;
 
 import java.net.InetSocketAddress;
 import java.net.URI;

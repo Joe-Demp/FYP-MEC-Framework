@@ -1,8 +1,8 @@
 package service.node;
 
+import ie.ucd.mecframework.messages.migration.ServiceResponse;
 import org.junit.jupiter.api.Test;
 import service.core.Message;
-import service.core.ServiceResponse;
 
 import java.net.InetSocketAddress;
 import java.util.List;

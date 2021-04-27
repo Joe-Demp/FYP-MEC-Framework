@@ -1,12 +1,16 @@
 package ie.ucd.mecframework.servicenode;
 
 import com.google.gson.Gson;
+import ie.ucd.mecframework.messages.migration.ServiceRequest;
+import ie.ucd.mecframework.messages.migration.ServiceResponse;
 import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.core.*;
+import service.core.Message;
+import service.core.NodeClientLatencyRequest;
+import service.core.NodeInfoRequest;
 import service.util.Gsons;
 
 import java.net.URI;

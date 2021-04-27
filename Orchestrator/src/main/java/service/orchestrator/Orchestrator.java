@@ -1,6 +1,8 @@
 package service.orchestrator;
 
 import com.google.gson.Gson;
+import ie.ucd.mecframework.messages.migration.ServiceRequest;
+import ie.ucd.mecframework.messages.migration.ServiceResponse;
 import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
