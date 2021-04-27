@@ -4,6 +4,7 @@ import ie.ucd.mecframework.metrics.latency.LatencyRequestMonitor;
 import ie.ucd.mecframework.metrics.latency.LatencyRequestor;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
+import oshi.software.os.OSFileStore;
 import oshi.software.os.OperatingSystem;
 import service.core.NodeClientLatencyRequest;
 import service.core.NodeInfo;
@@ -43,27 +44,27 @@ public class ServiceNodeMetrics {
                 cpuLoad.add(load);
             }
             cpuTicks = hal.getProcessor().getSystemCpuLoadTicks();
-//
-//            // Memory
-//            double totalMemory = hal.getMemory().getTotal();
-//            long availableMemory = hal.getMemory().getAvailable();
-//            double fractionMemoryUsed = 1.0 - (availableMemory / totalMemory);
-//
-//            synchronized (memoryLoad) {
-//                memoryLoad.add(fractionMemoryUsed);
-//            }
-//            synchronized (mainMemory) {
-//                mainMemory.add(availableMemory);
-//            }
-//        }, 5, 1, TimeUnit.SECONDS);
-//
-//        scheduleService.scheduleAtFixedRate(() -> {
-//            long usableSpace = os.getFileSystem().getFileStores().stream()
-//                    .mapToLong(OSFileStore::getUsableSpace)
-//                    .sum();
-//            synchronized (storage) {
-//                storage.add(usableSpace);
-//            }
+
+            // Memory
+            double totalMemory = hal.getMemory().getTotal();
+            long availableMemory = hal.getMemory().getAvailable();
+            double fractionMemoryUsed = 1.0 - (availableMemory / totalMemory);
+
+            synchronized (memoryLoad) {
+                memoryLoad.add(fractionMemoryUsed);
+            }
+            synchronized (mainMemory) {
+                mainMemory.add(availableMemory);
+            }
+        }, 5, 1, TimeUnit.SECONDS);
+
+        scheduleService.scheduleAtFixedRate(() -> {
+            long usableSpace = os.getFileSystem().getFileStores().stream()
+                    .mapToLong(OSFileStore::getUsableSpace)
+                    .sum();
+            synchronized (storage) {
+                storage.add(usableSpace);
+            }
         }, 10, 5, TimeUnit.SECONDS);
 
         scheduleService.scheduleAtFixedRate(latencyRequestor, 3, 5, TimeUnit.SECONDS);
@@ -80,26 +81,26 @@ public class ServiceNodeMetrics {
         }
         nodeInfo.setCpuLoad(cpuCopy);
 
-//        List<Double> memoryLoadCopy;
-//        synchronized (memoryLoad) {
-//            memoryLoadCopy = new ArrayList<>(memoryLoad);
-//            memoryLoad.clear();
-//        }
-//        nodeInfo.setMemoryLoad(memoryLoadCopy);
-//
-//        List<Long> mainMemoryCopy;
-//        synchronized (mainMemory) {
-//            mainMemoryCopy = new ArrayList<>(mainMemory);
-//            mainMemory.clear();
-//        }
-//        nodeInfo.setMainMemory(mainMemoryCopy);
-//
-//        List<Long> storageCopy;
-//        synchronized (storage) {
-//            storageCopy = new ArrayList<>(storage);
-//            storage.clear();
-//        }
-//        nodeInfo.setStorage(storageCopy);
+        List<Double> memoryLoadCopy;
+        synchronized (memoryLoad) {
+            memoryLoadCopy = new ArrayList<>(memoryLoad);
+            memoryLoad.clear();
+        }
+        nodeInfo.setMemoryLoad(memoryLoadCopy);
+
+        List<Long> mainMemoryCopy;
+        synchronized (mainMemory) {
+            mainMemoryCopy = new ArrayList<>(mainMemory);
+            mainMemory.clear();
+        }
+        nodeInfo.setMainMemory(mainMemoryCopy);
+
+        List<Long> storageCopy;
+        synchronized (storage) {
+            storageCopy = new ArrayList<>(storage);
+            storage.clear();
+        }
+        nodeInfo.setStorage(storageCopy);
 
         Map<UUID, List<Long>> delayedLatencies = latenciesWithDelay(latencyMonitor.takeLatencySnapshot());
         nodeInfo.setLatencies(delayedLatencies);
