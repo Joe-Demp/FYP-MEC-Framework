@@ -12,6 +12,7 @@ import service.core.*;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -78,8 +79,8 @@ public class ServiceNode implements Runnable {
 
         logger.info("{} received a ServiceRequest!", label);
         state = State.TRANSFER_SERVER;
-        InetSocketAddress transferServerAddress = migrationManager.migrateService();
-        sendServiceResponse(request, transferServerAddress);
+        List<InetSocketAddress> transferServerAddresses = migrationManager.migrateService();
+        sendServiceResponse(request, transferServerAddresses);
     }
 
     /**
@@ -95,7 +96,7 @@ public class ServiceNode implements Runnable {
 
         // todo extract the following
         AcceptServiceTask acceptTask = new AcceptServiceTask(
-                migrationManager, response.getTransferServerAddress(), serviceController);
+                migrationManager, response.getTransferServerAddresses(), serviceController);
         CompletableFuture<Void> task = CompletableFuture.runAsync(acceptTask, singleExecutor);
         task.thenRunAsync(() -> {
             MigrationSuccess migrationSuccess = new MigrationSuccess(
@@ -104,9 +105,9 @@ public class ServiceNode implements Runnable {
         }, singleExecutor);
     }
 
-    private void sendServiceResponse(ServiceRequest request, InetSocketAddress transferServerAddress) {
+    private void sendServiceResponse(ServiceRequest request, List<InetSocketAddress> transferServerAddresses) {
         ServiceResponse response = new ServiceResponse(
-                request.getTargetUuid(), uuid, transferServerAddress, request.getDesiredServiceName());
+                request.getTargetUuid(), uuid, transferServerAddresses, request.getDesiredServiceName());
         wsClient.sendAsJson(response);
     }
 

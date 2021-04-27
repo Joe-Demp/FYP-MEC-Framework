@@ -5,12 +5,13 @@ import service.core.Message;
 import service.core.ServiceResponse;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ServiceNodeMecClientTest {
-    static InetSocketAddress socketAddress = new InetSocketAddress("www.irishtimes.com", 80);
+    static List<InetSocketAddress> socketAddress = List.of(new InetSocketAddress("www.irishtimes.com", 80));
     static String uuidString = "29d03298-9e3e-4f74-bb3f-57be11e4140c";
     static UUID someUUID = UUID.fromString(uuidString);
     static String serviceName = "myService";
@@ -19,7 +20,9 @@ class ServiceNodeMecClientTest {
     String messageJson = "{\n" +
             "  \"targetUuid\": \"29d03298-9e3e-4f74-bb3f-57be11e4140c\",\n" +
             "  \"sourceUuid\": \"29d03298-9e3e-4f74-bb3f-57be11e4140c\",\n" +
-            "  \"transferServerAddress\": \"www.irishtimes.com:80\",\n" +
+            "  \"transferServerAddresses\": [\n" +
+            "    \"www.irishtimes.com:80\"\n" +
+            "  ],\n" +
             "  \"serviceName\": \"myService\",\n" +
             "  \"type\": \"ServiceResponse\"\n" +
             "}";
@@ -40,7 +43,7 @@ class ServiceNodeMecClientTest {
 
         assertEquals(someUUID, response.getSourceUuid());
         assertEquals(someUUID, response.getTargetUuid());
-        assertEquals(socketAddress, response.getTransferServerAddress());
+        assertEquals(socketAddress, response.getTransferServerAddresses());
         assertEquals(serviceName, response.getServiceName());
     }
 }

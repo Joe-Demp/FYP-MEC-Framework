@@ -1,6 +1,7 @@
 package service.core;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -11,27 +12,21 @@ import java.util.UUID;
 public class ServiceResponse extends Message {
     private UUID targetUuid;
     private UUID sourceUuid;
-
-    public void setTransferServerAddress(InetSocketAddress transferServerAddress) {
-        this.transferServerAddress = transferServerAddress;
-    }
-
     /**
      * The address of the transfer server provided by the source ServiceNode during migration.
      */
-    private InetSocketAddress transferServerAddress;
+    private List<InetSocketAddress> transferServerAddresses;
     private String serviceName;
-
     public ServiceResponse() {
         super(Message.MessageTypes.SERVICE_RESPONSE);
     }
 
-    public ServiceResponse(UUID targetUuid, UUID sourceUuid, InetSocketAddress transferServerAddress,
+    public ServiceResponse(UUID targetUuid, UUID sourceUuid, List<InetSocketAddress> transferServerAddresses,
                            String serviceName) {
         this();
         this.targetUuid = targetUuid;
         this.sourceUuid = sourceUuid;
-        this.transferServerAddress = transferServerAddress;
+        this.transferServerAddresses = transferServerAddresses;
         this.serviceName = serviceName;
     }
 
@@ -43,8 +38,12 @@ public class ServiceResponse extends Message {
         return sourceUuid;
     }
 
-    public InetSocketAddress getTransferServerAddress() {
-        return transferServerAddress;
+    public List<InetSocketAddress> getTransferServerAddresses() {
+        return transferServerAddresses;
+    }
+
+    public void setTransferServerAddresses(List<InetSocketAddress> transferServerAddresses) {
+        this.transferServerAddresses = transferServerAddresses;
     }
 
     public String getServiceName() {
@@ -56,7 +55,7 @@ public class ServiceResponse extends Message {
         return "ServiceResponse{" +
                 "targetUuid=" + targetUuid +
                 ", sourceUuid=" + sourceUuid +
-                ", transferServerAddress=" + transferServerAddress +
+                ", transferServerAddresses=" + transferServerAddresses +
                 ", serviceName='" + serviceName + '\'' +
                 '}';
     }

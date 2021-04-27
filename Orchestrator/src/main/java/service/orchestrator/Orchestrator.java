@@ -21,16 +21,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.toList;
 
 /**
  * The Orchestrator's WebSocketServer.
@@ -85,10 +83,11 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         return webSocketAddress;
     }
 
-    private static void fixTransferServerAddress(ServiceResponse response, ServiceNode serverNode) {
-        response.setTransferServerAddress(
-                new InetSocketAddress(serverNode.globalIpAddress, response.getTransferServerAddress().getPort())
-        );
+    private static void fixTransferServerAddresses(ServiceResponse response, ServiceNode node) {
+        List<InetSocketAddress> fixedAddresses = response.getTransferServerAddresses().stream()
+                .map(socketAddress -> new InetSocketAddress(node.globalIpAddress, socketAddress.getPort()))
+                .collect(toList());
+        response.setTransferServerAddresses(fixedAddresses);
     }
 
     /*
@@ -233,7 +232,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     // Routes a ServiceResponse from a source ServiceNode to a target ServiceNode.
     // has to add the globalIp to the transfer server address.
     private void handleServiceResponse(ServiceResponse response) {
-        fixTransferServerAddress(response, serviceNodeRegistry.get(response.getSourceUuid()));
+        fixTransferServerAddresses(response, serviceNodeRegistry.get(response.getSourceUuid()));
         UUID targetUuid = response.getTargetUuid();
         WebSocket returnSocket = serviceNodeRegistry.get(targetUuid).webSocket;
         sendAsJson(returnSocket, response);

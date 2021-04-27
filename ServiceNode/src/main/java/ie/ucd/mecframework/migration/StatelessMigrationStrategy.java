@@ -10,6 +10,7 @@ import service.transfer.TransferServer;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class StatelessMigrationStrategy implements MigrationStrategy {
@@ -23,16 +24,18 @@ public class StatelessMigrationStrategy implements MigrationStrategy {
         this.service = service;
     }
 
-    private static URI mapInetSocketAddressToWebSocketUri(InetSocketAddress address) {
+    private static URI makeWebSocketUri(InetSocketAddress address) {
         String uriString = String.format("ws://%s:%d", address.getHostString(), address.getPort());
         return URI.create(uriString);
     }
 
     @Override
-    public InetSocketAddress migrateService() {
+    public List<InetSocketAddress> migrateService() {
         controller.stopService();
         launchTransferServer(nodeProperties.getActualTransferServerPortNumber1());
-        return new InetSocketAddress(nodeProperties.getAdvertisedTransferServerPortNumber1());
+        return List.of(
+                new InetSocketAddress(nodeProperties.getAdvertisedTransferServerPortNumber1())
+        );
     }
 
     /**
@@ -47,8 +50,9 @@ public class StatelessMigrationStrategy implements MigrationStrategy {
     }
 
     @Override
-    public void acceptService(InetSocketAddress serverAddress) {
-        URI serverUri = mapInetSocketAddressToWebSocketUri(serverAddress);
+    public void acceptService(List<InetSocketAddress> serverAddresses) {
+        InetSocketAddress serverAddress = serverAddresses.get(0);
+        URI serverUri = makeWebSocketUri(serverAddress);
         CountDownLatch transferFinished = new CountDownLatch(1);
         TransferClient transferClient = new TransferClient(serverUri, service, transferFinished);
         transferClient.setConnectionLostTimeout(-1);
@@ -61,9 +65,9 @@ public class StatelessMigrationStrategy implements MigrationStrategy {
         transferClient.close();
     }
 
-    private void waitForTransferClient(CountDownLatch cdl) {
+    private void waitForTransferClient(CountDownLatch transferFinished) {
         try {
-            cdl.await();
+            transferFinished.await();
         } catch (InterruptedException ie) {
             logger.error("Interrupted exception in waitForCountDownLatch!", ie);
         }
