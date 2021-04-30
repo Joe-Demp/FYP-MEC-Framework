@@ -264,7 +264,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
     }
 
     private void broadcastHeartbeats() {
-        ServerHeartbeatRequest request = new ServerHeartbeatRequest();
+        HeartbeatRequest request = new HeartbeatRequest();
         String json = gson.toJson(request);
         broadcast(json);
     }

@@ -49,7 +49,7 @@ public class ServiceNodeWsClient extends WebSocketClient {
             case Message.MessageTypes.NODE_INFO_REQUEST:
                 serviceNode.handleNodeInfoRequest((NodeInfoRequest) messageObj);
                 break;
-            case Message.MessageTypes.SERVER_HEARTBEAT_REQUEST:
+            case Message.MessageTypes.HEARTBEAT_REQUEST:
                 serviceNode.sendHeartbeatResponse();
                 break;
             case Message.MessageTypes.SERVICE_REQUEST:

@@ -26,12 +26,12 @@ public class Gsons {
                     .registerSubtype(HostResponse.class, Message.MessageTypes.HOST_RESPONSE)
                     .registerSubtype(MigrationAlert.class, Message.MessageTypes.MIGRATION_ALERT)
                     .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
-                    .registerSubtype(ServerHeartbeatRequest.class, Message.MessageTypes.SERVER_HEARTBEAT_REQUEST);
+                    .registerSubtype(HeartbeatRequest.class, Message.MessageTypes.HEARTBEAT_REQUEST);
 
     private static final RuntimeTypeAdapterFactory<Message> SERVICE_NODE_RTA_FACTORY =
             RuntimeTypeAdapterFactory.of(Message.class, "type")
                     .registerSubtype(NodeInfo.class, Message.MessageTypes.NODE_INFO)
-                    .registerSubtype(ServerHeartbeatRequest.class, Message.MessageTypes.SERVER_HEARTBEAT_REQUEST)
+                    .registerSubtype(HeartbeatRequest.class, Message.MessageTypes.HEARTBEAT_REQUEST)
                     .registerSubtype(ServiceRequest.class, Message.MessageTypes.SERVICE_REQUEST)
                     .registerSubtype(ServiceResponse.class, Message.MessageTypes.SERVICE_RESPONSE)
                     .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
