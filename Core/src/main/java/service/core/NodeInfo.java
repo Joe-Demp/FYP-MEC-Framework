@@ -14,17 +14,7 @@ public class NodeInfo extends Message {
     private UUID uuid;
     private WebSocket webSocket;
     private boolean serviceRunning;
-
     private boolean serviceInstalled;
-
-    public boolean isServiceInstalled() {
-        return serviceInstalled;
-    }
-
-    public void setServiceInstalled(boolean serviceInstalled) {
-        this.serviceInstalled = serviceInstalled;
-    }
-
     private List<Double> cpuLoad = Collections.emptyList();
     private List<Double> memoryLoad = Collections.emptyList();
     private List<Long> mainMemory = Collections.emptyList();
@@ -49,6 +39,14 @@ public class NodeInfo extends Message {
         this.serviceHostAddress = serviceUri;
     }
 
+    private static String mapToString(Map<?, ?> map) {
+        String mapContents = map.entrySet().stream()
+                .map(e -> new StringBuilder().append(e.getKey()).append(": ").append(e.getValue()).append(' '))
+                .reduce(new StringBuilder(), StringBuilder::append)
+                .toString();
+        return "{ " + mapContents + " }";
+    }
+
     public Map<UUID, List<Long>> getLatencies() {
         return latencies;
     }
@@ -71,6 +69,14 @@ public class NodeInfo extends Message {
 
     public void setServiceRunning(boolean serviceName) {
         this.serviceRunning = serviceName;
+    }
+
+    public boolean isServiceInstalled() {
+        return serviceInstalled;
+    }
+
+    public void setServiceInstalled(boolean serviceInstalled) {
+        this.serviceInstalled = serviceInstalled;
     }
 
     public UUID getUuid() {
@@ -131,14 +137,6 @@ public class NodeInfo extends Message {
 
     public void setGlobalIpAddress(InetAddress globalIpAddress) {
         this.globalIpAddress = globalIpAddress;
-    }
-
-    private static String mapToString(Map<?, ?> map) {
-        String mapContents = map.entrySet().stream()
-                .map(e -> new StringBuilder().append(e.getKey()).append(": ").append(e.getValue()).append(' '))
-                .reduce(new StringBuilder(), StringBuilder::append)
-                .toString();
-        return "{ " + mapContents + " }";
     }
 
     @Override
