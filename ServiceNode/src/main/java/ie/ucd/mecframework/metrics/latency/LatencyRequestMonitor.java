@@ -44,6 +44,7 @@ public class LatencyRequestMonitor implements Runnable {
         checkForFinishedPingTasks();
     }
 
+    // todo move the MobileClient UUID into the PingResult to obviate the need for the awaitedLatencyResponses Map
     // synchronized since it accesses awaitedLatencyResponses
     private synchronized void checkForFinishedPingTasks() {
         /* Using the pre Java 1.5 style for loop with iterator in order to use method Iterator#remove()
