@@ -159,7 +159,7 @@ public class ServiceNode {
 
     @Override
     public String toString() {
-        return String.format("UUID=%s remoteSA=%s, serviceName=%s, serviceHostAddress=%s",
+        return String.format("UUID=%s remoteSA=%s, serviceRunning=%s, serviceAddress=%s",
                 uuid,
                 webSocket.getRemoteSocketAddress(),
                 serviceRunning,
