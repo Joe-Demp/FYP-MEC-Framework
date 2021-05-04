@@ -16,12 +16,12 @@ import java.util.concurrent.CountDownLatch;
 
 public class TransferClient extends WebSocketClient {
     private static final Logger logger = LoggerFactory.getLogger(TransferClient.class);
-    private final File service;
+    private final File file;
     private final CountDownLatch transferFinished;
 
-    public TransferClient(URI serverUri, File service, CountDownLatch transferFinished) {
+    public TransferClient(URI serverUri, File file, CountDownLatch transferFinished) {
         super(serverUri);
-        this.service = service;
+        this.file = file;
         this.transferFinished = transferFinished;
         logger.debug("Launching TransferClient for Server at {}", serverUri);
     }
@@ -47,7 +47,7 @@ public class TransferClient extends WebSocketClient {
         byte[] b = bytes.array();
 
         tryingToWriteFileMessage();
-        try (FileOutputStream fos = new FileOutputStream(service)) {
+        try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(b);
             fos.close();
             logger.info("File written and FileOutputStream closed");
@@ -56,17 +56,16 @@ public class TransferClient extends WebSocketClient {
         }
 
         // Transfer done, notify the waiting MigrationManager.
-        logger.info("Calling transferFinished.countDown()");
         transferFinished.countDown();
-        logger.info("transferFinished.countDown() called");
+        logger.info("transfer of {} finished", file);
     }
 
     private void tryingToWriteFileMessage() {
         String filename = "stream.tar";
         try {
-            logger.info("Trying to write file {} @ {}", filename, service.getCanonicalPath());
+            logger.info("Trying to write file {} @ {}", filename, file.getCanonicalPath());
         } catch (IOException removeMe) {
-            logger.warn("Could not construct the canonical pathname for {}", service);
+            logger.warn("Could not construct the canonical pathname for {}", file);
         }
     }
 
