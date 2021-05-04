@@ -62,6 +62,14 @@ public class ServiceNodeRegistry {
                 ;
     }
 
+    public Collection<ServiceNode> getNonHostingNodes() {
+        return serviceNodes.values().stream()
+                .filter(node -> !node.isServiceRunning())
+                .filter(node -> (node.getState() == ServiceNode.State.STABLE))
+                .collect(Collectors.toList())
+                ;
+    }
+
     public void recordMigration(UUID source, UUID target) {
         ServiceNode sourceNode = get(source);
         ServiceNode targetNode = get(target);

@@ -57,7 +57,7 @@ public class LatencyTrigger implements Trigger {
 
     private void findBetterServiceNodeForClient(UUID clientUuid, ServiceNode currentServiceNode) {
         MobileClient mobileClient = MobileClientRegistry.get().get(clientUuid);
-        Collection<ServiceNode> allServiceNodes = ServiceNodeRegistry.get().getServiceNodes();
+        Collection<ServiceNode> allServiceNodes = ServiceNodeRegistry.get().getNonHostingNodes();
 
         ServiceNode migrationTarget = selector.select(allServiceNodes, mobileClient);
         if (nonNull(migrationTarget)) {
