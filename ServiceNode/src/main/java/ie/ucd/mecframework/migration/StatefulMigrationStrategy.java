@@ -8,8 +8,11 @@ import service.transfer.TransferClient;
 import service.transfer.TransferServer;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -64,6 +67,15 @@ public class StatefulMigrationStrategy implements MigrationStrategy {
         CountDownLatch transferFinished = new CountDownLatch(2);
         List<TransferClient> transferClients = makeTransferClients(serverAddress, transferFinished);
         doTransfers(transferFinished, transferClients);
+
+        // todo remove this when not needed
+        try {
+            logger.info("copying the received streamData.dat file.");
+            Files.copy(Paths.get("data", "streamData.dat"),
+                    Paths.get("data", "streamData-copy.dat"));
+        } catch (IOException e) {
+            logger.warn("Couldn't copy transferred state file");
+        }
     }
 
     private void doTransfers(CountDownLatch transferFinished, List<TransferClient> transferClients) {
