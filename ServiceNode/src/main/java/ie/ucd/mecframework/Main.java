@@ -28,16 +28,18 @@ public class Main implements Runnable {
     private URI serverUri;
     @Parameters(index = "1", paramLabel = "file", description = "The name of the file storing the service you wish to run.")
     private File serviceFile;
-    @Parameters(index = "2", paramLabel = "serviceAddress",
+    @Parameters(index = "2", paramLabel = "state", description = "The name of the file storing the service state.")
+    private File serviceState;
+    @Parameters(index = "3", paramLabel = "serviceAddress",
             description = "The address any services will run out of on this machine {ip}:{port}")
     private URI serviceAddress;
-    @Parameters(index = "3", paramLabel = "nodeLabel", description = "An identifying name for this Service Node",
+    @Parameters(index = "4", paramLabel = "nodeLabel", description = "An identifying name for this Service Node",
             defaultValue = "some-service-node")
     private String nodeLabel;
-    @Parameters(index = "4", paramLabel = "latencyDelay", description = "An extra delay added on to the latency" +
+    @Parameters(index = "5", paramLabel = "latencyDelay", description = "An extra delay added on to the latency" +
             " values collected by this node", defaultValue = "0")
     private int latencyDelay;
-    @Parameters(index = "5", paramLabel = "startService", description = "Whether or not to start the service on" +
+    @Parameters(index = "6", paramLabel = "startService", description = "Whether or not to start the service on" +
             " initializing this ServiceNode.", defaultValue = "true")
     private boolean startService;
 
@@ -48,6 +50,7 @@ public class Main implements Runnable {
 
     @Override
     public void run() {
+        removeStateIfExists();
         ServiceController serviceController = getServiceController();
         MigrationStrategy migrationStrategy = getMigrationStrategy(serviceController);
         ServiceNode serviceNode =
@@ -56,6 +59,14 @@ public class Main implements Runnable {
                 );
         serviceNode.run();  // run instead of start a Thread to stop the program from finishing immediately
         serviceController.stopService();
+    }
+
+    // Only for testing: removes the serviceFile's application state before launching the ServiceNode to ensure that
+    //  this run's state is clear. This helps to ensure that the mobile-client is connecting to the service and that
+    //  the file migrates correctly.
+    private void removeStateIfExists() {
+        boolean wasDeleted = serviceState.delete();
+        logger.debug("Service state existed?={}, and was deleted", wasDeleted);
     }
 
     private MigrationStrategy getMigrationStrategy(ServiceController serviceController) {
