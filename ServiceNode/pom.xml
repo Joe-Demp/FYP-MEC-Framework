@@ -82,7 +82,7 @@
                             <arguments>
                                 <argument>ws://localhost:8080</argument>
                                 <argument>../../streaming-sample/stream.tar</argument>
-                                <argument>../../streaming-sample/data/streamData.dat</argument>
+                                <argument>data/streamData.dat</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>generic-service-node</argument>
                                 <argument>0</argument>
@@ -110,7 +110,7 @@
                             <arguments>
                                 <argument>ws://csi420-01-vm1.ucd.ie</argument>
                                 <argument>../../streaming-sample/stream.tar</argument>
-                                <argument>../../streaming-sample/data/streamData.dat</argument>
+                                <argument>data/streamData.dat</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>cloud-node</argument>
                                 <argument>1000</argument>
@@ -139,7 +139,7 @@
                             <arguments>
                                 <argument>ws://csi420-01-vm1.ucd.ie</argument>
                                 <argument>../../streaming-sample/stream.tar</argument>
-                                <argument>../../streaming-sample/data/streamData.dat</argument>
+                                <argument>data/streamData.dat</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>edge-node</argument>
                                 <argument>200</argument>
@@ -167,7 +167,7 @@
                             <arguments>
                                 <argument>ws://csi420-01-vm1.ucd.ie</argument>
                                 <argument>../../streaming-sample/stream.tar</argument>
-                                <argument>../../streaming-sample/data/streamData.dat</argument>
+                                <argument>data/streamData.dat</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>edge-node</argument>
                                 <argument>0</argument>
@@ -195,7 +195,7 @@
                             <arguments>
                                 <argument>ws://csi420-01-vm1.ucd.ie</argument>
                                 <argument>../../streaming-sample/streaming-sample-1.jar</argument>
-                                <argument>../../streaming-sample/data/streamData.dat</argument>
+                                <argument>data/streamData.dat</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>cloud-node</argument>
                                 <argument>0</argument>
@@ -224,7 +224,7 @@
                             <arguments>
                                 <argument>ws://csi420-01-vm1.ucd.ie</argument>
                                 <argument>../../streaming-sample/streaming-sample-1.jar</argument>
-                                <argument>../../streaming-sample/data/streamData.dat</argument>
+                                <argument>data/streamData.dat</argument>
                                 <argument>ws://localhost:8090</argument>
                                 <argument>edge-node</argument>
                                 <argument>0</argument>
