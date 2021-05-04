@@ -13,6 +13,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -72,9 +73,9 @@ public class StatefulMigrationStrategy implements MigrationStrategy {
         try {
             logger.info("copying the received streamData.dat file.");
             Files.copy(Paths.get("data", "streamData.dat"),
-                    Paths.get("data", "streamData-copy.dat"));
-        } catch (IOException e) {
-            logger.warn("Couldn't copy transferred state file");
+                    Paths.get("data", "streamData-copy.dat"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ioe) {
+            logger.warn("Couldn't copy transferred state file", ioe);
         }
     }
 
