@@ -179,6 +179,7 @@ public class Orchestrator extends WebSocketServer implements Migrator {
         ServiceNode serviceNode = ServiceNodeRegistry.get().getServiceNodes().stream()
                 .filter(node -> node.serviceInstalled)
                 .filter(node -> !node.serviceRunning)
+                .filter(node -> node.getState().equals(ServiceNode.State.STABLE))
                 .findAny()
                 .orElse(null);
         if (nonNull(serviceNode)) sendStartServiceRequest(serviceNode);
