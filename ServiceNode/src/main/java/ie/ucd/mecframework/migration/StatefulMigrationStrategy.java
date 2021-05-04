@@ -1,11 +1,11 @@
 package ie.ucd.mecframework.migration;
 
+import ie.ucd.mecframework.migration.transfer.TransferClient;
+import ie.ucd.mecframework.migration.transfer.TransferServer;
 import ie.ucd.mecframework.service.ServiceController;
 import ie.ucd.mecframework.servicenode.ServiceNodeProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import service.transfer.TransferClient;
-import service.transfer.TransferServer;
 
 import java.io.File;
 import java.io.IOException;

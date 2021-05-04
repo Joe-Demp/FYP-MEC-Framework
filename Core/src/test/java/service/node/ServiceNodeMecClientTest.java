@@ -28,10 +28,6 @@ class ServiceNodeMecClientTest {
             "}";
 
     @Test
-    void serviceNodeLoadsCorrectly() {
-    }
-
-    @Test
     void gsonSerializesCorrectly() {
         assertEquals(messageJson, serviceNode.gson.toJson(message));
     }

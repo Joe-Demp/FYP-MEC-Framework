@@ -36,11 +36,6 @@ public class ServiceNodeRegistry {
         target.serviceRunning = true;
     }
 
-    /**
-     * todo write
-     *
-     * @param nodeInfo
-     */
     public void updateNode(NodeInfo nodeInfo) {
         getOrCreateServiceNode(nodeInfo).update(nodeInfo);
     }

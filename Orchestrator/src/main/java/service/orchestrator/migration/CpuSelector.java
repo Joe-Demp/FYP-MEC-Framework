@@ -20,7 +20,7 @@ public class CpuSelector implements Selector {
 
     private static class NodeCpuPair implements Comparable<NodeCpuPair> {
         private final double cpu;
-        ServiceNode node;
+        final ServiceNode node;
 
         NodeCpuPair(ServiceNode node) {
             this.node = node;

@@ -18,10 +18,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DockerController implements ServiceController {
     private final Logger logger = LoggerFactory.getLogger(DockerController.class);
     private final Path servicePath;
-    private AtomicBoolean isServiceRunning = new AtomicBoolean();
+    private final AtomicBoolean isServiceRunning = new AtomicBoolean();
     private Process dockerProcess;
-    private OSRuntime runtime = OSRuntime.get();
-    private ExecutorService serviceOutputExecutor = Executors.newSingleThreadExecutor();
+    private final OSRuntime runtime = OSRuntime.get();
+    private final ExecutorService serviceOutputExecutor = Executors.newSingleThreadExecutor();
 
     /**
      * @param servicePath the path to the location where the Controller expects to find a tar file to load into Docker.

@@ -24,10 +24,6 @@ public class MobileClientRegistry {
         return instance;
     }
 
-    public void put(MobileClient mobileClient) {
-        mobileClients.put(mobileClient.uuid, mobileClient);
-    }
-
     public MobileClient get(UUID uuid) {
         return isNull(uuid) ? null : mobileClients.get(uuid);
     }
@@ -36,11 +32,6 @@ public class MobileClientRegistry {
         return mobileClients.values();
     }
 
-    /**
-     * todo write
-     *
-     * @param mobileClientInfo
-     */
     public void updateClient(MobileClientInfo mobileClientInfo) {
         getOrCreateMobileClient(mobileClientInfo).update(mobileClientInfo);
     }

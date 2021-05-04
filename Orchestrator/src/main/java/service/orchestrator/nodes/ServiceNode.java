@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import service.core.NodeInfo;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -103,15 +102,6 @@ public class ServiceNode {
 
     public double getMeanStorage() {
         return getMean(storage);
-    }
-
-    /**
-     * Gets the address that this orchestrator uses to communicate with the {@code ServiceNode}
-     *
-     * @return the remote address of the WebSocket owned by this class.
-     */
-    public InetSocketAddress getAddress() {
-        return webSocket.getRemoteSocketAddress();
     }
 
     public State getState() {

@@ -20,7 +20,6 @@ public class NodeInfo extends Message {
     private List<Long> mainMemory = Collections.emptyList();
     private List<Long> storage = Collections.emptyList();
     private Map<UUID, List<Long>> latencies = Collections.emptyMap();
-    private boolean trustworthy = true;
     private URI serviceHostAddress;
 
     // todo Only reason why this is here is so that the Orchestrator can update globalIpAddress in its
@@ -81,14 +80,6 @@ public class NodeInfo extends Message {
 
     public UUID getUuid() {
         return uuid;
-    }
-
-    public boolean isTrustworthy() {
-        return trustworthy;
-    }
-
-    public void setTrustworthy(boolean trustworthy) {
-        this.trustworthy = trustworthy;
     }
 
     public URI getServiceHostAddress() {
