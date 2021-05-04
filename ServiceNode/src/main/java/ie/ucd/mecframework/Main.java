@@ -2,7 +2,7 @@ package ie.ucd.mecframework;
 
 import ie.ucd.mecframework.migration.MigrationManager;
 import ie.ucd.mecframework.migration.MigrationStrategy;
-import ie.ucd.mecframework.migration.StatelessMigrationStrategy;
+import ie.ucd.mecframework.migration.StatefulMigrationStrategy;
 import ie.ucd.mecframework.service.DockerController;
 import ie.ucd.mecframework.service.JarController;
 import ie.ucd.mecframework.service.ServiceController;
@@ -70,7 +70,8 @@ public class Main implements Runnable {
     }
 
     private MigrationStrategy getMigrationStrategy(ServiceController serviceController) {
-        return new StatelessMigrationStrategy(serviceController, serviceFile);
+//        return new StatelessMigrationStrategy(serviceController, serviceFile);
+        return new StatefulMigrationStrategy(serviceController, serviceFile, serviceState);
     }
 
     private ServiceController getServiceController() {
