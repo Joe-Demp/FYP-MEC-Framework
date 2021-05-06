@@ -40,7 +40,13 @@ public class Main implements Runnable {
     }
 
     private Trigger getTrigger(Selector selector, Orchestrator orchestrator) {
-        return new LatencyTrigger(selector, orchestrator);
+//        return new LatencyTrigger(selector, orchestrator);
 //        return new CpuTrigger(selector, orchestrator);
+
+        DeferredMigrator deferredMigrator = new DeferredMigrator();
+        Trigger latency = new LatencyTrigger(selector, deferredMigrator);
+        Trigger cpu = new CpuTrigger(selector, deferredMigrator);
+
+        return new CombinedTrigger(selector, orchestrator, deferredMigrator, cpu, latency);
     }
 }
