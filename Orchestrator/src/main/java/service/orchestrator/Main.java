@@ -37,6 +37,7 @@ public class Main implements Runnable {
 //        return new LatencySelector();
 //        return new CpuSelector();
 //        return new MainMemorySelector();
+//        return new MainMemorySelector();
 //        return new HighAvailabilitySelector(new LatencySelector());
         return new CombinedSelector(new LatencySelector(), new CpuSelector());
     }
