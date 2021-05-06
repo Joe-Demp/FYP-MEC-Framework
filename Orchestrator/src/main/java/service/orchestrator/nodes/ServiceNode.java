@@ -20,6 +20,7 @@ import static java.util.Objects.nonNull;
  */
 public class ServiceNode {
     private static final Logger logger = LoggerFactory.getLogger(ServiceNode.class);
+    private static final double BYTES_PER_GIBIBYTE = Math.pow(2, 30);
 
     public UUID uuid;
     public WebSocket webSocket;
@@ -136,6 +137,20 @@ public class ServiceNode {
         int lowerBound = Integer.max(upperBound - 10, 0);
         List<Double> cpuUtilizations = cpuLoad.subList(lowerBound, upperBound);
         return getMean(cpuUtilizations);
+    }
+
+    public double getMainMemoryScore() {
+        int upperBound = cpuLoad.size();
+        int lowerBound = Integer.max(upperBound - 10, 0);
+        List<Double> ramUtilizations = ramLoad.subList(lowerBound, upperBound);
+        return getMean(ramUtilizations);
+    }
+
+    public double getMainMemoryInGibibytes() {
+        int upperBound = mainMemory.size();
+        int lowerBound = Integer.max(upperBound - 10, 0);
+        List<Long> memoryAmounts = mainMemory.subList(lowerBound, upperBound);
+        return getMean(memoryAmounts) / BYTES_PER_GIBIBYTE;
     }
 
     public double getMeanLatency(UUID clientUuid) {

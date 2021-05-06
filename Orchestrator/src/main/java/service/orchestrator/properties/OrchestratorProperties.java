@@ -66,8 +66,13 @@ public class OrchestratorProperties {
     }
 
     public double getMaxMemory() {
-        String maxCpu = properties.getProperty("application.limit.max-memory-used", DEFAULT_DOUBLE);
-        return Double.parseDouble(maxCpu);
+        String maxMemory = properties.getProperty("application.limit.max-memory", DEFAULT_DOUBLE);
+        return Double.parseDouble(maxMemory);
+    }
+
+    public double getMinMemoryGibibytes() {
+        String minMemory = properties.getProperty("application.limit.min-memory-gb", "0.0");
+        return Double.parseDouble(minMemory);
     }
 
     public double getMinStorage() {
