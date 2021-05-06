@@ -36,7 +36,8 @@ public class Main implements Runnable {
 //        return new SimpleSelector();
 //        return new LatencySelector();
 //        return new CpuSelector();
-        return new HighAvailabilitySelector(new LatencySelector());
+//        return new HighAvailabilitySelector(new LatencySelector());
+        return new CombinedSelector(new LatencySelector(), new CpuSelector());
     }
 
     private Trigger getTrigger(Selector selector, Orchestrator orchestrator) {
