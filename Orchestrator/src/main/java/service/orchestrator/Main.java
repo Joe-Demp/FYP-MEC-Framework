@@ -38,19 +38,19 @@ public class Main implements Runnable {
 //        return new CpuSelector();
 //        return new MainMemorySelector();
 //        return new MainMemorySelector();
-//        return new HighAvailabilitySelector(new LatencySelector());
-        return new CombinedSelector(new LatencySelector(), new CpuSelector());
+        return new HighAvailabilitySelector(new LatencySelector());
+//        return new CombinedSelector(new LatencySelector(), new CpuSelector());
     }
 
     private Trigger getTrigger(Selector selector, Orchestrator orchestrator) {
-//        return new LatencyTrigger(selector, orchestrator);
+        return new LatencyTrigger(selector, orchestrator);
 //        return new CpuTrigger(selector, orchestrator);
 //        return new MainMemoryTrigger(selector, orchestrator);
 
-        DeferredMigrator deferredMigrator = new DeferredMigrator();
-        Trigger latency = new LatencyTrigger(selector, deferredMigrator);
-        Trigger cpu = new CpuTrigger(selector, deferredMigrator);
-
-        return new CombinedTrigger(selector, orchestrator, deferredMigrator, cpu, latency);
+//        DeferredMigrator deferredMigrator = new DeferredMigrator();
+//        Trigger latency = new LatencyTrigger(selector, deferredMigrator);
+//        Trigger cpu = new CpuTrigger(selector, deferredMigrator);
+//
+//        return new CombinedTrigger(selector, orchestrator, deferredMigrator, cpu, latency);
     }
 }
