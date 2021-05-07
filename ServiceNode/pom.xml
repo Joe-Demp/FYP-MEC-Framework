@@ -2,15 +2,25 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>mec-framework</artifactId>
-        <groupId>clarke.fyp</groupId>
-        <version>1.0</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ie.ucd.dempsey.mecframework</groupId>
     <artifactId>ServiceNode</artifactId>
+    <version>1.0</version>
+
+    <developers>
+        <developer>
+            <id>joe-dempsey</id>
+            <name>Joseph Dempsey</name>
+            <email>joseph.dempsey@ucdconnect.ie</email>
+            <url>https://github.com/Joe-Demp</url>
+            <organization>University College Dublin</organization>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
 
     <properties>
         <main.class>ie.ucd.mecframework.Main</main.class>
