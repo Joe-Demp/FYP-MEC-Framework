@@ -10,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InetSocketAddressAdapterTest {
     static final String RAW_ADDRESS = "192.168.0.1:80";
-    InetSocketAddress homeRouter = new InetSocketAddress("192.168.0.1", 80);
-    InetSocketAddressAdapter testAdapter = new InetSocketAddressAdapter();
+    final InetSocketAddress homeRouter = new InetSocketAddress("192.168.0.1", 80);
+    final InetSocketAddressAdapter testAdapter = new InetSocketAddressAdapter();
 
     @Test
     void deserialize() {

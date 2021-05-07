@@ -14,7 +14,7 @@ import java.net.InetSocketAddress;
 
 public class TransferServer extends WebSocketServer {
     private static final Logger logger = LoggerFactory.getLogger(TransferServer.class);
-    private File serviceFile;
+    private final File serviceFile;
 
     public TransferServer(InetSocketAddress address, File serviceFile) {
         super(address);

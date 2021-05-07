@@ -93,18 +93,6 @@ public class ServiceNode {
         return mobileClientLatencies.entrySet();
     }
 
-    public double getMeanCPU() {
-        return getMean(cpuLoad);
-    }
-
-    public double getMeanRam() {
-        return getMean(ramLoad);
-    }
-
-    public double getMeanStorage() {
-        return getMean(storage);
-    }
-
     public State getState() {
         return stateAtomRef.get();
     }

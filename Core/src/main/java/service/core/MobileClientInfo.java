@@ -15,30 +15,19 @@ public class MobileClientInfo extends Message {
         super(MessageTypes.MOBILE_CLIENT_INFO);
     }
 
+    @SuppressWarnings("unused")
     public MobileClientInfo(UUID uuid, InetSocketAddress pingServer) {
         this();
         this.uuid = uuid;
         this.pingServer = pingServer;
     }
 
-    public MobileClientInfo(UUID uuid) {
-        this(uuid, null);
-    }
-
     public UUID getUuid() {
         return uuid;
     }
 
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
     public InetSocketAddress getPingServer() {
         return pingServer;
-    }
-
-    public void setPingServer(InetSocketAddress pingServer) {
-        this.pingServer = pingServer;
     }
 
     public void setPingServerAddress(InetAddress address) {

@@ -2,8 +2,6 @@ package service.node;
 
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import service.util.Gsons;
 
 import java.net.URI;
@@ -16,7 +14,6 @@ import java.net.URI;
  * MEC orchestrator.
  */
 public abstract class ServiceNodeMecClient extends WebSocketClient {
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected Gson gson;
 
     public ServiceNodeMecClient(URI serverUri) {

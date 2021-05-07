@@ -22,10 +22,6 @@ public class MigrationSuccess extends Message {
         return targetHostUuid;
     }
 
-    public String getServiceName() {
-        return serviceName;
-    }
-
     public UUID getSourceHostUuid() {
         return sourceHostUuid;
     }

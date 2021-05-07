@@ -17,10 +17,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class JarController implements ServiceController {
     private final Logger logger = LoggerFactory.getLogger(JarController.class);
     private final Path servicePath;
-    private AtomicBoolean isServiceRunning = new AtomicBoolean();
+    private final AtomicBoolean isServiceRunning = new AtomicBoolean();
     private Process javaProcess;
-    private OSRuntime runtime = OSRuntime.get();
-    private ExecutorService serviceOutputExecutor = Executors.newSingleThreadExecutor();
+    private final OSRuntime runtime = OSRuntime.get();
+    private final ExecutorService serviceOutputExecutor = Executors.newSingleThreadExecutor();
 
     public JarController(Path servicePath) {
         this.servicePath = servicePath;

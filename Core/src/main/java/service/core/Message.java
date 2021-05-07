@@ -31,8 +31,5 @@ public class Message implements Serializable {
         final public static String MIGRATION_ALERT = "MigrationAlert";
         final public static String START_SERVICE_REQUEST = "StartServiceRequest";
         final public static String START_SERVICE_RESPONSE = "StartServiceResponse";
-        final public static String STOP_SERVICE_REQUEST = "StopServiceRequest";
-        final public static String STOP_SERVICE_RESPONSE = "StopServiceResponse";
-
     }
 }

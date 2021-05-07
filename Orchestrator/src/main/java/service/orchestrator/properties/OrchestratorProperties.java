@@ -75,17 +75,6 @@ public class OrchestratorProperties {
         return Double.parseDouble(minMemory);
     }
 
-    public double getMinStorage() {
-        final String DOUBLE_ZERO = Double.toString(0.0);
-        String maxCpu = properties.getProperty("application.limit.min-storage", DOUBLE_ZERO);
-        return Double.parseDouble(maxCpu);
-    }
-
-    public int getClientPingServerPort() {
-        String clientPingServerPort = properties.getProperty("client.pingserver.port", "8092");
-        return Integer.parseInt(clientPingServerPort);
-    }
-
     public long getHeartbeatPeriod() {
         String heartbeatFrequency = properties.getProperty("orchestrator.heartbeat.frequency", "10");
         return Long.parseLong(heartbeatFrequency);

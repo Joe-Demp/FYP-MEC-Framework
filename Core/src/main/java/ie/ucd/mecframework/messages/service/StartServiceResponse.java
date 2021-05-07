@@ -18,14 +18,6 @@ public class StartServiceResponse extends Message {
         this.serviceStarted = serviceStarted;
     }
 
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public boolean isServiceStarted() {
-        return serviceStarted;
-    }
-
     @Override
     public String toString() {
         return "StartServiceResponse{" +

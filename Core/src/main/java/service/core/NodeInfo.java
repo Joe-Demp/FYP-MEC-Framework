@@ -66,10 +66,6 @@ public class NodeInfo extends Message {
         return serviceRunning;
     }
 
-    public void setServiceRunning(boolean serviceName) {
-        this.serviceRunning = serviceName;
-    }
-
     public boolean isServiceInstalled() {
         return serviceInstalled;
     }
@@ -84,10 +80,6 @@ public class NodeInfo extends Message {
 
     public URI getServiceHostAddress() {
         return serviceHostAddress;
-    }
-
-    public void setServiceHostAddress(URI serviceHostAddress) {
-        this.serviceHostAddress = serviceHostAddress;
     }
 
     public List<Double> getCpuLoad() {

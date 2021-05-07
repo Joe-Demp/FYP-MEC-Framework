@@ -7,8 +7,6 @@ import ie.ucd.mecframework.messages.migration.ServiceRequest;
 import ie.ucd.mecframework.messages.migration.ServiceResponse;
 import ie.ucd.mecframework.messages.service.StartServiceRequest;
 import ie.ucd.mecframework.messages.service.StartServiceResponse;
-import ie.ucd.mecframework.messages.service.StopServiceRequest;
-import ie.ucd.mecframework.messages.service.StopServiceResponse;
 import service.core.*;
 
 import java.net.InetSocketAddress;
@@ -38,8 +36,7 @@ public class Gsons {
                     .registerSubtype(MigrationAlert.class, Message.MessageTypes.MIGRATION_ALERT)
                     .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
                     .registerSubtype(NodeClientLatencyRequest.class, Message.MessageTypes.NODE_CLIENT_LATENCY_REQUEST)
-                    .registerSubtype(StartServiceRequest.class, Message.MessageTypes.START_SERVICE_REQUEST)
-                    .registerSubtype(StopServiceRequest.class, Message.MessageTypes.STOP_SERVICE_REQUEST);
+                    .registerSubtype(StartServiceRequest.class, Message.MessageTypes.START_SERVICE_REQUEST);
 
     private static final RuntimeTypeAdapterFactory<Message> ORCHESTRATOR_RTA_FACTORY =
             RuntimeTypeAdapterFactory.of(Message.class, "type")
@@ -50,8 +47,7 @@ public class Gsons {
                     .registerSubtype(NodeInfoRequest.class, Message.MessageTypes.NODE_INFO_REQUEST)
                     .registerSubtype(MigrationSuccess.class, Message.MessageTypes.MIGRATION_SUCCESS)
                     .registerSubtype(MobileClientInfo.class, Message.MessageTypes.MOBILE_CLIENT_INFO)
-                    .registerSubtype(StartServiceResponse.class, Message.MessageTypes.START_SERVICE_RESPONSE)
-                    .registerSubtype(StopServiceResponse.class, Message.MessageTypes.STOP_SERVICE_RESPONSE);
+                    .registerSubtype(StartServiceResponse.class, Message.MessageTypes.START_SERVICE_RESPONSE);
 
     private Gsons() {
     }
@@ -64,6 +60,7 @@ public class Gsons {
                 .create();
     }
 
+    @SuppressWarnings("unused")
     public static Gson mobileClientGson() {
         return buildGson(MOBILE_CLIENT_RTA_FACTORY);
     }

@@ -42,10 +42,6 @@ public class ServiceNodeProperties {
         return (os == OS.WINDOWS) ? ROBERT_PC_TRANSFER_PORT_2 : RPI_TRANSFER_PORT_2;
     }
 
-    public int getActualServicePortNumber() {
-        return ROBERT_PC_SERVICE_PORT;
-    }
-
     public int getActualTransferServerPortNumber1() {
         return ROBERT_PC_TRANSFER_PORT_1;
     }

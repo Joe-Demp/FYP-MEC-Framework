@@ -17,10 +17,7 @@ public class HostResponse extends Message  {
         this.serviceHostAddress = serviceHostAddress;
     }
 
-    public UUID getRequestorID() {
-        return requestorID;
-    }
-
+    @SuppressWarnings("unused")
     public URI getServiceHostAddress() {
         return serviceHostAddress;
     }

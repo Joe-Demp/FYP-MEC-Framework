@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class ServiceNodeRegistry {
     private static final ServiceNodeRegistry instance = new ServiceNodeRegistry();
-    private Map<UUID, ServiceNode> serviceNodes = new Hashtable<>();
+    private final Map<UUID, ServiceNode> serviceNodes = new Hashtable<>();
 
     private ServiceNodeRegistry() {
     }

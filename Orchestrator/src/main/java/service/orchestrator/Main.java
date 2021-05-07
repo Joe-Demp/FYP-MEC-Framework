@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("unused")
 @CommandLine.Command(name = "cmMain", mixinStandardHelpOptions = true, version = "0.8")
 public class Main implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);

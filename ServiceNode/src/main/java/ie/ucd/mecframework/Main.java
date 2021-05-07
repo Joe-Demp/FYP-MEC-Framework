@@ -18,6 +18,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@SuppressWarnings("unused")
 @CommandLine.Command(name = "ServiceNode Driver", mixinStandardHelpOptions = true, version = "0.1")
 public class Main implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -87,6 +88,7 @@ public class Main implements Runnable {
      *
      * @return the initialized ServiceController.
      */
+    @SuppressWarnings("unused")
     private ServiceController initializeDockerController() {
         Path servicePath = getServiceFileCanonicalPath();
         logger.info(servicePath.toString());
