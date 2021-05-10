@@ -3,9 +3,8 @@ package service.orchestrator.properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.MissingResourceException;
 import java.util.Properties;
 
@@ -22,10 +21,9 @@ public class OrchestratorProperties {
         properties = new Properties();
 
         try {
-            properties.load(new FileInputStream(getFilePath()));
+            properties.load(getFileStream());
         } catch (IOException ioe) {
-            logger.error(ioe.getMessage());
-            ioe.printStackTrace();
+            logger.error("Couldn't load " + FILENAME, ioe);
             throw new MissingResourceException(
                     String.format("No Orchestrator properties file found: %s", ioe.getMessage()),
                     OrchestratorProperties.class.getSimpleName(),
@@ -46,12 +44,8 @@ public class OrchestratorProperties {
         return instance;
     }
 
-    private String getFilePath() throws IOException {
-        URL fileUrl = getClass().getClassLoader().getResource(FILENAME);
-        if (isNull(fileUrl)) {
-            throw new IOException("OrchestratorProperties file not found");
-        }
-        return fileUrl.getPath();
+    private InputStream getFileStream() {
+        return getClass().getClassLoader().getResourceAsStream(FILENAME);
     }
 
     public int getMaxLatency() {

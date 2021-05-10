@@ -1,10 +1,33 @@
-This repo is a fork of [Darragh Clark's FYP](https://github.com/DarraghClarke/FYP).
-I plan to expand on Darragh's final year project using this codebase, developing in GitLab.
-The final project will be published here later this year (2021) once the project has been submitted and graded.  
+# MEC Framework Project
 
-Many thanks to Darragh for providing this code.  
+This repo is a fork of [Darragh Clark's Final Year Project Codebase](https://github.com/DarraghClarke/FYP).
 
-_The original README.md is included below._
+The following is a guide toward building and running the applications in this project.
+
+## Core
+
+The Core module is a dependency for the Orchestrator, ServiceNode, and console-app applications. It must be installed before building the other components. To build the Core module:
+
+1. Navigate to the Core directory.
+2. Run `mvn install`.
+
+## Orchestrator
+
+### Build
+
+1. Navigate to the Orchestrator directory.
+2. Run `mvn package`.
+
+### Run
+
+1. Navigate to the Orchestrator/target directory.
+2. Run the following command:
+```
+java -jar Orchestrator-0.8.0-jar-with-dependencies.jar <port-number>
+```
+
+Where `<port-number>` should be replaced by the port number that you want the Orchestrator's WebSocket to listen on.
+ 
 
 # Final Year Project 16387431
 
