@@ -13,6 +13,8 @@ The Core module is a dependency for the Orchestrator, ServiceNode, and console-a
 
 ## Orchestrator
 
+Before building, navigate to `service.orchestrator.Main` and choose the required `Trigger` and `Selector`. 
+
 ### Build
 
 1. Navigate to the Orchestrator directory.
@@ -28,82 +30,47 @@ java -jar Orchestrator-0.8.0-jar-with-dependencies.jar <port-number>
 
 Where `<port-number>` should be replaced by the port number that you want the Orchestrator's WebSocket to listen on.
  
+## ServiceNode
 
-# Final Year Project 16387431
+Before building, navigate to `ie.ucd.mecframework.Main` and choose the required `MigrationStrategy` and `ServiceConroller`. 
 
-This Project is a implementation of a mobile computing orchestrator and node setup which allows for TLS based secure migration docker images. This serves as a proof of concept implementation of a migration and also includes a sample accompanying Android application to connect to any docker image hosted.
+### Build
 
+1. Navigate to the ServiceNode directory.
+2. Run `mvn package`.
 
-## A note on security
-For testing purposes these jars are using preprovided keystores, for any actual implementation built on top of this these should be swapped out by your own keystores.
+### Run
 
-## Setup Instructions
-
-## Orchestrator 
-Before trying to run the orchestrator make sure that the port it will run on is free and has firewall clearence,
-
-To run in ordinary mode the command is
- ```
-java -jar {Release.jar} {Port} 
-i.e java -jar orchestrator-0.7.0-jar-with-dependencies 443
+1. Navigate to the ServiceNode/target directory.
+2. Run the following command:
 ```
- 
-To run in secure mode include -s
- ```
-java -jar {Release.jar} {Port} -s 
-i.e java -jar orchestrator-0.7.0-jar-with-dependencies 443 -s
+java -jar ServiceNode-1.0-jar-with-dependencies.jar <orchestrator-URI> <service-file> <service-state> \
+    <service-address> <node-label> <latency-delay> <start-service>
 ```
 
-The orchestrator as part of its evaluation uses a rolling average of node CPU and Ram availability, by default this is set 80/20 in favour of new values. To set this manually simple add -RollingAverage to command input in the format 60 for a 60/40 split.
- ```
-java -jar {Release.jar} {Port} -RollingAverage 
-i.e java -jar orchestrator-0.7.0-jar-with-dependencies 443 -RollingAverage 60
+With the following substitutions:
+
+* `<orchestrator-URI>` - the URI of the Orchestrator e.g. ws://csi420-01-vm1.ucd.ie
+* `<service-file>` - the path of the service that you want this ServiceNode to run. This is mandatory even if the
+service is not installed. This is the location where the service will be saved if this ServiceNode receives the
+service through a service migration. e.g. ../../streaming-sample/streaming-sample-1.jar
+* `<service-state>` - the path of the service state that you want this ServiceNode to migrate along with the service
+instance. This will not be used for stateless services. e.g. data/streamData.dat
+* `<service-address>` - the local address that you expect the service to run on. This application actually only uses the
+address's port number. e.g. ws://localhost:8090 ; This will let clients know that the service is running on port 8090.
+The Orchestrator will replace the localhost part with the proper address. 
+* `<node-label>` - a name for this ServiceNode. e.g. edge-node
+* `<latency-delay>` - a delay in milliseconds that will be added to every latency reading. Useful for simulating delays.
+e.g. 200
+* `<start-service>` - a boolean value indicating whether the service should be started on launch. e.g. true
+
+For example:
 ```
-
-## EdgeNode 
-To run in ordinary mode the command is
- ```
-java -jar {Release.jar} {Orchestrator address} {file to host} {address of services hosted on this cloudNode} 
-i.e java -jar edge-0.6.0-jar-with-dependencies ws://193.145.123.56:443 C://path/to/file.tar ws://192.168.18.250:8080
+java -jar ServiceNode-1.0-jar-with-dependencies.jar ws://csi420-01-vm1.ucd.ie \
+    ../../streaming-sample/streaming-sample-1.jar \ 
+    data/streamData \
+    ws://localhost:8090 \
+    edge \
+    200 \
+    true
 ```
- 
-To run in secure mode include -s, note all node addresses should be in form wss instead of ws
- ```
-java -jar {Release.jar} {Orchestrator address} {file to host} {address of services hosted on this cloudNode} -s
-i.e java -jar edge-0.6.0-jar-with-dependencies ws://193.145.123.56:443 C://path/to/file.tar ws://192.168.18.250:8080 -s
-```
-
-for testing edgenodes feature an input to declare themselves as badAgents, which means even if they pass the SSL phase, orchestrators won't trust them for transfers.
- ```
-java -jar {Release.jar} {Orchestrator address} {file to host} {address of services hosted on this cloudNode} -bA
-i.e java -jar edge-0.6.0-jar-with-dependencies ws://193.145.123.56:443 C://path/to/file.tar ws://192.168.18.250:8080 -bA
-```
-
-## CloudNode 
-To run in ordinary mode the command is
- ```
-java -jar {Release.jar} {Orchestrator address} {file to host} {address of services hosted on this cloudNode} 
-i.e java -jar cloud-0.6.0-jar-with-dependencies ws://193.145.123.56:443 C://path/to/file.tar ws://192.168.18.250:8080
-```
- 
-To run in secure mode include -s, note all node addresses should be in form wss instead of ws
- ```
-java -jar {Release.jar} {Orchestrator address} {file to host} {address of services hosted on this cloudNode}  -s
-i.e java -jar cloud-0.6.0-jar-with-dependencies wss://193.145.123.56:443 C://path/to/file.tar wss://192.168.18.250:8080 -s
-```
-
-## Android Application
-The Android project that accompanies this implementation serves as simple controller to show how an android application can connect to the orchestrator,request a service, and then communicate with that service.
-This needs to be built from source, and has been developed and tested with android studio.
-To run:
-Select whether or not secure mode should be used, Input the IP of the desired Orchestrator and the app will connect to it. 
-After a successful connection you can send strings and file to the docker image, depending on the docker image connected too it may handle these inputs in strange ways, 
-so the android app isn't user proofed like the rest of the elements and simply serves as a template for any development of a dedicated app.
-
-## Run instructions
-Deploy the orchestrator jar in it's desired mode, then deploy at least two nodes, any number or combinations of cloud and edge are fine based on your needs. 
-Make sure that all ports selected aren't blocked by a systems firewall.
-Launch the android application and use it to connect to the orchestrator, this should trigger a migration to occur.
-
-
-

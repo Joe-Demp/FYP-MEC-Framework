@@ -320,7 +320,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>service.cloud.Main</mainClass>
+                            <mainClass>ie.ucd.mecframework.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -346,7 +346,7 @@
                     <archive>
                         <manifest>
                             <!-- Jar file entry point -->
-                            <mainClass>service.cloud.Main</mainClass>
+                            <mainClass>ie.ucd.mecframework.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
